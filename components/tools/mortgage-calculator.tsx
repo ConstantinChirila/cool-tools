@@ -39,7 +39,7 @@ export function MortgageCalculator() {
     <>
       <div className="grid gap-6 lg:grid-cols-[5fr_6fr] lg:items-start">
         {/* Inputs */}
-        <Card className="card-glow card-specular border-transparent">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Loan details</CardTitle>
             <CurrencySelect value={code} onChange={setCurrency} />
@@ -87,10 +87,10 @@ export function MortgageCalculator() {
                     key={preset}
                     type="button"
                     onClick={() => setTerm(preset)}
-                    className={`h-8 flex-1 rounded-lg border text-xs font-medium transition-colors ${
+                    className={`h-9 flex-1 rounded-full border-2 text-xs font-bold transition-colors ${
                       term === preset
-                        ? "border-primary/40 bg-primary/15 text-primary"
-                        : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-foreground bg-card text-foreground hover:bg-secondary"
                     }`}
                   >
                     {preset} yrs
@@ -103,14 +103,14 @@ export function MortgageCalculator() {
 
         {/* Results */}
         <div className="space-y-6 lg:sticky lg:top-20">
-          <Card className="card-glow card-specular border-transparent">
+          <Card>
             <CardContent className="space-y-6 pt-6">
               <HeroStat
                 label="Monthly repayment"
                 value={money(result.monthlyPayment, 2)}
                 hint={`for ${term} years at ${rate}%`}
               />
-              <div className="grid grid-cols-2 gap-4 border-t border-border/60 pt-5">
+              <div className="grid grid-cols-2 gap-4 border-t border-foreground/15 pt-5">
                 <Stat label="Total repaid" value={money(result.totalPaid)} />
                 <Stat label="Total interest" value={money(result.totalInterest)} />
               </div>
@@ -130,7 +130,7 @@ export function MortgageCalculator() {
         </div>
       </div>
 
-      <Card className="card-glow card-specular mt-6 border-transparent">
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle className="text-base">Over the life of the loan</CardTitle>
         </CardHeader>
@@ -162,10 +162,10 @@ export function MortgageCalculator() {
               />
             </TabsContent>
             <TabsContent value="table">
-              <div className="max-h-96 overflow-y-auto rounded-lg border border-border/60">
+              <div className="max-h-96 overflow-y-auto rounded-2xl border-2 border-foreground">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-card">
-                    <tr className="border-b border-border/60 text-left text-xs text-muted-foreground">
+                    <tr className="border-b border-foreground/15 text-left text-xs font-bold text-muted-foreground">
                       <th className="px-4 py-2.5 font-medium">Year</th>
                       <th className="px-4 py-2.5 text-right font-medium">Interest</th>
                       <th className="px-4 py-2.5 text-right font-medium">Principal</th>
@@ -176,7 +176,7 @@ export function MortgageCalculator() {
                     {result.years.map((row) => (
                       <tr
                         key={row.year}
-                        className="border-b border-border/40 last:border-0 hover:bg-accent/40"
+                        className="border-b border-foreground/10 last:border-0 hover:bg-secondary"
                       >
                         <td className="px-4 py-2.5 text-muted-foreground">{row.year}</td>
                         <td className="px-4 py-2.5 text-right">{money(row.interestPaid)}</td>

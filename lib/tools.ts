@@ -3,10 +3,11 @@ import {
   Percent,
   Target,
   TrendingUp,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 
-export type ToolCategory = "Finance" | "Math" | "Sport";
+export type ToolCategory = "Finance" | "Maths" | "Sport";
 
 export interface Tool {
   slug: string;
@@ -17,11 +18,22 @@ export interface Tool {
   icon: LucideIcon;
   /** Extra terms the search should match beyond name/description. */
   keywords: string[];
-  /** Accent hue used for the tool icon tile, as a Tailwind-compatible oklch color. */
+  /** Sticker fill for the tool tile: one of the --sticker-* palette colours. */
   tint: string;
 }
 
 export const tools: Tool[] = [
+  {
+    slug: "uk-salary-calculator",
+    name: "UK Salary Calculator",
+    shortName: "UK Salary",
+    description:
+      "Take-home pay after income tax, National Insurance, pension and student loans, with Scottish rates, tax codes, bonuses and overtime.",
+    category: "Finance",
+    icon: Wallet,
+    keywords: ["salary", "take home", "take-home", "wage", "paye", "income tax", "national insurance", "ni", "pension", "student loan", "net pay", "hmrc", "payslip", "tax code", "scotland", "gross", "hourly", "wages"],
+    tint: "var(--sticker-mint)",
+  },
   {
     slug: "mortgage-calculator",
     name: "Mortgage Calculator",
@@ -31,7 +43,7 @@ export const tools: Tool[] = [
     category: "Finance",
     icon: House,
     keywords: ["loan", "home", "house", "repayment", "amortization", "interest", "property"],
-    tint: "oklch(0.72 0.14 170)",
+    tint: "var(--sticker-sky)",
   },
   {
     slug: "compound-interest-calculator",
@@ -42,7 +54,7 @@ export const tools: Tool[] = [
     category: "Finance",
     icon: TrendingUp,
     keywords: ["savings", "investment", "growth", "interest", "wealth", "returns", "isa"],
-    tint: "oklch(0.68 0.17 285)",
+    tint: "var(--sticker-lilac)",
   },
   {
     slug: "percentage-calculator",
@@ -50,10 +62,10 @@ export const tools: Tool[] = [
     shortName: "Percentage",
     description:
       "Every percentage question in one place: X% of Y, percentage change, increases, and discounts.",
-    category: "Math",
+    category: "Maths",
     icon: Percent,
     keywords: ["percent", "change", "increase", "decrease", "discount", "ratio", "difference"],
-    tint: "oklch(0.78 0.14 85)",
+    tint: "var(--sticker-yellow)",
   },
   {
     slug: "arrow-spine-calculator",
@@ -64,11 +76,11 @@ export const tools: Tool[] = [
     category: "Sport",
     icon: Target,
     keywords: ["archery", "arrow", "spine", "stiffness", "bow", "shaft", "point", "tip", "grain", "deflection", "tuning"],
-    tint: "oklch(0.7 0.15 25)",
+    tint: "var(--sticker-pink)",
   },
 ];
 
-export const categories: ToolCategory[] = ["Finance", "Math", "Sport"];
+export const categories: ToolCategory[] = ["Finance", "Maths", "Sport"];
 
 export function getTool(slug: string): Tool | undefined {
   return tools.find((t) => t.slug === slug);

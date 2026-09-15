@@ -3,7 +3,7 @@
 import * as React from "react";
 import { DEFAULT_CURRENCY, getCurrency } from "@/lib/currency";
 
-const STORAGE_KEY = "cool-tools:currency";
+const STORAGE_KEY = "bitsbobs:currency";
 
 let currentCode: string | null = null;
 const listeners = new Set<() => void>();

@@ -1,37 +1,26 @@
 import { ToolsGrid } from "@/components/tools-grid";
-import { tools } from "@/lib/tools";
 
 export default function Home() {
   return (
-    <div className="relative">
-      <div className="hero-grid pointer-events-none absolute inset-x-0 top-0 h-105" aria-hidden />
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-105"
-        style={{
-          background:
-            "radial-gradient(600px circle at 50% 0%, oklch(0.68 0.17 285 / 7%), transparent 70%)",
-        }}
-        aria-hidden
-      />
+    <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+      <section className="flex flex-col items-center gap-5 pt-8 pb-8 text-center sm:pt-12 sm:pb-10">
+        <h1 className="flex flex-wrap items-center justify-center gap-x-3 gap-y-3 font-heading font-black leading-none tracking-tight">
+          <span className="sticker tilt-1 inline-block rounded-2xl bg-yellow px-4 py-1.5 text-3xl sm:px-5 sm:text-5xl lg:text-[66px]">
+            Bits
+          </span>
+          <span className="inline-block rotate-6 text-2xl sm:text-3xl lg:text-5xl">&amp;</span>
+          <span className="sticker tilt-2 inline-block rounded-2xl bg-pink px-4 py-1.5 text-3xl sm:px-5 sm:text-5xl lg:text-[66px]">
+            Bobs
+          </span>
+        </h1>
+        <p className="max-w-xl text-balance text-base font-semibold sm:text-lg">
+          Odd little tools that just work. Free, quick, and nobody asks for your email.
+        </p>
+      </section>
 
-      <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
-        <section className="py-16 text-center sm:py-24">
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-primary">
-            {tools.length} tools and growing
-          </p>
-          <h1 className="mx-auto max-w-2xl text-balance bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
-            Sharp little tools for everyday questions
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-pretty text-muted-foreground sm:text-lg">
-            Calculators and utilities that are fast, free, and beautiful.
-            No ads, no sign-up, instant answers.
-          </p>
-        </section>
-
-        <section className="pb-20">
-          <ToolsGrid />
-        </section>
-      </div>
+      <section className="pb-24">
+        <ToolsGrid />
+      </section>
     </div>
   );
 }

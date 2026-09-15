@@ -133,7 +133,7 @@ export function GrowthChart({
                 x2={left + plotW}
                 y1={y(t)}
                 y2={y(t)}
-                stroke="oklch(1 0 0 / 7%)"
+                stroke="oklch(0.2 0.01 60 / 10%)"
                 strokeWidth={1}
               />
               <text
@@ -141,7 +141,7 @@ export function GrowthChart({
                 y={y(t)}
                 dy="0.32em"
                 textAnchor="end"
-                className="fill-muted-foreground text-numeric"
+                className="fill-muted-foreground font-semibold text-numeric"
                 fontSize={11}
               >
                 {formatAxis(t)}
@@ -156,7 +156,7 @@ export function GrowthChart({
               x={x(i)}
               y={HEIGHT - 6}
               textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"}
-              className="fill-muted-foreground text-numeric"
+              className="fill-muted-foreground font-semibold text-numeric"
               fontSize={11}
             >
               {xTick(i)}
@@ -183,7 +183,7 @@ export function GrowthChart({
               x2={x(hover)}
               y1={M.top}
               y2={M.top + plotH}
-              stroke="oklch(1 0 0 / 20%)"
+              stroke="oklch(0.2 0.01 60 / 30%)"
               strokeWidth={1}
             />
           )}
@@ -195,7 +195,7 @@ export function GrowthChart({
               d={path(s.values)}
               fill="none"
               stroke={s.color}
-              strokeWidth={2}
+              strokeWidth={3}
               strokeLinecap="round"
               strokeLinejoin="round"
             />
@@ -230,7 +230,7 @@ export function GrowthChart({
       {/* tooltip */}
       {hover !== null && width > 0 && (
         <div
-          className="glass card-specular pointer-events-none absolute top-2 z-10 min-w-36 rounded-lg p-2.5 text-xs shadow-lg"
+          className="sticker-sm pointer-events-none absolute top-2 z-10 min-w-36 rounded-xl bg-card p-2.5 text-xs"
           style={flip ? { right: width - tooltipLeft + 10 } : { left: tooltipLeft + 10 }}
         >
           <p className="mb-1.5 font-medium text-muted-foreground">{xLabel(hover)}</p>
@@ -247,7 +247,7 @@ export function GrowthChart({
               </div>
             ))}
             {extraRow?.(hover) && (
-              <div className="flex items-center justify-between gap-4 border-t border-border/60 pt-1">
+              <div className="flex items-center justify-between gap-4 border-t border-foreground/15 pt-1">
                 <span className="pl-4.5 text-muted-foreground">{extraRow(hover)!.name}</span>
                 <span className="font-semibold text-foreground text-numeric">
                   {extraRow(hover)!.value}

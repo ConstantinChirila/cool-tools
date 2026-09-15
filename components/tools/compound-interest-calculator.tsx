@@ -56,7 +56,7 @@ export function CompoundInterestCalculator() {
     <>
       <div className="grid gap-6 lg:grid-cols-[5fr_6fr] lg:items-start">
         {/* Inputs */}
-        <Card className="card-glow card-specular border-transparent">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Your plan</CardTitle>
             <CurrencySelect value={code} onChange={setCurrency} />
@@ -132,14 +132,14 @@ export function CompoundInterestCalculator() {
 
         {/* Results */}
         <div className="space-y-6 lg:sticky lg:top-20">
-          <Card className="card-glow card-specular border-transparent">
+          <Card>
             <CardContent className="space-y-6 pt-6">
               <HeroStat
                 label={`Balance after ${years} years`}
                 value={money(result.finalBalance)}
                 hint={`earning ${rate}% compounded ${FREQUENCIES.find((f) => f.value === frequency)?.label.toLowerCase()}`}
               />
-              <div className="grid grid-cols-2 gap-4 border-t border-border/60 pt-5">
+              <div className="grid grid-cols-2 gap-4 border-t border-foreground/15 pt-5">
                 <Stat
                   label="Total contributed"
                   value={money(result.totalContributed)}
@@ -170,7 +170,7 @@ export function CompoundInterestCalculator() {
         </div>
       </div>
 
-      <Card className="card-glow card-specular mt-6 border-transparent">
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle className="text-base">Growth over time</CardTitle>
         </CardHeader>
@@ -191,7 +191,7 @@ export function CompoundInterestCalculator() {
                   },
                   {
                     name: "Contributed",
-                    color: "oklch(0.55 0.02 270)",
+                    color: "oklch(0.8 0.01 60)",
                     values: result.contributedSeries,
                   },
                 ]}
@@ -208,10 +208,10 @@ export function CompoundInterestCalculator() {
               />
             </TabsContent>
             <TabsContent value="table">
-              <div className="max-h-96 overflow-y-auto rounded-lg border border-border/60">
+              <div className="max-h-96 overflow-y-auto rounded-2xl border-2 border-foreground">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-card">
-                    <tr className="border-b border-border/60 text-left text-xs text-muted-foreground">
+                    <tr className="border-b border-foreground/15 text-left text-xs font-bold text-muted-foreground">
                       <th className="px-4 py-2.5 font-medium">Year</th>
                       <th className="px-4 py-2.5 text-right font-medium">Contributed</th>
                       <th className="px-4 py-2.5 text-right font-medium">Interest</th>
@@ -222,7 +222,7 @@ export function CompoundInterestCalculator() {
                     {result.years.map((row) => (
                       <tr
                         key={row.year}
-                        className="border-b border-border/40 last:border-0 hover:bg-accent/40"
+                        className="border-b border-foreground/10 last:border-0 hover:bg-secondary"
                       >
                         <td className="px-4 py-2.5 text-muted-foreground">{row.year}</td>
                         <td className="px-4 py-2.5 text-right">{money(row.contributed)}</td>

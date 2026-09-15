@@ -1,52 +1,59 @@
 "use client";
 
 import * as React from "react";
-import { Search, SearchX } from "lucide-react";
+import { Plus, Search, SearchX } from "lucide-react";
 import { ToolCard } from "@/components/tool-card";
-import { categories, searchTools } from "@/lib/tools";
+import { searchTools } from "@/lib/tools";
 
 export function ToolsGrid() {
   const [query, setQuery] = React.useState("");
   const results = searchTools(query);
 
   return (
-    <div className="space-y-10">
-      <div className="relative mx-auto max-w-xl">
-        <Search className="pointer-events-none absolute left-4 top-1/2 size-4.5 -translate-y-1/2 text-muted-foreground" />
+    <div className="space-y-8">
+      <div className="sticker relative mx-auto max-w-2xl rounded-full bg-card focus-within:-translate-y-0.5 focus-within:shadow-[7px_7px_0_var(--foreground)] transition-[transform,box-shadow]">
+        <Search
+          className="pointer-events-none absolute left-6 top-1/2 size-5 -translate-y-1/2"
+          strokeWidth={2.5}
+        />
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search tools… mortgage, percentage, interest"
+          placeholder="What do you need to work out?"
           aria-label="Search tools"
-          className="h-12 w-full rounded-xl border border-input bg-card/80 pl-11 pr-4 text-[15px] shadow-[0_1px_0_0_oklch(1_0_0/5%)_inset,0_8px_24px_-12px_oklch(0_0_0/50%)] outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-ring/50 focus:ring-2 focus:ring-ring/30"
+          className="h-14 w-full rounded-full bg-transparent pl-14 pr-20 text-base font-semibold outline-none placeholder:text-muted-foreground sm:text-lg"
         />
+        <kbd className="pointer-events-none absolute right-5 top-1/2 hidden -translate-y-1/2 rounded-lg border-2 border-foreground px-2 py-0.5 font-mono text-xs sm:block">
+          ⌘K
+        </kbd>
       </div>
 
       {results.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <SearchX className="size-8 text-muted-foreground/50" />
-          <p className="text-muted-foreground">
-            No tools match &ldquo;{query}&rdquo; yet. More tools are on the way.
+          <SearchX className="size-8" />
+          <p className="font-semibold">
+            No tools match &ldquo;{query}&rdquo; yet. More bits are on the way.
           </p>
         </div>
       ) : (
-        categories.map((category) => {
-          const categoryTools = results.filter((t) => t.category === category);
-          if (categoryTools.length === 0) return null;
-          return (
-            <section key={category} className="space-y-4">
-              <h2 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                {category}
-              </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {categoryTools.map((tool) => (
-                  <ToolCard key={tool.slug} tool={tool} />
-                ))}
-              </div>
-            </section>
-          );
-        })
+        <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8 lg:px-4">
+          {results.map((tool, i) => (
+            <ToolCard key={tool.slug} tool={tool} index={i} />
+          ))}
+          {!query && (
+            <a
+              href="mailto:constantin.chirila@gmail.com?subject=Bits%20%26%20Bobs%3A%20tool%20idea"
+              className="tilt-6 flex flex-col items-center justify-center gap-3 rounded-[26px] border-[2.5px] border-dashed border-foreground bg-card p-6 text-center transition-transform hover:rotate-0"
+            >
+              <span className="flex size-13 items-center justify-center rounded-full border-[2.5px] border-foreground">
+                <Plus className="size-6" strokeWidth={2.5} />
+              </span>
+              <span className="font-heading text-2xl font-extrabold">Missing a bit?</span>
+              <span className="font-semibold text-muted-foreground">Tell us what to build next</span>
+            </a>
+          )}
+        </div>
       )}
     </div>
   );

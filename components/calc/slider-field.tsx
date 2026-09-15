@@ -72,10 +72,10 @@ export function SliderField({
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between gap-3">
-        <Label htmlFor={id} className="text-sm text-muted-foreground">
+        <Label htmlFor={id} className="text-sm font-bold">
           {label}
         </Label>
-        <div className="flex h-9 items-center rounded-lg border border-input bg-secondary/40 px-2.5 transition-colors focus-within:border-ring/50 focus-within:ring-2 focus-within:ring-ring/30">
+        <div className="flex h-10 items-center rounded-xl border-[2.5px] border-foreground bg-card px-3 transition-shadow focus-within:ring-[3px] focus-within:ring-ring/60">
           {prefix && (
             <span className="pr-1 text-sm text-muted-foreground">{prefix}</span>
           )}
@@ -97,7 +97,7 @@ export function SliderField({
             onKeyDown={(e) => {
               if (e.key === "Enter") commit((e.target as HTMLInputElement).value);
             }}
-            className="w-24 bg-transparent text-right text-sm font-medium text-numeric outline-none sm:w-28"
+            className="w-24 bg-transparent text-right font-mono text-sm font-bold text-numeric outline-none sm:w-28"
           />
           {suffix && (
             <span className="pl-1 text-sm text-muted-foreground">{suffix}</span>

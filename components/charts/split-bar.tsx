@@ -29,7 +29,7 @@ export function SplitBar({
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="flex h-4 w-full gap-0.5 overflow-hidden rounded-full" role="img"
+      <div className="flex h-6 w-full overflow-hidden rounded-full border-[2.5px] border-foreground bg-card" role="img"
         aria-label={segments.map((s) => `${s.name}: ${format(s.value)}`).join(", ")}
       >
         {segments.map((s, i) => (
@@ -37,7 +37,7 @@ export function SplitBar({
             key={s.name}
             onPointerEnter={() => setActive(i)}
             onPointerLeave={() => setActive(null)}
-            className="h-full min-w-1 transition-opacity duration-150"
+            className="h-full min-w-1 border-r-[2.5px] border-foreground transition-opacity duration-150 last:border-r-0"
             style={{
               width: `${(s.value / total) * 100}%`,
               background: s.color,
@@ -50,16 +50,16 @@ export function SplitBar({
         {segments.map((s, i) => (
           <div
             key={s.name}
-            className="flex items-center gap-2 text-sm transition-opacity duration-150"
+            className="flex items-center gap-2 text-sm font-semibold transition-opacity duration-150"
             style={{ opacity: active === null || active === i ? 1 : 0.5 }}
           >
             <span
-              className="size-2.5 rounded-[3px]"
+              className="size-3 rounded-full border-2 border-foreground"
               style={{ background: s.color }}
               aria-hidden
             />
             <span className="text-muted-foreground">{s.name}</span>
-            <span className="font-medium text-numeric">{format(s.value)}</span>
+            <span className="font-bold text-numeric">{format(s.value)}</span>
             <span className="text-xs text-muted-foreground/70 text-numeric">
               {((s.value / total) * 100).toFixed(1)}%
             </span>

@@ -27,7 +27,7 @@ function InlineNumber({
       value={value}
       onChange={(e) => onChange(e.target.value.replace(/[^\d.,-]/g, ""))}
       className={cn(
-        "h-11 w-28 rounded-lg border border-input bg-secondary/40 px-3 text-center text-lg font-semibold text-numeric outline-none transition-colors focus:border-ring/50 focus:ring-2 focus:ring-ring/30",
+        "h-12 w-28 rounded-xl border-[2.5px] border-foreground bg-card px-3 text-center font-mono text-lg font-bold text-numeric outline-none transition-colors focus:border-ring/50 focus:ring-2 focus:ring-ring/30",
         className,
       )}
     />
@@ -112,7 +112,7 @@ export function PercentageCalculator() {
           onClick={() =>
             setDirection((d) => (d === "increase" ? "decrease" : "increase"))
           }
-          className="inline-flex h-11 items-center gap-1 rounded-lg border border-primary/40 bg-primary/15 px-3 text-base font-medium text-primary transition-colors hover:bg-primary/25"
+          className="inline-flex h-12 items-center gap-1 rounded-xl border-[2.5px] border-foreground bg-yellow px-3 text-base font-medium text-primary transition-colors hover:bg-primary/25"
           aria-label={`Switch to ${direction === "increase" ? "decrease" : "increase"}`}
         >
           {direction === "increase" ? (
@@ -151,13 +151,13 @@ export function PercentageCalculator() {
         </TabsList>
       </Tabs>
 
-      <Card className="card-glow card-specular border-transparent">
+      <Card>
         <CardContent className="space-y-8 py-8">
           <div className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-3 text-lg text-muted-foreground">
             {sentence[mode]}
           </div>
 
-          <div className="border-t border-border/60 pt-7 text-center">
+          <div className="border-t border-foreground/15 pt-7 text-center">
             {result !== null && valid ? (
               <>
                 <p className="text-sm text-muted-foreground">{explanation}</p>
@@ -174,8 +174,8 @@ export function PercentageCalculator() {
                     className={cn(
                       "mt-3 inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium",
                       result >= 0
-                        ? "bg-[oklch(0.64_0.13_170/15%)] text-[oklch(0.75_0.13_170)]"
-                        : "bg-destructive/15 text-[oklch(0.75_0.15_22)]",
+                        ? "bg-mint text-foreground"
+                        : "bg-pink text-foreground",
                     )}
                   >
                     {result >= 0 ? (

@@ -13,9 +13,9 @@ export function Stat({
 }) {
   return (
     <div className={cn("space-y-1", className)}>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-lg font-semibold tracking-tight text-numeric">{value}</p>
-      {hint && <p className="text-xs text-muted-foreground/70">{hint}</p>}
+      <p className="text-[13px] font-bold">{label}</p>
+      <p className="font-heading text-2xl font-extrabold tracking-tight text-numeric">{value}</p>
+      {hint && <p className="text-xs font-semibold text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -31,9 +31,9 @@ export function HeroStat({
 }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="text-4xl font-bold tracking-tight sm:text-5xl">{value}</p>
-      {hint && <p className="text-sm text-muted-foreground">{hint}</p>}
+      <p className="text-base font-bold">{label}</p>
+      <p className="font-heading text-5xl font-black tracking-tighter sm:text-7xl">{value}</p>
+      {hint && <p className="text-sm font-semibold text-muted-foreground">{hint}</p>}
     </div>
   );
 }

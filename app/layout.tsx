@@ -1,31 +1,39 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Gabarito, Nunito, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CommandPalette } from "@/components/command-palette";
 
-const geistSans = Geist({
-  variable: "--font-sans",
+const heading = Gabarito({
+  variable: "--font-heading",
   subsets: ["latin"],
+  weight: ["600", "800", "900"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const body = Nunito({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["400", "600", "700", "800"],
+});
+
+const mono = Space_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "Cool Tools",
-    template: "%s · Cool Tools",
+    default: "Bits & Bobs",
+    template: "%s · Bits & Bobs",
   },
   description:
-    "A growing library of fast, beautiful online tools and calculators.",
+    "Odd little tools that just work. Free calculators, no sign-up, nobody asks for your email.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#111118",
+  themeColor: "#fbf9f4",
 };
 
 export default function RootLayout({
@@ -36,9 +44,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${heading.variable} ${body.variable} ${mono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="dot-grid flex min-h-full flex-col">
         <CommandPalette />
         <SiteHeader />
         <main className="flex-1">{children}</main>

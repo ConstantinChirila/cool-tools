@@ -1,43 +1,41 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import type { Tool } from "@/lib/tools";
+import { cn } from "@/lib/utils";
 
-export function ToolCard({ tool }: { tool: Tool }) {
+const TILTS = ["tilt-1", "tilt-2", "tilt-3", "tilt-4", "tilt-5", "tilt-6"];
+
+export function ToolCard({ tool, index = 0 }: { tool: Tool; index?: number }) {
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="group card-glow card-specular relative flex flex-col gap-3 rounded-2xl p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      className={cn(
+        "sticker group flex flex-col gap-4 rounded-[26px] p-6 transition-[transform,box-shadow] duration-200 ease-out hover:rotate-0 hover:-translate-y-1 hover:shadow-[8px_8px_0_var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring motion-reduce:transition-none",
+        TILTS[index % TILTS.length],
+      )}
+      style={{ background: tool.tint }}
     >
       <div className="flex items-start justify-between">
-        <span
-          className="flex size-11 items-center justify-center rounded-xl ring-1 transition-shadow duration-200"
-          style={{
-            color: tool.tint,
-            background: `color-mix(in oklch, ${tool.tint} 12%, transparent)`,
-            boxShadow: `0 0 24px -6px color-mix(in oklch, ${tool.tint} 35%, transparent)`,
-            // @ts-expect-error CSS custom property for ring color
-            "--tw-ring-color": `color-mix(in oklch, ${tool.tint} 25%, transparent)`,
-          }}
-        >
-          <tool.icon className="size-5" />
+        <span className="flex size-13 items-center justify-center rounded-full border-[2.5px] border-foreground bg-card">
+          <tool.icon className="size-6" strokeWidth={2.25} />
         </span>
-        <ArrowUpRight className="size-4 text-muted-foreground/50 transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-foreground" />
+        <span className="rotate-3 rounded-full border-[2.5px] border-foreground bg-card px-2.5 py-1 font-mono text-[11px] font-bold uppercase">
+          {tool.category}
+        </span>
       </div>
 
-      <div className="flex-1 space-y-1">
-        <h3 className="font-semibold tracking-tight">{tool.name}</h3>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {tool.description}
-        </p>
+      <div className="flex-1 space-y-1.5">
+        <h3 className="font-heading text-[26px] leading-tight font-extrabold tracking-tight">
+          {tool.name}
+        </h3>
+        <p className="font-semibold leading-relaxed">{tool.description}</p>
       </div>
 
-      <Badge
-        variant="outline"
-        className="w-fit text-[11px] font-medium tracking-wide text-muted-foreground"
-      >
-        {tool.category}
-      </Badge>
+      <div className="flex justify-end">
+        <span className="flex size-10 items-center justify-center rounded-full bg-foreground text-background transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+          <ArrowUpRight className="size-5" strokeWidth={2.5} />
+        </span>
+      </div>
     </Link>
   );
 }

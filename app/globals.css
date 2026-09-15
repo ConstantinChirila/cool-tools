@@ -8,8 +8,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-heading);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,6 +39,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Sticker palette: flat candy fills used for tiles, sections and result cards. */
+  --color-yellow: var(--sticker-yellow);
+  --color-pink: var(--sticker-pink);
+  --color-mint: var(--sticker-mint);
+  --color-sky: var(--sticker-sky);
+  --color-lilac: var(--sticker-lilac);
+  --color-ink: var(--foreground);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -48,44 +55,48 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Dark-only theme. The `dark` class is pinned on <html>, and :root and .dark
-   carry the same values so shadcn dark: variants always apply. */
-:root,
-.dark {
-  --background: oklch(0.155 0.012 270);
-  --foreground: oklch(0.93 0.006 270);
-  --card: oklch(0.195 0.014 270);
-  --card-foreground: oklch(0.93 0.006 270);
-  --popover: oklch(0.21 0.014 270);
-  --popover-foreground: oklch(0.93 0.006 270);
-  --primary: oklch(0.68 0.17 285);
-  --primary-foreground: oklch(0.985 0.005 285);
-  --secondary: oklch(0.245 0.016 270);
-  --secondary-foreground: oklch(0.93 0.006 270);
-  --muted: oklch(0.245 0.016 270);
-  --muted-foreground: oklch(0.68 0.012 270);
-  --accent: oklch(0.26 0.02 275);
-  --accent-foreground: oklch(0.96 0.005 270);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.68 0.17 285 / 60%);
-  /* Categorical chart palette, validated for CVD separation and 3:1 contrast
-     against the card surface (dark band L 0.48-0.67). */
-  --chart-1: oklch(0.65 0.18 285);
-  --chart-2: oklch(0.64 0.13 170);
-  --chart-3: oklch(0.66 0.13 80);
-  --chart-4: oklch(0.62 0.14 235);
-  --chart-5: oklch(0.64 0.16 350);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.195 0.014 270);
-  --sidebar-foreground: oklch(0.93 0.006 270);
-  --sidebar-primary: oklch(0.68 0.17 285);
-  --sidebar-primary-foreground: oklch(0.985 0.005 285);
-  --sidebar-accent: oklch(0.26 0.02 275);
-  --sidebar-accent-foreground: oklch(0.96 0.005 270);
-  --sidebar-border: oklch(1 0 0 / 9%);
-  --sidebar-ring: oklch(0.68 0.17 285 / 60%);
+/* Bits & Bobs "sticker sheet" theme: warm paper, ink outlines, candy fills,
+   hard offset shadows. Light only. */
+:root {
+  --background: oklch(0.985 0.01 90);
+  --foreground: oklch(0.2 0.01 60);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.01 60);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.01 60);
+  --primary: oklch(0.2 0.01 60);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.955 0.012 90);
+  --secondary-foreground: oklch(0.2 0.01 60);
+  --muted: oklch(0.955 0.012 90);
+  --muted-foreground: oklch(0.45 0.01 60);
+  --accent: oklch(0.93 0.06 95);
+  --accent-foreground: oklch(0.2 0.01 60);
+  --destructive: oklch(0.55 0.2 25);
+  --border: oklch(0.2 0.01 60);
+  --input: oklch(0.2 0.01 60);
+  --ring: oklch(0.7 0.12 235);
+  --sticker-yellow: oklch(0.9 0.16 95);
+  --sticker-pink: oklch(0.84 0.12 350);
+  --sticker-mint: oklch(0.9 0.1 165);
+  --sticker-sky: oklch(0.87 0.09 235);
+  --sticker-lilac: oklch(0.86 0.09 300);
+  /* Chart series: deeper versions of the sticker fills so lines and bars
+     clear 3:1 against white. */
+  --chart-1: oklch(0.62 0.16 300);
+  --chart-2: oklch(0.6 0.13 165);
+  --chart-3: oklch(0.7 0.16 80);
+  --chart-4: oklch(0.6 0.13 235);
+  --chart-5: oklch(0.66 0.17 350);
+  --radius: 1rem;
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.2 0.01 60);
+  --sidebar-primary: oklch(0.2 0.01 60);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.93 0.06 95);
+  --sidebar-accent-foreground: oklch(0.2 0.01 60);
+  --sidebar-border: oklch(0.2 0.01 60);
+  --sidebar-ring: oklch(0.7 0.12 235);
 }
 
 @layer base {
@@ -94,15 +105,17 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "cv11";
   }
   html {
     @apply font-sans;
-    color-scheme: dark;
+    color-scheme: light;
     scrollbar-gutter: stable;
   }
+  h1, h2, h3, h4 {
+    @apply font-heading;
+  }
   ::selection {
-    background: oklch(0.68 0.17 285 / 35%);
+    background: var(--sticker-yellow);
   }
 }
 
@@ -111,50 +124,44 @@
   letter-spacing: -0.01em;
 }
 
-@utility card-glow {
-  position: relative;
-  background:
-    radial-gradient(
-      120% 90% at 50% 0%,
-      oklch(1 0 0 / 4.5%) 0%,
-      transparent 60%
-    ),
-    var(--color-card);
+/* Sticker: ink outline plus a hard offset shadow, like a die-cut sticker. */
+@utility sticker {
+  border: 2.5px solid var(--foreground);
+  box-shadow: 5px 5px 0 var(--foreground);
 }
 
-/* Specular 1px gradient border: brighter on top, fading down, like light from above. */
-@utility card-specular {
-  position: relative;
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(
-      180deg,
-      oklch(1 0 0 / 14%),
-      oklch(1 0 0 / 3%) 55%
-    );
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
+@utility sticker-lg {
+  border: 3px solid var(--foreground);
+  box-shadow: 7px 7px 0 var(--foreground);
 }
 
-/* Faint dot grid for hero sections, faded with a mask. */
-@utility hero-grid {
-  background-image: radial-gradient(oklch(1 0 0 / 6%) 1px, transparent 1px);
-  background-size: 24px 24px;
-  mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, #000 20%, transparent 75%);
+@utility sticker-sm {
+  border: 2px solid var(--foreground);
+  box-shadow: 3px 3px 0 var(--foreground);
 }
 
-/* Frosted glass for sticky bars, header, and overlays. */
+/* Outline only, no shadow: for inputs and rows inside a sticker. */
+@utility outline-ink {
+  border: 2.5px solid var(--foreground);
+}
+
+/* Faint dot grid behind pages. */
+@utility dot-grid {
+  background-image: radial-gradient(oklch(0.2 0.01 60 / 22%) 1.2px, transparent 1.2px);
+  background-size: 28px 28px;
+}
+
+/* Slight tilts for tiles and badges. Straightened for reduced motion users on hover. */
+@utility tilt-1 { transform: rotate(-1.2deg); }
+@utility tilt-2 { transform: rotate(1deg); }
+@utility tilt-3 { transform: rotate(-0.6deg); }
+@utility tilt-4 { transform: rotate(0.8deg); }
+@utility tilt-5 { transform: rotate(-1deg); }
+@utility tilt-6 { transform: rotate(0.7deg); }
+
+/* Frosted bar for sticky elements. */
 @utility glass {
-  background: oklch(0.17 0.012 270 / 72%);
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  background: oklch(0.985 0.01 90 / 85%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }

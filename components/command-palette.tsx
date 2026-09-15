@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/command";
 import { categories, tools } from "@/lib/tools";
 
-export const OPEN_PALETTE_EVENT = "cool-tools:open-palette";
+export const OPEN_PALETTE_EVENT = "bitsbobs:open-palette";
 
 export function openCommandPalette() {
   window.dispatchEvent(new Event(OPEN_PALETTE_EVENT));

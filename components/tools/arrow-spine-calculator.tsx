@@ -45,8 +45,8 @@ export function ArrowSpineCalculator() {
         className={cn(
           "inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium",
           result.direction === "stiffer"
-            ? "bg-[oklch(0.64_0.13_170/15%)] text-[oklch(0.75_0.13_170)]"
-            : "bg-destructive/15 text-[oklch(0.75_0.15_22)]",
+            ? "bg-mint text-foreground"
+            : "bg-pink text-foreground",
         )}
       >
         {result.direction === "stiffer" ? (
@@ -65,7 +65,7 @@ export function ArrowSpineCalculator() {
       <div className="grid gap-6 lg:grid-cols-[5fr_6fr] lg:items-start">
         {/* Inputs */}
         <div className="space-y-6">
-          <Card className="card-glow card-specular border-transparent">
+          <Card>
             <CardHeader>
               <CardTitle className="text-base">Your current arrow</CardTitle>
             </CardHeader>
@@ -104,7 +104,7 @@ export function ArrowSpineCalculator() {
             </CardContent>
           </Card>
 
-          <Card className="card-glow card-specular border-transparent">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Your changes</CardTitle>
               <button
@@ -113,7 +113,7 @@ export function ArrowSpineCalculator() {
                   setNewLength(baseLength);
                   setNewPoint(basePoint);
                 }}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border-2 border-foreground bg-card px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 <RotateCcw className="size-3" />
                 Reset
@@ -148,10 +148,10 @@ export function ArrowSpineCalculator() {
                       key={preset}
                       type="button"
                       onClick={() => setNewPoint(preset)}
-                      className={`h-8 flex-1 rounded-lg border text-xs font-medium transition-colors ${
+                      className={`h-9 flex-1 rounded-full border-2 text-xs font-bold transition-colors ${
                         newPoint === preset
-                          ? "border-primary/40 bg-primary/15 text-primary"
-                          : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-foreground bg-card text-foreground hover:bg-secondary"
                       }`}
                     >
                       {preset} gr
@@ -165,7 +165,7 @@ export function ArrowSpineCalculator() {
 
         {/* Results */}
         <div className="space-y-6 lg:sticky lg:top-20">
-          <Card className="card-glow card-specular border-transparent">
+          <Card>
             <CardContent className="space-y-6 pt-6">
               <HeroStat
                 label="Effective spine of the modified arrow"
@@ -177,7 +177,7 @@ export function ArrowSpineCalculator() {
                 }
               />
               {directionBadge}
-              <div className="grid grid-cols-2 gap-4 border-t border-border/60 pt-5">
+              <div className="grid grid-cols-2 gap-4 border-t border-foreground/15 pt-5">
                 <Stat
                   label="From length change"
                   value={`${signed(result.lengthEffect)} spine`}
@@ -202,7 +202,7 @@ export function ArrowSpineCalculator() {
             </CardContent>
           </Card>
 
-          <Card className="card-glow card-specular border-transparent">
+          <Card>
             <CardContent className="space-y-3 pt-6 text-sm text-muted-foreground">
               <p className="font-medium text-foreground">How this is estimated</p>
               <p>
