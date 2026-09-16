@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { RecordRecentTool } from "@/components/record-recent-tool";
 import type { Tool } from "@/lib/tools";
 
 export function ToolPageShell({
@@ -10,7 +11,8 @@ export function ToolPageShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-28 sm:px-6">
+    <div className="mx-auto w-full max-w-7xl px-4 pb-28 sm:px-6">
+      <RecordRecentTool slug={tool.slug} />
       <div className="py-6">
         <Link
           href="/"

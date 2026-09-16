@@ -8,7 +8,7 @@ import { openCommandPalette } from "@/components/command-palette";
 export function SiteHeader() {
   return (
     <header className="glass sticky top-0 z-40">
-      <div className="mx-auto flex h-[76px] w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-[76px] w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link
           href="/"
           className="group flex items-center gap-3 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
