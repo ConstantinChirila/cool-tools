@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Plus, Search, SearchX } from "lucide-react";
+import { FeedbackLink } from "@/components/feedback-link";
 import { RecentTools } from "@/components/recent-tools";
 import { ToolCard } from "@/components/tool-card";
 import { searchTools } from "@/lib/tools";
@@ -45,8 +46,8 @@ export function ToolsGrid() {
             <ToolCard key={tool.slug} tool={tool} index={i} />
           ))}
           {!query && (
-            <a
-              href="mailto:constantin.chirila@gmail.com?subject=Bits%20%26%20Bobs%3A%20tool%20idea"
+            <FeedbackLink
+              subject="Bits & Bobs: tool idea"
               className="tilt-6 flex min-h-56 flex-col items-center justify-center gap-2.5 rounded-3xl border-[2.5px] border-dashed border-foreground bg-card p-5 text-center transition-transform hover:rotate-0"
             >
               <span className="flex size-11 items-center justify-center rounded-full border-[2.5px] border-foreground">
@@ -56,7 +57,7 @@ export function ToolsGrid() {
               <span className="text-sm font-semibold text-muted-foreground">
                 Tell us what to build next
               </span>
-            </a>
+            </FeedbackLink>
           )}
         </div>
       )}

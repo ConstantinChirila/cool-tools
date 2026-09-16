@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     "compound interest calculator",
     "percentage calculator",
   ],
-  authors: [{ name: "Constantin Chirila" }],
+  authors: [{ name: "Constantin Chirila", url: "https://constantinchirila.com" }],
   creator: "Constantin Chirila",
   category: "finance",
   alternates: { canonical: "/" },

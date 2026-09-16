@@ -28,7 +28,15 @@ export function SiteFooter() {
         <div className="mt-10 flex flex-col gap-2 border-t border-foreground/15 pt-6 text-sm font-bold sm:flex-row sm:items-center sm:justify-between">
           <p>Bits &amp; Bobs</p>
           <p className="text-muted-foreground">
-            Free, fast, no sign-up. Made in the UK. Figures are estimates, not financial advice.
+            Free, fast, no sign-up. Made in the UK by{" "}
+            <a
+              href="https://constantinchirila.com"
+              rel="author"
+              className="text-foreground underline underline-offset-2 hover:no-underline"
+            >
+              Constantin Chirila
+            </a>
+            . Figures are estimates, not financial advice.
           </p>
         </div>
       </div>
