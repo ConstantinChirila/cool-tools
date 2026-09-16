@@ -18,8 +18,9 @@ import { HeroStat, Stat } from "@/components/calc/stat";
 import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
 import { useCurrency } from "@/hooks/use-currency";
+import { useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateCompound } from "@/lib/finance";
-import { formatMoney } from "@/lib/currency";
+import { DEFAULT_CURRENCY, currencies, formatMoney } from "@/lib/currency";
 
 const FREQUENCIES = [
   { value: "12", label: "Monthly" },
@@ -35,6 +36,25 @@ export function CompoundInterestCalculator() {
   const [rate, setRate] = React.useState(7);
   const [frequency, setFrequency] = React.useState("12");
   const [years, setYears] = React.useState(20);
+
+  useUrlState({
+    initial: urlField(initial, setInitial, 10_000),
+    monthly: urlField(monthly, setMonthly, 250),
+    rate: urlField(rate, setRate, 7),
+    freq: urlField(
+      frequency,
+      setFrequency,
+      "12",
+      FREQUENCIES.map((f) => f.value),
+    ),
+    years: urlField(years, setYears, 20),
+    currency: urlField(
+      code,
+      setCurrency,
+      DEFAULT_CURRENCY,
+      currencies.map((c) => c.code),
+    ),
+  });
 
   const result = React.useMemo(
     () => calculateCompound(initial, monthly, rate, Number(frequency), years),

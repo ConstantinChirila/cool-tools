@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { RecordRecentTool } from "@/components/record-recent-tool";
+import { ShareLink } from "@/components/share-link";
 import type { Tool } from "@/lib/tools";
 
 export function ToolPageShell({
@@ -13,7 +14,7 @@ export function ToolPageShell({
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-28 sm:px-6">
       <RecordRecentTool slug={tool.slug} />
-      <div className="py-6">
+      <div className="flex items-center justify-between gap-3 py-6">
         <Link
           href="/"
           className="inline-flex h-10 items-center gap-1.5 rounded-full border-[2.5px] border-foreground bg-card px-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
@@ -21,6 +22,7 @@ export function ToolPageShell({
           <ArrowLeft className="size-4" strokeWidth={2.5} />
           All tools
         </Link>
+        <ShareLink />
       </div>
 
       <header className="mb-8 flex items-center gap-5">

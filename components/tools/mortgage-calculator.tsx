@@ -12,8 +12,9 @@ import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrency } from "@/hooks/use-currency";
+import { useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateMortgage } from "@/lib/finance";
-import { formatMoney } from "@/lib/currency";
+import { DEFAULT_CURRENCY, currencies, formatMoney } from "@/lib/currency";
 
 const TERM_PRESETS = [15, 20, 25, 30];
 
@@ -30,6 +31,23 @@ export function MortgageCalculator() {
   const [rate, setRate] = React.useState(4.5);
   const [term, setTerm] = React.useState(25);
   const [mortgageType, setMortgageType] = React.useState<MortgageType>("repayment");
+
+  useUrlState({
+    amount: urlField(amount, setAmount, 250_000),
+    rate: urlField(rate, setRate, 4.5),
+    term: urlField(term, setTerm, 25),
+    type: urlField(mortgageType, setMortgageType, "repayment" as MortgageType, [
+      "repayment",
+      "interestOnly",
+    ]),
+    currency: urlField(
+      code,
+      setCurrency,
+      DEFAULT_CURRENCY,
+      currencies.map((c) => c.code),
+    ),
+  });
+
   const interestOnly = mortgageType === "interestOnly";
 
   const result = React.useMemo(

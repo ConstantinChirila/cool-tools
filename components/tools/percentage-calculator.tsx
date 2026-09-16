@@ -4,6 +4,7 @@ import * as React from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUrlState, urlField } from "@/hooks/use-url-state";
 import { formatNumber } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +46,13 @@ export function PercentageCalculator() {
   const [a, setA] = React.useState("15");
   const [b, setB] = React.useState("200");
   const [direction, setDirection] = React.useState<"increase" | "decrease">("increase");
+
+  useUrlState({
+    mode: urlField(mode, setMode, "of" as Mode, ["of", "what", "change", "adjust"]),
+    a: urlField(a, setA, "15"),
+    b: urlField(b, setB, "200"),
+    dir: urlField(direction, setDirection, "increase", ["increase", "decrease"]),
+  });
 
   const x = parse(a);
   const y = parse(b);

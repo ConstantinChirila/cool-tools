@@ -14,6 +14,8 @@ All financial tools default to GBP with a switchable currency (persisted in loca
 
 The last four tools opened are pinned as a "Recent" row under the homepage search and as a "Recent" group in the ⌘K palette (localStorage key `bitsbobs:recent`, managed by `hooks/use-recent-tools.ts`; `ToolPageShell` records the visit, so every tool page gets it automatically).
 
+Every tool mirrors its inputs into the query string via `hooks/use-url-state.ts`: on mount, recognised query params are applied to state, and non-default values are written back into the URL with `replaceState` as you edit. The "Share link" button in `ToolPageShell` (`components/share-link.tsx`) just copies the current URL, so any set of inputs is a shareable link. New tools should call `useUrlState` with one `urlField(value, setter, default, allowed?)` per input, right after the `useState` declarations.
+
 ## Development
 
 ```bash

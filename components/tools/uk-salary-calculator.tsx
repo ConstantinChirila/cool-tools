@@ -33,6 +33,7 @@ import { HeroStat, Stat } from "@/components/calc/stat";
 import { SwitchField } from "@/components/calc/switch-field";
 import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
+import { useUrlState, urlField, type UrlField } from "@/hooks/use-url-state";
 import { formatMoney } from "@/lib/currency";
 import {
   DEFAULT_TAX_YEAR,
@@ -114,6 +115,37 @@ const DEFAULT_INPUT: UkSalaryInput = {
 };
 
 const pct = (v: number, decimals = 1) => `${(v * 100).toFixed(decimals)}%`;
+
+/* ------------------------------------------------------------------ */
+/* URL state                                                            */
+/* ------------------------------------------------------------------ */
+
+/** Allowed URL values for the string-union fields of UkSalaryInput. */
+const ALLOWED_VALUES: Partial<Record<keyof UkSalaryInput, readonly string[]>> = {
+  taxYear: Object.keys(TAX_YEARS),
+  salaryPeriod: INPUT_PERIODS.map((p) => p.value),
+  marriage: ["none", "receive", "transfer"],
+  studentPlan: STUDENT_PLANS.map((p) => p.value),
+  pensionType: PENSION_TYPES.map((p) => p.value),
+  pensionMethod: ["percent", "amount"],
+};
+
+/**
+ * Binds one UkSalaryInput field to the URL. urlField's generic can't prove
+ * that a dynamic key's value type satisfies Primitive, even though every
+ * UkSalaryInput field actually is a string, number or boolean, so the casts
+ * below are the contained escape hatch for that.
+ */
+function bindInputField<K extends keyof UkSalaryInput>(
+  key: K,
+  input: UkSalaryInput,
+  update: <K2 extends keyof UkSalaryInput>(key: K2, value: UkSalaryInput[K2]) => void,
+): UrlField {
+  const value = input[key] as string | number | boolean;
+  const def = DEFAULT_INPUT[key] as string | number | boolean;
+  const set = (v: string | number | boolean) => update(key, v as UkSalaryInput[K]);
+  return urlField(value, set, def, ALLOWED_VALUES[key]);
+}
 
 /* ------------------------------------------------------------------ */
 /* Collapsible section                                                  */
@@ -208,6 +240,21 @@ export function UkSalaryCalculator() {
       else next.add(key);
       return next;
     });
+
+  useUrlState({
+    ...Object.fromEntries(
+      (Object.keys(DEFAULT_INPUT) as (keyof UkSalaryInput)[]).map((key) => [
+        key,
+        bindInputField(key, input, update),
+      ]),
+    ),
+    view: urlField(
+      view,
+      setView,
+      "month",
+      VIEW_PERIODS.map((p) => p.value),
+    ),
+  });
 
   const result = React.useMemo(() => calculateUkSalary(input), [input]);
   const year = TAX_YEARS[input.taxYear];

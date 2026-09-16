@@ -12,8 +12,9 @@ import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrency } from "@/hooks/use-currency";
+import { useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateMortgage } from "@/lib/finance";
-import { formatMoney } from "@/lib/currency";
+import { DEFAULT_CURRENCY, currencies, formatMoney } from "@/lib/currency";
 
 const TERM_PRESETS = [15, 20, 25, 30];
 
@@ -40,6 +41,20 @@ export function MortgageOverpaymentCalculator() {
   const [term, setTerm] = React.useState(25);
   const [monthlyOverpayment, setMonthlyOverpayment] = React.useState(200);
   const [lumpSum, setLumpSum] = React.useState(0);
+
+  useUrlState({
+    amount: urlField(amount, setAmount, 250_000),
+    rate: urlField(rate, setRate, 4.5),
+    term: urlField(term, setTerm, 25),
+    overpay: urlField(monthlyOverpayment, setMonthlyOverpayment, 200),
+    lump: urlField(lumpSum, setLumpSum, 0),
+    currency: urlField(
+      code,
+      setCurrency,
+      DEFAULT_CURRENCY,
+      currencies.map((c) => c.code),
+    ),
+  });
 
   const base = React.useMemo(
     () => calculateMortgage(amount, rate, term),

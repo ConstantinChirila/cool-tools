@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
+import { useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateEffectiveSpine } from "@/lib/archery";
 import { formatNumber } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,14 @@ export function ArrowSpineCalculator() {
   const [basePoint, setBasePoint] = React.useState(100);
   const [newLength, setNewLength] = React.useState(28);
   const [newPoint, setNewPoint] = React.useState(125);
+
+  useUrlState({
+    spine: urlField(baseSpine, setBaseSpine, 500),
+    len: urlField(baseLength, setBaseLength, 29),
+    point: urlField(basePoint, setBasePoint, 100),
+    newLen: urlField(newLength, setNewLength, 28),
+    newPoint: urlField(newPoint, setNewPoint, 125),
+  });
 
   const result = React.useMemo(
     () =>
