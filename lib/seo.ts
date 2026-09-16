@@ -35,6 +35,7 @@ const SCHEMA_CATEGORY: Record<Tool["category"], string> = {
   Finance: "FinanceApplication",
   Maths: "UtilitiesApplication",
   Sport: "SportsApplication",
+  Everyday: "LifestyleApplication",
 };
 
 /** schema.org graph for a tool page: the app itself, breadcrumbs and FAQs. */

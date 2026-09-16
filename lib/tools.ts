@@ -3,12 +3,13 @@ import {
   Percent,
   PiggyBank,
   Target,
+  TrainFront,
   TrendingUp,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
 
-export type ToolCategory = "Finance" | "Maths" | "Sport";
+export type ToolCategory = "Finance" | "Maths" | "Sport" | "Everyday";
 
 export interface Tool {
   slug: string;
@@ -130,9 +131,26 @@ export const tools: Tool[] = [
     },
     updated: "2026-09-16",
   },
+  {
+    slug: "commute-calculator",
+    name: "Commute Time Calculator",
+    shortName: "Commute",
+    description:
+      "How many hours and days a year your commute really takes, what it costs, and how much working from home would give back.",
+    category: "Everyday",
+    icon: TrainFront,
+    keywords: ["commute", "commuting", "travel time", "journey", "train", "drive", "driving", "work from home", "wfh", "hybrid", "office", "season ticket", "fuel", "hours per year", "time"],
+    tint: "var(--sticker-mint)",
+    seo: {
+      title: "Commute Time Calculator: Hours per Year",
+      description:
+        "Work out how many hours and full days a year you spend commuting, what it costs, and how much time and money working from home a few days a week would save.",
+    },
+    updated: "2026-09-16",
+  },
 ];
 
-export const categories: ToolCategory[] = ["Finance", "Maths", "Sport"];
+export const categories: ToolCategory[] = ["Finance", "Maths", "Sport", "Everyday"];
 
 export function getTool(slug: string): Tool | undefined {
   return tools.find((t) => t.slug === slug);

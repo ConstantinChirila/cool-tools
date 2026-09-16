@@ -407,7 +407,7 @@ export function UkSalaryCalculator() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="tax-code" className="text-xs font-bold text-muted-foreground">
+                <Label htmlFor="tax-code" className="text-sm font-bold text-muted-foreground">
                   Tax code
                 </Label>
                 <Input
@@ -450,7 +450,7 @@ export function UkSalaryCalculator() {
                 onToggle={() => toggleSection("pension")}
               >
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-muted-foreground">Scheme type</Label>
+                  <Label className="text-sm font-bold text-muted-foreground">Scheme type</Label>
                   <Select
                     value={input.pensionType}
                     onValueChange={(v) => update("pensionType", v as PensionType)}
@@ -483,7 +483,7 @@ export function UkSalaryCalculator() {
                     decimals={input.pensionMethod === "percent" ? 2 : 0}
                   />
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-muted-foreground">Entered as</Label>
+                    <Label className="text-sm font-bold text-muted-foreground">Entered as</Label>
                     <Segmented
                       label="Pension contribution method"
                       value={input.pensionMethod}
@@ -526,7 +526,7 @@ export function UkSalaryCalculator() {
                 onToggle={() => toggleSection("loan")}
               >
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-muted-foreground">Repayment plan</Label>
+                  <Label className="text-sm font-bold text-muted-foreground">Repayment plan</Label>
                   <Select
                     value={input.studentPlan}
                     onValueChange={(v) => update("studentPlan", v as StudentPlan)}
@@ -686,7 +686,7 @@ export function UkSalaryCalculator() {
                 onToggle={() => toggleSection("allowances")}
               >
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-muted-foreground">Marriage Allowance</Label>
+                  <Label className="text-sm font-bold text-muted-foreground">Marriage Allowance</Label>
                   <Select
                     value={input.marriage}
                     onValueChange={(v) => update("marriage", v as MarriageAllowance)}

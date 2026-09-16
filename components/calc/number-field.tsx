@@ -72,7 +72,7 @@ export function NumberField({
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      <Label htmlFor={id} className="text-[13px] font-bold">
+      <Label htmlFor={id} className="text-[15px] font-bold">
         {label}
       </Label>
       <div className="flex h-10 items-center rounded-xl border-[2.5px] border-foreground bg-card px-3 transition-shadow focus-within:ring-[3px] focus-within:ring-ring/60">

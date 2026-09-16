@@ -72,7 +72,7 @@ export function SliderField({
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between gap-3">
-        <Label htmlFor={id} className="text-sm font-bold">
+        <Label htmlFor={id} className="text-[15px] font-bold">
           {label}
         </Label>
         <div className="flex h-10 items-center rounded-xl border-[2.5px] border-foreground bg-card px-3 transition-shadow focus-within:ring-[3px] focus-within:ring-ring/60">

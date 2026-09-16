@@ -13,7 +13,7 @@ export function Stat({
 }) {
   return (
     <div className={cn("space-y-1", className)}>
-      <p className="text-[13px] font-bold">{label}</p>
+      <p className="text-[15px] font-bold">{label}</p>
       <p className="font-heading text-2xl font-extrabold tracking-tight text-numeric">{value}</p>
       {hint && <p className="text-xs font-semibold text-muted-foreground">{hint}</p>}
     </div>

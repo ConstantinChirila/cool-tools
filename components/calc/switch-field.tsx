@@ -23,7 +23,7 @@ export function SwitchField({
   return (
     <div className={cn("flex items-center justify-between gap-4", className)}>
       <div className="min-w-0 space-y-0.5">
-        <Label htmlFor={id} className="cursor-pointer text-sm font-bold">
+        <Label htmlFor={id} className="cursor-pointer text-[15px] font-bold">
           {label}
         </Label>
         {hint && <p className="text-xs font-semibold text-muted-foreground">{hint}</p>}

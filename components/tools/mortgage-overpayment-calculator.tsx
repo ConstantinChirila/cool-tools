@@ -155,7 +155,7 @@ export function MortgageOverpaymentCalculator() {
                     key={preset}
                     type="button"
                     onClick={() => setTerm(preset)}
-                    className={`h-9 flex-1 rounded-full border-2 text-xs font-bold transition-colors ${
+                    className={`h-9 flex-1 rounded-full border-2 text-sm font-bold transition-colors ${
                       term === preset
                         ? "border-foreground bg-foreground text-background"
                         : "border-foreground bg-card text-foreground hover:bg-secondary"
@@ -168,7 +168,7 @@ export function MortgageOverpaymentCalculator() {
             </div>
 
             <div className="space-y-5 border-t border-foreground/15 pt-6">
-              <p className="text-sm font-bold">Overpayments</p>
+              <p className="text-[15px] font-bold">Overpayments</p>
               <SliderField
                 id="overpayment-monthly"
                 label="Monthly overpayment"
@@ -194,7 +194,7 @@ export function MortgageOverpaymentCalculator() {
               />
               {showCapWarning && (
                 <p className="sticker-sm rounded-xl border-[2.5px] border-foreground bg-yellow px-3 py-2 text-xs font-semibold">
-                  From year {capWarningYear} your overpayments exceed 10% of the
+                  From year {capWarningYear}{" "}your overpayments exceed 10% of the
                   remaining balance. Many UK fixed-rate deals charge an early
                   repayment fee above that. Check your lender&apos;s terms.
                 </p>

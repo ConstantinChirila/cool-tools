@@ -157,7 +157,7 @@ export function ArrowSpineCalculator() {
                       key={preset}
                       type="button"
                       onClick={() => setNewPoint(preset)}
-                      className={`h-9 flex-1 rounded-full border-2 text-xs font-bold transition-colors ${
+                      className={`h-9 flex-1 rounded-full border-2 text-sm font-bold transition-colors ${
                         newPoint === preset
                           ? "border-foreground bg-foreground text-background"
                           : "border-foreground bg-card text-foreground hover:bg-secondary"
