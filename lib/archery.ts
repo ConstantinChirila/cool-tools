@@ -20,10 +20,16 @@
  * setup. It is a tuning aid, not a substitute for paper/bareshaft tuning.
  */
 
-/** Spine change per 100 gr of point weight, as a fraction of current spine. */
+/**
+ * Spine change per 100 gr of point weight, as a fraction of current spine.
+ * An averaged field heuristic, not manufacturer-published data.
+ */
 const POINT_SENSITIVITY = 0.25;
 
-/** Approximate spine ratio of one standard spine group (about 5 lb of draw). */
+/**
+ * Approximate spine ratio of one standard spine group (about 5 lb of draw).
+ * An averaged heuristic drawn from common tuning guides, not manufacturer data.
+ */
 const GROUP_RATIO = 0.84;
 const LBS_PER_GROUP = 5;
 

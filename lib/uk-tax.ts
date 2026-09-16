@@ -74,7 +74,7 @@ export const TAX_YEARS: Record<TaxYear, TaxYearConfig> = {
       { name: "Basic rate", rate: 0.2, limit: 14_921 },
       { name: "Intermediate rate", rate: 0.21, limit: 31_092 },
       { name: "Higher rate", rate: 0.42, limit: 62_430 },
-      { name: "Advanced rate", rate: 0.45, limit: 112_570 },
+      { name: "Advanced rate", rate: 0.45, limit: 125_140 },
       { name: "Top rate", rate: 0.48, limit: Infinity },
     ],
     ni: NI_2025,
@@ -93,11 +93,11 @@ export const TAX_YEARS: Record<TaxYear, TaxYearConfig> = {
     marriageTransfer: 1_260,
     bands: RUK_BANDS,
     scottishBands: [
-      { name: "Starter rate", rate: 0.19, limit: 2_306 },
-      { name: "Basic rate", rate: 0.2, limit: 13_992 },
+      { name: "Starter rate", rate: 0.19, limit: 3_967 },
+      { name: "Basic rate", rate: 0.2, limit: 16_956 },
       { name: "Intermediate rate", rate: 0.21, limit: 31_092 },
       { name: "Higher rate", rate: 0.42, limit: 62_430 },
-      { name: "Advanced rate", rate: 0.45, limit: 112_570 },
+      { name: "Advanced rate", rate: 0.45, limit: 125_140 },
       { name: "Top rate", rate: 0.48, limit: Infinity },
     ],
     ni: NI_2025,
@@ -201,10 +201,18 @@ export interface UkSalaryResult {
   hourlyRate: number;
   allowance: number;
   allowanceNote: string;
+  /** True when adjusted net income pushed the allowance down, whatever the tax code says. */
+  tapered: boolean;
+  /** True when an S prefix on the tax code, not the toggle, selected Scottish rates. */
+  scotlandFromCode: boolean;
   taxableIncome: number;
   bands: BandResult[];
   incomeTax: number;
   nationalInsurance: number;
+  /** Pay that employee NI is charged on, after salary sacrifice and exempt vouchers. */
+  niablePay: number;
+  /** Employee NI split across the main-rate and upper-rate slices. */
+  niBands: BandResult[];
   employerNi: number;
   /** What leaves your pay for pension (net of any relief at source). */
   pensionDeducted: number;
@@ -217,7 +225,10 @@ export interface UkSalaryResult {
   salarySacrifice: number;
   preTaxDeduction: number;
   postTaxDeduction: number;
+  /** Never negative. If deductions exceed pay this is 0 and `shortfall` holds the excess. */
   takeHome: number;
+  /** Amount by which deductions exceed gross pay, 0 when pay covers them. */
+  shortfall: number;
   employerCost: number;
   effectiveRate: number;
   marginalRate: number;
@@ -226,14 +237,14 @@ export interface UkSalaryResult {
   scotland: boolean;
 }
 
-export const PERIODS: { value: PayPeriod; label: string; short: string }[] = [
-  { value: "year", label: "Yearly", short: "yr" },
-  { value: "month", label: "Monthly", short: "mo" },
-  { value: "4week", label: "4-weekly", short: "4wk" },
-  { value: "2week", label: "2-weekly", short: "2wk" },
-  { value: "week", label: "Weekly", short: "wk" },
-  { value: "day", label: "Daily", short: "day" },
-  { value: "hour", label: "Hourly", short: "hr" },
+export const PERIODS: { value: PayPeriod; label: string; short: string; noun: string }[] = [
+  { value: "year", label: "Yearly", short: "yr", noun: "year" },
+  { value: "month", label: "Monthly", short: "mo", noun: "month" },
+  { value: "4week", label: "4-weekly", short: "4wk", noun: "4 weeks" },
+  { value: "2week", label: "2-weekly", short: "2wk", noun: "2 weeks" },
+  { value: "week", label: "Weekly", short: "wk", noun: "week" },
+  { value: "day", label: "Daily", short: "day", noun: "day" },
+  { value: "hour", label: "Hourly", short: "hr", noun: "hour" },
 ];
 
 const WEEKS = 52;
@@ -263,31 +274,50 @@ function clamp(v: number, lo: number, hi: number) {
 }
 
 interface ParsedCode {
-  kind: "default" | "allowance" | "flat" | "none";
+  /**
+   * default  blank or unrecognised, use the statutory personal allowance
+   * coded    a numeric code such as 1257L, its number is the starting allowance
+   * zero     0T, no allowance at all
+   * k        a K code, extra taxable pay instead of an allowance
+   * flat     BR/D0/D1/D2/D3, one rate on everything
+   * none     NT, no tax
+   */
+  kind: "default" | "coded" | "zero" | "k" | "flat" | "none";
+  /** Starting allowance from the code number, before any taper. */
   allowance: number;
   /** Extra taxable income added by a K code. */
   addition: number;
   /** Flat rate for BR/D0/D1-style codes. */
   flatRate: number;
   scotland: boolean;
+  /** True when the S prefix on the code, rather than the toggle, selected Scottish rates. */
+  scotlandFromCode: boolean;
   note: string;
 }
+
+/** Week 1 / month 1 markers. They change nothing on an annual basis. */
+const NON_CUMULATIVE = /(?:W1M1|M1W1|W1|M1|X)$/;
 
 function parseTaxCode(raw: string, scotlandToggle: boolean, cfg: TaxYearConfig): ParsedCode {
   const code = raw.replace(/\s+/g, "").toUpperCase();
   let scotland = scotlandToggle;
+  let scotlandFromCode = false;
   let body = code;
   if (body.startsWith("S")) {
     scotland = true;
+    scotlandFromCode = true;
     body = body.slice(1);
   } else if (body.startsWith("C")) {
     body = body.slice(1);
   }
-  const base = { allowance: 0, addition: 0, flatRate: 0, scotland };
+  const marker = NON_CUMULATIVE.exec(body);
+  if (marker && body.length > marker[0].length) body = body.slice(0, body.length - marker[0].length);
+
+  const base = { allowance: 0, addition: 0, flatRate: 0, scotland, scotlandFromCode };
 
   if (!body) return { ...base, kind: "default", note: "" };
   if (body === "NT") return { ...base, kind: "none", note: "NT: no tax deducted" };
-  if (body === "0T") return { ...base, kind: "allowance", note: "0T: no personal allowance" };
+  if (body === "0T") return { ...base, kind: "zero", note: "0T: no personal allowance" };
 
   const bands = scotland ? cfg.scottishBands : cfg.bands;
   const flat: Record<string, number> = scotland
@@ -299,13 +329,14 @@ function parseTaxCode(raw: string, scotlandToggle: boolean, cfg: TaxYearConfig):
 
   const k = /^K(\d+)$/.exec(body);
   if (k) {
-    return { ...base, kind: "allowance", addition: Number(k[1]) * 10, note: `${code}: £${(Number(k[1]) * 10).toLocaleString("en-GB")} added to taxable pay` };
+    const addition = Number(k[1]) * 10;
+    return { ...base, kind: "k", addition, note: `${code}: £${addition.toLocaleString("en-GB")} added to taxable pay` };
   }
 
   const numeric = /^(\d+)([LMNTY]?)$/.exec(body);
   if (numeric) {
     const allowance = Number(numeric[1]) * 10;
-    return { ...base, kind: "allowance", allowance, note: `${code}: £${allowance.toLocaleString("en-GB")} allowance` };
+    return { ...base, kind: "coded", allowance, note: `${code}: £${allowance.toLocaleString("en-GB")} allowance` };
   }
 
   return { ...base, kind: "default", note: `"${raw}" not recognised, using standard allowance` };
@@ -319,13 +350,10 @@ function taxOnBands(taxable: number, bands: Band[], extend: number): BandResult[
     const limit = band.limit === Infinity ? Infinity : band.limit + extend;
     const width = Math.max(limit - lower, 0);
     const amount = Math.max(Math.min(remaining, width), 0);
+    // Bands past the end of the income still get a row so the table stays stable.
     out.push({ name: band.name, rate: band.rate, amount, tax: amount * band.rate });
     remaining -= amount;
     lower = limit;
-    if (remaining <= 0 && band.limit !== Infinity) {
-      // still push the remaining bands as empty rows for a stable table
-      continue;
-    }
   }
   return out;
 }
@@ -367,7 +395,7 @@ function compute(input: UkSalaryInput): Omit<UkSalaryResult, "marginalRate"> {
   const estimatedEarnings = gross - sacrificePension - netPayPension;
   const childcareCap = input.childcarePre2011
     ? cfg.childcareCaps.basic
-    : estimatedEarnings > cfg.bands[1].limit + cfg.personalAllowance
+    : estimatedEarnings > cfg.bands[1].limit
       ? cfg.childcareCaps.additional
       : estimatedEarnings > cfg.bands[0].limit + cfg.personalAllowance
         ? cfg.childcareCaps.higher
@@ -377,10 +405,15 @@ function compute(input: UkSalaryInput): Omit<UkSalaryResult, "marginalRate"> {
   // NI
   const niable = Math.max(gross - sacrificePension - salarySacrifice - childcareExempt, 0);
   const ni = cfg.ni;
-  const nationalInsurance = input.noNi
+  const niMainAmount = input.noNi
     ? 0
-    : clamp(niable - ni.primaryThreshold, 0, ni.upperEarningsLimit - ni.primaryThreshold) * ni.mainRate +
-      Math.max(niable - ni.upperEarningsLimit, 0) * ni.upperRate;
+    : clamp(niable - ni.primaryThreshold, 0, ni.upperEarningsLimit - ni.primaryThreshold);
+  const niUpperAmount = input.noNi ? 0 : Math.max(niable - ni.upperEarningsLimit, 0);
+  const niBands: BandResult[] = [
+    { name: "Main rate", rate: ni.mainRate, amount: niMainAmount, tax: niMainAmount * ni.mainRate },
+    { name: "Upper rate", rate: ni.upperRate, amount: niUpperAmount, tax: niUpperAmount * ni.upperRate },
+  ];
+  const nationalInsurance = niBands.reduce((s, b) => s + b.tax, 0);
   const taxableBenefits = Math.max(input.taxableBenefits, 0);
   const employerNi =
     Math.max(niable - ni.secondaryThreshold, 0) * ni.employerRate + taxableBenefits * ni.employerRate;
@@ -394,41 +427,63 @@ function compute(input: UkSalaryInput): Omit<UkSalaryResult, "marginalRate"> {
   const scotland = code.scotland;
   const bands = scotland ? cfg.scottishBands : cfg.bands;
 
+  // The taper bites whatever the code says: a code is only HMRC's starting figure.
+  const taper = Math.max(adjustedNetIncome - cfg.taperThreshold, 0) / 2;
+  const blindAllowance = input.blind ? cfg.blindAllowance : 0;
+  const transferredOut = input.marriage === "transfer" ? cfg.marriageTransfer : 0;
+
   let allowance = 0;
   let allowanceNote = code.note;
+  let tapered = false;
   let taxable = 0;
   let bandResults: BandResult[] = [];
   let incomeTax = 0;
 
+  const addNote = (note: string) => {
+    allowanceNote = allowanceNote ? `${allowanceNote} · ${note}` : note;
+  };
+
   if (code.kind === "none") {
-    allowance = taxablePay;
     bandResults = bands.map((b) => ({ name: b.name, rate: b.rate, amount: 0, tax: 0 }));
   } else if (code.kind === "flat") {
     taxable = taxablePay;
     incomeTax = taxable * code.flatRate;
     bandResults = [{ name: `Flat rate (${code.note.split(":")[0]})`, rate: code.flatRate, amount: taxable, tax: incomeTax }];
   } else {
-    if (code.kind === "allowance") {
-      allowance = code.allowance;
-      taxable = Math.max(taxablePay + code.addition - allowance, 0);
+    if (code.kind === "k") {
+      taxable = Math.max(taxablePay + code.addition, 0);
+    } else if (code.kind === "zero") {
+      taxable = taxablePay;
     } else {
-      const taper = Math.max(adjustedNetIncome - cfg.taperThreshold, 0) / 2;
-      const personal = Math.max(cfg.personalAllowance - taper, 0);
-      allowance = personal + (input.blind ? cfg.blindAllowance : 0) - (input.marriage === "transfer" ? cfg.marriageTransfer : 0);
-      allowance = Math.max(allowance, 0);
+      const startingAllowance = code.kind === "coded" ? code.allowance : cfg.personalAllowance;
+      const personal = Math.max(startingAllowance - taper, 0);
+      tapered = taper > 0 && startingAllowance > 0;
+      allowance = Math.max(personal + blindAllowance - transferredOut, 0);
       taxable = Math.max(taxablePay - allowance, 0);
-      if (taper > 0 && personal > 0) allowanceNote = `Tapered: £1 lost per £2 over £${cfg.taperThreshold.toLocaleString("en-GB")}`;
-      else if (personal === 0) allowanceNote = "Personal allowance fully tapered away";
-      else if (input.blind) allowanceNote = "Includes Blind Person's Allowance";
-      else if (input.marriage === "transfer") allowanceNote = "£1,260 transferred to your partner";
+      if (tapered && personal > 0) addNote(`Tapered: £1 lost per £2 over £${cfg.taperThreshold.toLocaleString("en-GB")}`);
+      else if (tapered) addNote("Personal allowance fully tapered away");
+      if (blindAllowance > 0) addNote("Includes Blind Person's Allowance");
+      if (transferredOut > 0) addNote(`£${cfg.marriageTransfer.toLocaleString("en-GB")} transferred to your partner`);
     }
     // Relief at source extends every band limit by the gross contribution.
     bandResults = taxOnBands(taxable, bands, personalPension);
     incomeTax = bandResults.reduce((s, b) => s + b.tax, 0);
-    if (code.kind === "default" && input.marriage === "receive") {
-      incomeTax = Math.max(incomeTax - cfg.marriageTransfer * bands.find((b) => b.name === "Basic rate")!.rate, 0);
-      allowanceNote = "Marriage Allowance: £252 taken off your tax";
+
+    // Marriage Allowance is only available while the recipient stays a basic-rate
+    // taxpayer, or in Scotland no higher than the intermediate rate.
+    if (input.marriage === "receive" && (code.kind === "default" || code.kind === "coded")) {
+      const ceiling = (scotland ? bands[2].limit : bands[0].limit) + personalPension;
+      const credit = cfg.marriageTransfer * 0.2;
+      if (taxable <= ceiling) {
+        incomeTax = Math.max(incomeTax - credit, 0);
+        addNote(`Marriage Allowance: £${credit.toLocaleString("en-GB")} off your tax`);
+      } else {
+        addNote("Marriage Allowance is not available above the basic rate");
+      }
     }
+
+    // A K code can never take more than half the pay in the period.
+    if (code.kind === "k") incomeTax = Math.min(incomeTax, taxablePay * 0.5);
   }
 
   // Student loans (on NI-able earnings)
@@ -440,7 +495,7 @@ function compute(input: UkSalaryInput): Omit<UkSalaryResult, "marginalRate"> {
 
   const postTaxDeduction = Math.max(input.postTaxDeduction, 0) * 12;
 
-  const takeHome =
+  const netPay =
     gross -
     incomeTax -
     nationalInsurance -
@@ -461,10 +516,14 @@ function compute(input: UkSalaryInput): Omit<UkSalaryResult, "marginalRate"> {
     hourlyRate,
     allowance,
     allowanceNote,
+    tapered,
+    scotlandFromCode: code.scotlandFromCode,
     taxableIncome: taxable,
     bands: bandResults,
     incomeTax,
     nationalInsurance,
+    niablePay: niable,
+    niBands,
     employerNi,
     pensionDeducted,
     pensionGross,
@@ -475,7 +534,8 @@ function compute(input: UkSalaryInput): Omit<UkSalaryResult, "marginalRate"> {
     salarySacrifice,
     preTaxDeduction,
     postTaxDeduction,
-    takeHome,
+    takeHome: Math.max(netPay, 0),
+    shortfall: Math.max(-netPay, 0),
     employerCost: gross + employerNi + employerPension,
     effectiveRate: gross > 0 ? (incomeTax + nationalInsurance) / gross : 0,
     hoursPerYear,
@@ -486,12 +546,19 @@ function compute(input: UkSalaryInput): Omit<UkSalaryResult, "marginalRate"> {
 
 export function calculateUkSalary(input: UkSalaryInput): UkSalaryResult {
   const base = compute(input);
-  // Marginal rate: how much of the next £1,000 of salary is lost to tax, NI and loans.
-  const factor = periodsPerYear(input.salaryPeriod, input.hoursPerWeek, input.daysPerWeek);
-  const bumped = compute({ ...input, salary: input.salary + 1000 / factor });
+  // Marginal rate: how much of the next £1,000 of pay is lost to tax, NI and loans.
+  // The bump goes on the cash allowance, and the pension is pinned to the amount
+  // already being paid, so raising pay does not also rescale overtime or pension.
+  const bumped = compute({
+    ...input,
+    cashAllowance: Math.max(input.cashAllowance, 0) + 1000,
+    pensionMethod: "amount",
+    pensionValue: base.pensionGross,
+  });
   const deductions = (r: Omit<UkSalaryResult, "marginalRate">) =>
     r.incomeTax + r.nationalInsurance + r.studentLoan + r.postgradLoan;
-  const marginalRate = clamp((deductions(bumped) - deductions(base)) / 1000, 0, 1);
+  const extra = bumped.gross - base.gross;
+  const marginalRate = extra > 0 ? clamp((deductions(bumped) - deductions(base)) / extra, 0, 1) : 0;
   return { ...base, marginalRate };
 }
 
@@ -509,7 +576,14 @@ export function salaryCurve(
   const deductions: number[] = [];
   for (let i = 0; i <= steps; i++) {
     const s = (maxSalary * i) / steps;
-    const r = compute({ ...input, salary: s, salaryPeriod: "year", bonus: 0, overtimeHours: 0 });
+    const r = compute({
+      ...input,
+      salary: s,
+      salaryPeriod: "year",
+      bonus: 0,
+      overtimeHours: 0,
+      cashAllowance: 0,
+    });
     salaries.push(s);
     takeHome.push(r.takeHome);
     deductions.push(r.incomeTax + r.nationalInsurance + r.studentLoan + r.postgradLoan);

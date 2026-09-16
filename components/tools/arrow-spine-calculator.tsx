@@ -206,6 +206,11 @@ export function ArrowSpineCalculator() {
             <CardContent className="space-y-3 pt-6 text-sm text-muted-foreground">
               <p className="font-medium text-foreground">How this is estimated</p>
               <p>
+                Static spine follows the ASTM F2031 / ATA method: deflection in
+                thousandths of an inch under a 1.94 lb weight on a 28-inch
+                span, so 500 spine means 0.500 inches.
+              </p>
+              <p>
                 Cutting a shaft changes its bending stiffness with the cube of
                 its length, so even small trims matter: the calculator scales
                 your spine by (new length / old length)&sup3;.
@@ -215,6 +220,12 @@ export function ArrowSpineCalculator() {
                 on release. That effect is applied proportionally, roughly 25
                 spine per 25 gr on a mid-range shaft, following the common
                 field heuristic.
+              </p>
+              <p>
+                Draw-weight equivalents are rule-of-thumb approximations;
+                published guides range from about 1 to 5 lb per 25 grains of
+                point weight, so treat the number as a direction rather than a
+                precise figure.
               </p>
               <p>
                 Results estimate dynamic behavior for comparison between

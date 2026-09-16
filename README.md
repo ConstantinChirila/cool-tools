@@ -5,11 +5,14 @@ Odd little tools that just work. A growing library of free online calculators bu
 ## Current tools
 
 - **UK Salary Calculator**: take-home pay for 2025/26 and 2026/27 with Scottish rates, tax codes, pension types, student loan plans, bonus, overtime, benefits, salary sacrifice, allowances and a salary curve (engine in `lib/uk-tax.ts`)
-- **Mortgage Calculator**: monthly repayment, total interest, amortization chart and yearly table
+- **Mortgage Calculator**: monthly repayment, total interest, amortization chart and yearly table, with a repayment vs interest-only toggle
+- **Mortgage Overpayment Calculator**: interest and time saved by overpaying monthly or with a lump sum, with a with/without overpayment comparison chart and yearly table
 - **Compound Interest Calculator**: growth projection with contributions, compounding frequency, chart and yearly table
 - **Percentage Calculator**: % of a number, what %, % change, increase/decrease
 
 All financial tools default to GBP with a switchable currency (persisted in localStorage and shared across tools).
+
+The last four tools opened are pinned as a "Recent" row under the homepage search and as a "Recent" group in the ⌘K palette (localStorage key `bitsbobs:recent`, managed by `hooks/use-recent-tools.ts`; `ToolPageShell` records the visit, so every tool page gets it automatically).
 
 ## Development
 

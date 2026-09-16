@@ -50,32 +50,44 @@ export function PercentageCalculator() {
   const y = parse(b);
   const valid = Number.isFinite(x) && Number.isFinite(y);
 
+  const decimals = 4;
   let result: number | null = null;
   let explanation = "";
   let resultSuffix = "";
+  let zeroMessage: string | null = null;
 
   if (valid) {
     switch (mode) {
       case "of":
         result = (x / 100) * y;
-        explanation = `${formatNumber(x)}% of ${formatNumber(y)}`;
+        explanation = `${formatNumber(x, decimals)}% of ${formatNumber(y, decimals)}`;
         break;
       case "what":
         result = y === 0 ? null : (x / y) * 100;
-        explanation = `${formatNumber(x)} out of ${formatNumber(y)}`;
+        explanation = `${formatNumber(x, decimals)} out of ${formatNumber(y, decimals)}`;
         resultSuffix = "%";
+        if (y === 0) {
+          zeroMessage = "Can't divide by zero: the second number needs to be non-zero";
+        }
         break;
       case "change":
         result = x === 0 ? null : ((y - x) / Math.abs(x)) * 100;
-        explanation = `from ${formatNumber(x)} to ${formatNumber(y)}`;
+        explanation = `from ${formatNumber(x, decimals)} to ${formatNumber(y, decimals)}`;
         resultSuffix = "%";
+        if (x === 0) {
+          zeroMessage = "Percentage change from zero is undefined";
+        }
         break;
       case "adjust":
         result =
           direction === "increase" ? y * (1 + x / 100) : y * (1 - x / 100);
-        explanation = `${formatNumber(y)} ${direction}d by ${formatNumber(x)}%`;
+        explanation = `${formatNumber(y, decimals)} ${direction}d by ${formatNumber(x, decimals)}%`;
         break;
     }
+  }
+
+  if (result !== null && Object.is(result, -0)) {
+    result = 0;
   }
 
   const sentence: Record<Mode, React.ReactNode> = {
@@ -162,7 +174,7 @@ export function PercentageCalculator() {
               <>
                 <p className="text-sm text-muted-foreground">{explanation}</p>
                 <p className="mt-1.5 text-5xl font-bold tracking-tight sm:text-6xl">
-                  {formatNumber(result, 4)}
+                  {formatNumber(result, decimals)}
                   {resultSuffix && (
                     <span className="ml-1 text-3xl text-muted-foreground">
                       {resultSuffix}
@@ -173,23 +185,24 @@ export function PercentageCalculator() {
                   <p
                     className={cn(
                       "mt-3 inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium",
-                      result >= 0
-                        ? "bg-mint text-foreground"
-                        : "bg-pink text-foreground",
+                      result === 0
+                        ? "border-2 border-foreground bg-card text-foreground"
+                        : result > 0
+                          ? "bg-mint text-foreground"
+                          : "bg-pink text-foreground",
                     )}
                   >
-                    {result >= 0 ? (
-                      <ArrowUp className="size-3.5" />
-                    ) : (
-                      <ArrowDown className="size-3.5" />
-                    )}
-                    {result >= 0 ? "Increase" : "Decrease"}
+                    {result > 0 && <ArrowUp className="size-3.5" />}
+                    {result < 0 && <ArrowDown className="size-3.5" />}
+                    {result === 0 ? "No change" : result > 0 ? "Increase" : "Decrease"}
                   </p>
                 )}
               </>
             ) : (
               <p className="py-4 text-muted-foreground">
-                Fill in both numbers to see the answer.
+                {valid && zeroMessage
+                  ? zeroMessage
+                  : "Fill in both numbers to see the answer."}
               </p>
             )}
           </div>

@@ -88,6 +88,10 @@ export function CompoundInterestCalculator() {
               grouped
               decimals={0}
             />
+            <p className="text-xs font-semibold text-muted-foreground">
+              Contributions are added at the start of each month and start
+              earning interest straight away.
+            </p>
             <SliderField
               id="ci-rate"
               label="Annual interest rate"
@@ -214,7 +218,7 @@ export function CompoundInterestCalculator() {
                     <tr className="border-b border-foreground/15 text-left text-xs font-bold text-muted-foreground">
                       <th className="px-4 py-2.5 font-medium">Year</th>
                       <th className="px-4 py-2.5 text-right font-medium">Contributed</th>
-                      <th className="px-4 py-2.5 text-right font-medium">Interest</th>
+                      <th className="px-4 py-2.5 text-right font-medium">Interest this year</th>
                       <th className="px-4 py-2.5 text-right font-medium">Balance</th>
                     </tr>
                   </thead>
@@ -226,7 +230,7 @@ export function CompoundInterestCalculator() {
                       >
                         <td className="px-4 py-2.5 text-muted-foreground">{row.year}</td>
                         <td className="px-4 py-2.5 text-right">{money(row.contributed)}</td>
-                        <td className="px-4 py-2.5 text-right">{money(row.interestEarned)}</td>
+                        <td className="px-4 py-2.5 text-right">{money(row.interestThisYear)}</td>
                         <td className="px-4 py-2.5 text-right">{money(row.balance)}</td>
                       </tr>
                     ))}

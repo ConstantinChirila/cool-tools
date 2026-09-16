@@ -278,11 +278,7 @@ export function UkSalaryCalculator() {
   const otherDeductions =
     result.childcareVouchers + result.salarySacrifice + result.preTaxDeduction + result.postTaxDeduction;
 
-  const inTaper =
-    !result.scotland &&
-    result.marginalRate >= 0.6 &&
-    result.allowance > 0 &&
-    result.allowanceNote.startsWith("Tapered");
+  const inTaper = !result.scotland && result.marginalRate >= 0.6 && result.allowance > 0 && result.tapered;
 
   const breakdownRows: { label: string; value: number; kind?: "muted" | "deduct" | "total" }[] = [
     { label: "Gross income", value: result.gross },
@@ -380,14 +376,21 @@ export function UkSalaryCalculator() {
                   {result.allowanceNote || "Leave blank for the standard allowance"}
                 </p>
               </div>
-              <SwitchField
-                id="scotland"
-                label="I live in Scotland"
-                hint="Scottish income tax bands"
-                checked={result.scotland}
-                onCheckedChange={(v) => update("scotland", v)}
-                className="rounded-2xl border-[2.5px] border-foreground bg-card px-3 py-2 sm:self-end"
-              />
+              <div className="space-y-1.5 sm:self-end">
+                <SwitchField
+                  id="scotland"
+                  label="I live in Scotland"
+                  hint="Scottish income tax bands"
+                  checked={input.scotland}
+                  onCheckedChange={(v) => update("scotland", v)}
+                  className="rounded-2xl border-[2.5px] border-foreground bg-card px-3 py-2"
+                />
+                {result.scotlandFromCode && (
+                  <p className="text-xs font-bold text-muted-foreground/70">
+                    Scottish rates set by tax code
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2.5">
@@ -526,7 +529,7 @@ export function UkSalaryCalculator() {
                   prefix="£"
                   grouped
                   decimals={0}
-                  hint="Taxed as ordinary income across the year"
+                  hint="Taxed as ordinary income across the year. NI is estimated on an annual basis; a one-off bonus is usually charged more NI in the month it is paid."
                 />
                 <div className="grid gap-4 sm:grid-cols-2">
                   <NumberField
@@ -737,7 +740,7 @@ export function UkSalaryCalculator() {
             <CardContent className="space-y-6 pt-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <HeroStat
-                  label={`Take-home pay per ${perLabel.label.replace(/ly$/, "").toLowerCase()}`}
+                  label={`Take-home pay per ${perLabel.noun}`}
                   value={inView(result.takeHome)}
                   hint={`from ${inView(result.gross)} gross · you keep ${pct(result.gross > 0 ? result.takeHome / result.gross : 0, 0)}`}
                 />
@@ -788,8 +791,14 @@ export function UkSalaryCalculator() {
                   adjusted income back under the threshold.
                 </Callout>
               )}
-              {result.allowance === 0 && result.taxableIncome > 0 && !input.taxCode.trim() && (
+              {result.tapered && result.allowance === 0 && result.taxableIncome > 0 && (
                 <Callout>Your personal allowance has tapered away completely above {money(year.taperThreshold + year.personalAllowance * 2)}.</Callout>
+              )}
+              {result.shortfall > 0 && (
+                <Callout tone="warn">
+                  Your deductions are {money(result.shortfall)} more than your pay. Take-home is shown as
+                  zero, so check the pension and deduction amounts.
+                </Callout>
               )}
               {input.pensionType === "personal" && result.pensionGross > 0 && (
                 <Callout>
@@ -920,18 +929,20 @@ export function UkSalaryCalculator() {
                         National Insurance · Class 1 employee
                       </td>
                     </tr>
-                    <NiRow
-                      label={`${money(ni.primaryThreshold)} to ${money(ni.upperEarningsLimit)}`}
-                      rate={ni.mainRate}
-                      amount={input.noNi ? 0 : Math.min(Math.max(result.gross - result.pensionGross * (input.pensionType === "sacrifice" ? 1 : 0) - result.salarySacrifice - ni.primaryThreshold, 0), ni.upperEarningsLimit - ni.primaryThreshold)}
-                      money={money}
-                    />
-                    <NiRow
-                      label={`Above ${money(ni.upperEarningsLimit)}`}
-                      rate={ni.upperRate}
-                      amount={input.noNi ? 0 : Math.max(result.gross - result.pensionGross * (input.pensionType === "sacrifice" ? 1 : 0) - result.salarySacrifice - ni.upperEarningsLimit, 0)}
-                      money={money}
-                    />
+                    {result.niBands.map((b, i) => (
+                      <NiRow
+                        key={b.name}
+                        label={
+                          i === 0
+                            ? `${money(ni.primaryThreshold)} to ${money(ni.upperEarningsLimit)}`
+                            : `Above ${money(ni.upperEarningsLimit)}`
+                        }
+                        rate={b.rate}
+                        amount={b.amount}
+                        tax={b.tax}
+                        money={money}
+                      />
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -975,18 +986,20 @@ export function UkSalaryCalculator() {
 }
 
 function perLabelFor(period: PayPeriod): string {
-  return PERIODS.find((p) => p.value === period)!.label.replace(/ly$/, "").toLowerCase();
+  return PERIODS.find((p) => p.value === period)!.noun;
 }
 
 function NiRow({
   label,
   rate,
   amount,
+  tax,
   money,
 }: {
   label: string;
   rate: number;
   amount: number;
+  tax: number;
   money: (v: number, d?: number) => string;
 }) {
   return (
@@ -994,7 +1007,7 @@ function NiRow({
       <td className="px-4 py-2.5 font-sans">{label}</td>
       <td className="px-4 py-2.5 text-right">{pct(rate, 0)}</td>
       <td className="px-4 py-2.5 text-right">{money(amount)}</td>
-      <td className="px-4 py-2.5 text-right">{money(amount * rate)}</td>
+      <td className="px-4 py-2.5 text-right">{money(tax)}</td>
     </tr>
   );
 }
