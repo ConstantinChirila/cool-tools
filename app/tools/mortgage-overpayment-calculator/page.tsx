@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { MortgageOverpaymentCalculator } from "@/components/tools/mortgage-overpayment-calculator";
 import { ToolPageShell } from "@/components/tool-page-shell";
-import content from "@/content/mortgage-overpayment-calculator";
+import { content } from "@/content/mortgage-overpayment-calculator";
 import { toolMetadata } from "@/lib/seo";
-import { getTool } from "@/lib/tools";
+import { requireTool } from "@/lib/tools";
 
-const tool = getTool("mortgage-overpayment-calculator")!;
+const tool = requireTool("mortgage-overpayment-calculator");
 
 export const metadata: Metadata = toolMetadata(tool);
 

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { MortgageCalculator } from "@/components/tools/mortgage-calculator";
 import { ToolPageShell } from "@/components/tool-page-shell";
-import content from "@/content/mortgage-calculator";
+import { content } from "@/content/mortgage-calculator";
 import { toolMetadata } from "@/lib/seo";
-import { getTool } from "@/lib/tools";
+import { requireTool } from "@/lib/tools";
 
-const tool = getTool("mortgage-calculator")!;
+const tool = requireTool("mortgage-calculator");
 
 export const metadata: Metadata = toolMetadata(tool);
 

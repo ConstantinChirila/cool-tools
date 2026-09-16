@@ -1,6 +1,6 @@
 import type { ToolContent } from "@/lib/tool-content";
 
-const content: ToolContent = {
+export const content: ToolContent = {
   intro: [
     "This is a UK salary calculator for 2026/27 that turns a gross salary into take-home pay, working through Income Tax, National Insurance, pension contributions and student loan repayments the way a payslip does. Enter a salary as a yearly, monthly, weekly, daily or hourly figure, add a pension, student loan plan or bonus, and switch on Scottish rates if that's where you live.",
     "Use it as a take home pay calculator, a net salary calculator, or a salary after tax UK check, when comparing job offers or asking how much tax will I pay on my salary.",
@@ -122,5 +122,3 @@ const content: ToolContent = {
     },
   ],
 };
-
-export default content;

@@ -20,6 +20,13 @@ interface Band {
   limit: number;
 }
 
+/** Band tables are positional (basic, higher, additional...); fail loudly if one is shorter than the code assumes. */
+function band(bands: Band[], index: number): Band {
+  const b = bands[index];
+  if (!b) throw new Error(`Tax band table has no entry at index ${index}`);
+  return b;
+}
+
 interface TaxYearConfig {
   label: string;
   personalAllowance: number;
@@ -112,36 +119,42 @@ export const TAX_YEARS: Record<TaxYear, TaxYearConfig> = {
 
 export const DEFAULT_TAX_YEAR: TaxYear = "2026-27";
 
-export const STUDENT_PLANS: { value: StudentPlan; label: string; hint: string }[] = [
-  { value: "none", label: "No student loan", hint: "" },
-  { value: "plan1", label: "Plan 1", hint: "Started before Sept 2012 (England/Wales), or Northern Ireland" },
-  { value: "plan2", label: "Plan 2", hint: "Started Sept 2012 to July 2023 (England/Wales)" },
-  { value: "plan4", label: "Plan 4", hint: "Scottish students" },
-  { value: "plan5", label: "Plan 5", hint: "Started Aug 2023 or later (England)" },
-];
+export const STUDENT_PLAN_INFO: Record<StudentPlan, { label: string; hint: string }> = {
+  none: { label: "No student loan", hint: "" },
+  plan1: { label: "Plan 1", hint: "Started before Sept 2012 (England/Wales), or Northern Ireland" },
+  plan2: { label: "Plan 2", hint: "Started Sept 2012 to July 2023 (England/Wales)" },
+  plan4: { label: "Plan 4", hint: "Scottish students" },
+  plan5: { label: "Plan 5", hint: "Started Aug 2023 or later (England)" },
+};
+/** Ordered list for option controls, derived from STUDENT_PLAN_INFO. */
+export const STUDENT_PLANS = (Object.keys(STUDENT_PLAN_INFO) as StudentPlan[]).map((value) => ({
+  value,
+  ...STUDENT_PLAN_INFO[value],
+}));
 
-export const PENSION_TYPES: { value: PensionType; label: string; hint: string }[] = [
-  {
-    value: "auto",
+export const PENSION_TYPE_INFO: Record<PensionType, { label: string; hint: string }> = {
+  auto: {
     label: "Auto-enrolment",
     hint: "Contribution taken on qualifying earnings only (£6,240 to £50,270). Tax relief, no NI saving.",
   },
-  {
-    value: "netpay",
+  netpay: {
     label: "Employer scheme (net pay)",
     hint: "Taken from gross pay before tax on your full salary. Tax relief, no NI saving.",
   },
-  {
-    value: "sacrifice",
+  sacrifice: {
     label: "Salary sacrifice",
     hint: "Your salary is reduced in exchange for the contribution. Saves both tax and NI.",
   },
-  {
-    value: "personal",
+  personal: {
     label: "Personal (relief at source)",
     hint: "Paid from take-home pay. You pay 80%, the provider claims basic-rate relief; higher-rate relief extends your basic band.",
   },
-];
+};
+/** Ordered list for option controls, derived from PENSION_TYPE_INFO. */
+export const PENSION_TYPES = (Object.keys(PENSION_TYPE_INFO) as PensionType[]).map((value) => ({
+  value,
+  ...PENSION_TYPE_INFO[value],
+}));
 
 export interface UkSalaryInput {
   taxYear: TaxYear;
@@ -237,15 +250,20 @@ export interface UkSalaryResult {
   scotland: boolean;
 }
 
-export const PERIODS: { value: PayPeriod; label: string; short: string; noun: string }[] = [
-  { value: "year", label: "Yearly", short: "yr", noun: "year" },
-  { value: "month", label: "Monthly", short: "mo", noun: "month" },
-  { value: "4week", label: "4-weekly", short: "4wk", noun: "4 weeks" },
-  { value: "2week", label: "2-weekly", short: "2wk", noun: "2 weeks" },
-  { value: "week", label: "Weekly", short: "wk", noun: "week" },
-  { value: "day", label: "Daily", short: "day", noun: "day" },
-  { value: "hour", label: "Hourly", short: "hr", noun: "hour" },
-];
+export const PERIOD_INFO: Record<PayPeriod, { label: string; short: string; noun: string }> = {
+  year: { label: "Yearly", short: "yr", noun: "year" },
+  month: { label: "Monthly", short: "mo", noun: "month" },
+  "4week": { label: "4-weekly", short: "4wk", noun: "4 weeks" },
+  "2week": { label: "2-weekly", short: "2wk", noun: "2 weeks" },
+  week: { label: "Weekly", short: "wk", noun: "week" },
+  day: { label: "Daily", short: "day", noun: "day" },
+  hour: { label: "Hourly", short: "hr", noun: "hour" },
+};
+/** Ordered list for option controls, derived from PERIOD_INFO. */
+export const PERIODS = (Object.keys(PERIOD_INFO) as PayPeriod[]).map((value) => ({
+  value,
+  ...PERIOD_INFO[value],
+}));
 
 const WEEKS = 52;
 
@@ -322,9 +340,10 @@ function parseTaxCode(raw: string, scotlandToggle: boolean, cfg: TaxYearConfig):
   const bands = scotland ? cfg.scottishBands : cfg.bands;
   const flat: Record<string, number> = scotland
     ? { BR: 0.2, D0: 0.21, D1: 0.42, D2: 0.45, D3: 0.48 }
-    : { BR: bands[0].rate, D0: bands[1].rate, D1: bands[2].rate };
-  if (body in flat) {
-    return { ...base, kind: "flat", flatRate: flat[body], note: `${code}: all income taxed at ${Math.round(flat[body] * 100)}%` };
+    : { BR: band(bands, 0).rate, D0: band(bands, 1).rate, D1: band(bands, 2).rate };
+  const flatRate = flat[body];
+  if (flatRate !== undefined) {
+    return { ...base, kind: "flat", flatRate, note: `${code}: all income taxed at ${Math.round(flatRate * 100)}%` };
   }
 
   const k = /^K(\d+)$/.exec(body);
@@ -395,9 +414,9 @@ function compute(input: UkSalaryInput): Omit<UkSalaryResult, "marginalRate"> {
   const estimatedEarnings = gross - sacrificePension - netPayPension;
   const childcareCap = input.childcarePre2011
     ? cfg.childcareCaps.basic
-    : estimatedEarnings > cfg.bands[1].limit
+    : estimatedEarnings > band(cfg.bands, 1).limit
       ? cfg.childcareCaps.additional
-      : estimatedEarnings > cfg.bands[0].limit + cfg.personalAllowance
+      : estimatedEarnings > band(cfg.bands, 0).limit + cfg.personalAllowance
         ? cfg.childcareCaps.higher
         : cfg.childcareCaps.basic;
   const childcareExempt = Math.min(childcareMonthly, childcareCap) * 12;
@@ -472,7 +491,7 @@ function compute(input: UkSalaryInput): Omit<UkSalaryResult, "marginalRate"> {
     // Marriage Allowance is only available while the recipient stays a basic-rate
     // taxpayer, or in Scotland no higher than the intermediate rate.
     if (input.marriage === "receive" && (code.kind === "default" || code.kind === "coded")) {
-      const ceiling = (scotland ? bands[2].limit : bands[0].limit) + personalPension;
+      const ceiling = (scotland ? band(bands, 2).limit : band(bands, 0).limit) + personalPension;
       const credit = cfg.marriageTransfer * 0.2;
       if (taxable <= ceiling) {
         incomeTax = Math.max(incomeTax - credit, 0);

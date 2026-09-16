@@ -26,11 +26,11 @@ export function ArrowSpineCalculator() {
   const [newPoint, setNewPoint] = React.useState(125);
 
   useUrlState({
-    spine: urlField(baseSpine, setBaseSpine, 500),
-    len: urlField(baseLength, setBaseLength, 29),
-    point: urlField(basePoint, setBasePoint, 100),
-    newLen: urlField(newLength, setNewLength, 28),
-    newPoint: urlField(newPoint, setNewPoint, 125),
+    spine: urlField(baseSpine, setBaseSpine, 500, undefined, { min: 150, max: 1300 }),
+    len: urlField(baseLength, setBaseLength, 29, undefined, { min: 20, max: 34 }),
+    point: urlField(basePoint, setBasePoint, 100, undefined, { min: 40, max: 350 }),
+    newLen: urlField(newLength, setNewLength, 28, undefined, { min: 20, max: 34 }),
+    newPoint: urlField(newPoint, setNewPoint, 125, undefined, { min: 40, max: 350 }),
   });
 
   const result = React.useMemo(

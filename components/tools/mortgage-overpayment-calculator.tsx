@@ -43,11 +43,11 @@ export function MortgageOverpaymentCalculator() {
   const [lumpSum, setLumpSum] = React.useState(0);
 
   useUrlState({
-    amount: urlField(amount, setAmount, 250_000),
-    rate: urlField(rate, setRate, 4.5),
-    term: urlField(term, setTerm, 25),
-    overpay: urlField(monthlyOverpayment, setMonthlyOverpayment, 200),
-    lump: urlField(lumpSum, setLumpSum, 0),
+    amount: urlField(amount, setAmount, 250_000, undefined, { min: 10_000, max: 1_500_000 }),
+    rate: urlField(rate, setRate, 4.5, undefined, { min: 0.1, max: 15 }),
+    term: urlField(term, setTerm, 25, undefined, { min: 1, max: 40 }),
+    overpay: urlField(monthlyOverpayment, setMonthlyOverpayment, 200, undefined, { min: 0, max: 3000 }),
+    lump: urlField(lumpSum, setLumpSum, 0, undefined, { min: 0, max: 10_000_000 }),
     currency: urlField(
       code,
       setCurrency,
@@ -82,7 +82,7 @@ export function MortgageOverpaymentCalculator() {
   // balance, not just year 1 against the original loan amount.
   const capWarningYear = React.useMemo(() => {
     for (let i = 1; i <= over.years.length; i++) {
-      const openingBalance = over.balanceSeries[i - 1];
+      const openingBalance = over.balanceSeries[i - 1] ?? 0;
       if (openingBalance <= 0) continue;
       const monthsElapsedBefore = (i - 1) * 12;
       const monthsPaidThisYear = Math.min(

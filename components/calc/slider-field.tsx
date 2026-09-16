@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
 function group(raw: string): string {
-  const [int, dec] = raw.split(".");
+  const [int = "", dec] = raw.split(".");
   const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return dec !== undefined ? `${grouped}.${dec}` : grouped;
 }
@@ -106,7 +106,9 @@ export function SliderField({
       </div>
       <Slider
         value={[value]}
-        onValueChange={([v]) => onChange(v)}
+        onValueChange={([v]) => {
+          if (v !== undefined) onChange(v);
+        }}
         min={min}
         max={max}
         step={sliderStep ?? step}

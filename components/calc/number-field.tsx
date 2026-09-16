@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 function group(raw: string): string {
-  const [int, dec] = raw.split(".");
+  const [int = "", dec] = raw.split(".");
   const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return dec !== undefined ? `${grouped}.${dec}` : grouped;
 }

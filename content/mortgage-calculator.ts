@@ -1,6 +1,6 @@
 import type { ToolContent } from "@/lib/tool-content";
 
-const content: ToolContent = {
+export const content: ToolContent = {
   intro: [
     "This mortgage repayment calculator works out how much will my mortgage cost per month for any loan amount, interest rate and term, plus how much of that goes to interest over the life of the loan. Switch between repayment and interest-only to see how the two compare, and open the yearly breakdown to watch the balance fall.",
     "Use it when comparing lenders or deals, testing how a shorter term or bigger deposit changes your monthly payment, or when you want the full year-by-year split of interest and principal before you commit to a mortgage.",
@@ -84,5 +84,3 @@ const content: ToolContent = {
     },
   ],
 };
-
-export default content;

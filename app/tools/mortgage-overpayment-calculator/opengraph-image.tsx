@@ -1,7 +1,7 @@
 import { OG_SIZE, renderOgImage } from "@/lib/og";
-import { getTool } from "@/lib/tools";
+import { requireTool } from "@/lib/tools";
 
-const tool = getTool("mortgage-overpayment-calculator")!;
+const tool = requireTool("mortgage-overpayment-calculator");
 
 export const alt = `${tool.name} on Bits & Bobs`;
 export const size = OG_SIZE;

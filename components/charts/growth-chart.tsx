@@ -30,10 +30,12 @@ function niceTicks(max: number, count = 4): number[] {
   const rough = max / count;
   const mag = 10 ** Math.floor(Math.log10(rough));
   const candidates = [1, 2, 2.5, 5, 10].map((m) => m * mag);
-  const step = candidates.find((c) => c >= rough) ?? candidates[4];
+  const step = candidates.find((c) => c >= rough) ?? 10 * mag;
   const ticks: number[] = [0];
-  while (ticks[ticks.length - 1] < max) {
-    ticks.push(ticks[ticks.length - 1] + step);
+  let last = 0;
+  while (last < max) {
+    last += step;
+    ticks.push(last);
   }
   return ticks;
 }
@@ -57,9 +59,9 @@ export function GrowthChart({
   React.useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const observer = new ResizeObserver(([entry]) =>
-      setWidth(entry.contentRect.width),
-    );
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setWidth(entry.contentRect.width);
+    });
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
@@ -67,7 +69,7 @@ export function GrowthChart({
   const n = series[0]?.values.length ?? 0;
   const maxValue = Math.max(...series.flatMap((s) => s.values), 1);
   const ticks = niceTicks(maxValue);
-  const yMax = ticks[ticks.length - 1];
+  const yMax = ticks[ticks.length - 1] ?? 1;
 
   const axisWidth = 12 + formatAxis(yMax).length * 7.5;
   const left = M.left + axisWidth;
@@ -104,6 +106,7 @@ export function GrowthChart({
   const flip = tooltipLeft > width - 180;
 
   if (n < 2) return null;
+  const extra = hover !== null ? (extraRow?.(hover) ?? null) : null;
 
   const xTickIndices = [0, Math.round((n - 1) / 3), Math.round(((n - 1) * 2) / 3), n - 1]
     .filter((v, i, arr) => arr.indexOf(v) === i);
@@ -133,7 +136,7 @@ export function GrowthChart({
                 x2={left + plotW}
                 y1={y(t)}
                 y2={y(t)}
-                stroke="oklch(0.2 0.01 60 / 10%)"
+                stroke="color-mix(in oklch, var(--foreground) 10%, transparent)"
                 strokeWidth={1}
               />
               <text
@@ -183,7 +186,7 @@ export function GrowthChart({
               x2={x(hover)}
               y1={M.top}
               y2={M.top + plotH}
-              stroke="oklch(0.2 0.01 60 / 30%)"
+              stroke="color-mix(in oklch, var(--foreground) 30%, transparent)"
               strokeWidth={1}
             />
           )}
@@ -203,11 +206,13 @@ export function GrowthChart({
 
           {/* hover markers with surface ring */}
           {hover !== null &&
-            series.map((s) => (
+            series
+              .filter((s) => s.values[hover] !== undefined)
+              .map((s) => (
               <circle
                 key={`${s.name}-dot`}
                 cx={x(hover)}
-                cy={y(s.values[hover])}
+                cy={y(s.values[hover] ?? 0)}
                 r={4.5}
                 fill={s.color}
                 stroke="var(--card)"
@@ -242,16 +247,14 @@ export function GrowthChart({
                   {s.name}
                 </span>
                 <span className="font-semibold text-foreground text-numeric">
-                  {formatValue(s.values[hover])}
+                  {formatValue(s.values[hover] ?? Number.NaN)}
                 </span>
               </div>
             ))}
-            {extraRow?.(hover) && (
+            {extra && (
               <div className="flex items-center justify-between gap-4 border-t border-foreground/15 pt-1">
-                <span className="pl-4.5 text-muted-foreground">{extraRow(hover)!.name}</span>
-                <span className="font-semibold text-foreground text-numeric">
-                  {extraRow(hover)!.value}
-                </span>
+                <span className="pl-4.5 text-muted-foreground">{extra.name}</span>
+                <span className="font-semibold text-foreground text-numeric">{extra.value}</span>
               </div>
             )}
           </div>

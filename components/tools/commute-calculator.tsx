@@ -97,16 +97,16 @@ export function CommuteCalculator() {
   const [horizon, setHorizon] = React.useState<Horizon>("10");
 
   useUrlState({
-    out: urlField(outbound, setOutbound, 45),
+    out: urlField(outbound, setOutbound, 45, undefined, { min: 1, max: 240 }),
     diff: urlField(differentReturn, setDifferentReturn, false),
-    back: urlField(returnMinutes, setReturnMinutes, 45),
-    days: urlField(daysPerWeek, setDaysPerWeek, 5),
-    off: urlField(daysOff, setDaysOff, 28),
-    wfh: urlField(wfhDays, setWfhDays, 0),
+    back: urlField(returnMinutes, setReturnMinutes, 45, undefined, { min: 1, max: 240 }),
+    days: urlField(daysPerWeek, setDaysPerWeek, 5, undefined, { min: 1, max: 7 }),
+    off: urlField(daysOff, setDaysOff, 28, undefined, { min: 0, max: 60 }),
+    wfh: urlField(wfhDays, setWfhDays, 0, undefined, { min: 0, max: 7 }),
     cost: urlField(costOn, setCostOn, false),
     mode: urlField(costMode, setCostMode, "perDay" as CostMode, ["perDay", "monthly"]),
-    perday: urlField(perDay, setPerDay, 0),
-    monthly: urlField(monthly, setMonthly, 0),
+    perday: urlField(perDay, setPerDay, 0, undefined, { min: 0, max: 1_000_000 }),
+    monthly: urlField(monthly, setMonthly, 0, undefined, { min: 0, max: 1_000_000 }),
     years: urlField(horizon, setHorizon, "10" as Horizon, HORIZONS),
     currency: urlField(code, setCurrency, DEFAULT_CURRENCY, currencies.map((c) => c.code)),
   });
@@ -212,7 +212,7 @@ export function CommuteCalculator() {
               <PillRow
                 label="What if you worked from home some days?"
                 value={effectiveWfh}
-                options={Array.from({ length: daysPerWeek + 1 }, (_, i) => i)}
+                options={Array.from({ length: Math.min(7, Math.max(1, Math.round(daysPerWeek))) + 1 }, (_, i) => i)}
                 onChange={setWfhDays}
                 format={(d) => (d === 0 ? "None" : `${d}`)}
               />

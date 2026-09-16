@@ -33,9 +33,9 @@ export function MortgageCalculator() {
   const [mortgageType, setMortgageType] = React.useState<MortgageType>("repayment");
 
   useUrlState({
-    amount: urlField(amount, setAmount, 250_000),
-    rate: urlField(rate, setRate, 4.5),
-    term: urlField(term, setTerm, 25),
+    amount: urlField(amount, setAmount, 250_000, undefined, { min: 10_000, max: 1_500_000 }),
+    rate: urlField(rate, setRate, 4.5, undefined, { min: 0.1, max: 15 }),
+    term: urlField(term, setTerm, 25, undefined, { min: 1, max: 40 }),
     type: urlField(mortgageType, setMortgageType, "repayment" as MortgageType, [
       "repayment",
       "interestOnly",

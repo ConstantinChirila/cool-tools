@@ -1,6 +1,6 @@
 import type { ToolContent } from "@/lib/tool-content";
 
-const content: ToolContent = {
+export const content: ToolContent = {
   intro: [
     "This arrow spine calculator shows how cutting a shaft or changing point weight shifts an arrow's effective spine away from the label, and whether the modified setup acts stiffer or weaker. It also gives a nearest standard spine size and a rough draw-weight equivalent.",
     "Use it when cutting arrows to a new draw length, trying a different point weight, or asking what spine arrow do I need after changing either one.",
@@ -80,5 +80,3 @@ const content: ToolContent = {
     },
   ],
 };
-
-export default content;

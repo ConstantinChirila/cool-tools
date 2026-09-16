@@ -1,6 +1,6 @@
 import type { ToolContent } from "@/lib/tool-content";
 
-const content: ToolContent = {
+export const content: ToolContent = {
   intro: [
     "This mortgage overpayment calculator UK borrowers use to see how paying extra each month, or adding a one-off lump sum, changes the total interest you pay and how much sooner the loan is cleared. Enter a monthly overpayment, a lump sum, or both, and compare that schedule against the same mortgage with no overpayments.",
     "Use it before deciding how much can I overpay on my mortgage without running into your lender's allowance, or to see whether a monthly habit or a single lump sum makes the bigger difference to the interest you'll pay overall.",
@@ -78,5 +78,3 @@ const content: ToolContent = {
     },
   ],
 };
-
-export default content;

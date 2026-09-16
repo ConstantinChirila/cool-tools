@@ -1,6 +1,6 @@
 import type { ToolContent } from "@/lib/tool-content";
 
-const content: ToolContent = {
+export const content: ToolContent = {
   intro: [
     "This percentage calculator covers the four questions people actually search for: what X% of a number is, what percentage one number is of another, the percentage change between two numbers, and what a number looks like after you increase or decrease it by a percentage.",
     "Switch between the four tabs above for discounts, VAT, pay rises, exam marks, tips, or working out a percentage change without doing the arithmetic by hand.",
@@ -81,5 +81,3 @@ const content: ToolContent = {
     },
   ],
 };
-
-export default content;

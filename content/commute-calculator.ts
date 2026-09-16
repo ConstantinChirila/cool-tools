@@ -1,6 +1,6 @@
 import type { ToolContent } from "@/lib/tool-content";
 
-const content: ToolContent = {
+export const content: ToolContent = {
   intro: [
     "Most of us know our commute in minutes and never in years. This calculator turns a one-way journey time, the days you travel in, and your days off into the total hours and full days a year, then shows what working from home a few days a week would give back.",
     "Switch on the cost section to add fares, fuel and parking or a season ticket, and pick a horizon to see what the same commute adds up to over 10, 20 or 40 years.",
@@ -88,5 +88,3 @@ const content: ToolContent = {
     },
   ],
 };
-
-export default content;

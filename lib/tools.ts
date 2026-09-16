@@ -156,6 +156,13 @@ export function getTool(slug: string): Tool | undefined {
   return tools.find((t) => t.slug === slug);
 }
 
+/** For route files, where the slug is a literal: fails loudly on a typo instead of at first render. */
+export function requireTool(slug: string): Tool {
+  const tool = getTool(slug);
+  if (!tool) throw new Error(`Unknown tool slug "${slug}" (register it in lib/tools.ts)`);
+  return tool;
+}
+
 export function searchTools(query: string): Tool[] {
   const q = query.trim().toLowerCase();
   if (!q) return tools;

@@ -33,17 +33,19 @@ import { HeroStat, Stat } from "@/components/calc/stat";
 import { SwitchField } from "@/components/calc/switch-field";
 import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
-import { useUrlState, urlField, type UrlField } from "@/hooks/use-url-state";
+import { useUrlState, urlField, type NumberRange, type UrlField } from "@/hooks/use-url-state";
 import { formatMoney } from "@/lib/currency";
 import {
-  DEFAULT_TAX_YEAR,
-  PENSION_TYPES,
-  PERIODS,
-  STUDENT_PLANS,
-  TAX_YEARS,
   calculateUkSalary,
+  DEFAULT_TAX_YEAR,
+  PENSION_TYPE_INFO,
+  PENSION_TYPES,
+  PERIOD_INFO,
   periodsPerYear,
   salaryCurve,
+  STUDENT_PLAN_INFO,
+  STUDENT_PLANS,
+  TAX_YEARS,
   type MarriageAllowance,
   type PayPeriod,
   type PensionMethod,
@@ -130,6 +132,25 @@ const ALLOWED_VALUES: Partial<Record<keyof UkSalaryInput, readonly string[]>> = 
   pensionMethod: ["percent", "amount"],
 };
 
+const MONEY: NumberRange = { min: 0, max: 10_000_000 };
+/** Clamp ranges for the numeric fields of UkSalaryInput when read from the URL. */
+const NUMBER_RANGES: Partial<Record<keyof UkSalaryInput, NumberRange>> = {
+  salary: MONEY,
+  hoursPerWeek: { min: 1, max: 100 },
+  daysPerWeek: { min: 1, max: 7 },
+  pensionValue: MONEY,
+  employerPensionPct: { min: 0, max: 100 },
+  bonus: MONEY,
+  overtimeHours: { min: 0, max: 80 },
+  overtimeMultiplier: { min: 1, max: 5 },
+  cashAllowance: MONEY,
+  taxableBenefits: MONEY,
+  childcareVouchers: MONEY,
+  salarySacrifice: MONEY,
+  preTaxDeduction: MONEY,
+  postTaxDeduction: MONEY,
+};
+
 /**
  * Binds one UkSalaryInput field to the URL. urlField's generic can't prove
  * that a dynamic key's value type satisfies Primitive, even though every
@@ -144,7 +165,7 @@ function bindInputField<K extends keyof UkSalaryInput>(
   const value = input[key] as string | number | boolean;
   const def = DEFAULT_INPUT[key] as string | number | boolean;
   const set = (v: string | number | boolean) => update(key, v as UkSalaryInput[K]);
-  return urlField(value, set, def, ALLOWED_VALUES[key]);
+  return urlField(value, set, def, ALLOWED_VALUES[key], NUMBER_RANGES[key]);
 }
 
 /* ------------------------------------------------------------------ */
@@ -269,7 +290,7 @@ export function UkSalaryCalculator() {
     [],
   );
   const per = periodsPerYear(view, input.hoursPerWeek, input.daysPerWeek);
-  const perLabel = PERIODS.find((p) => p.value === view)!;
+  const perLabel = PERIOD_INFO[view];
   const inView = (annual: number) => money(annual / per, view === "year" ? 0 : 2);
 
   const changeSalaryPeriod = (next: InputPeriod) => {
@@ -284,10 +305,10 @@ export function UkSalaryCalculator() {
   /* Section summaries */
   const pensionSummary =
     result.pensionGross > 0
-      ? `${input.pensionMethod === "percent" ? `${input.pensionValue}%` : money(input.pensionValue)} · ${PENSION_TYPES.find((p) => p.value === input.pensionType)!.label}${input.employerPensionPct > 0 ? ` · employer ${input.employerPensionPct}%` : ""}`
+      ? `${input.pensionMethod === "percent" ? `${input.pensionValue}%` : money(input.pensionValue)} · ${PENSION_TYPE_INFO[input.pensionType].label}${input.employerPensionPct > 0 ? ` · employer ${input.employerPensionPct}%` : ""}`
       : "No pension contributions";
   const loanSummary = [
-    input.studentPlan !== "none" && STUDENT_PLANS.find((p) => p.value === input.studentPlan)!.label,
+    input.studentPlan !== "none" && STUDENT_PLAN_INFO[input.studentPlan].label,
     input.postgradLoan && "Postgraduate loan",
   ]
     .filter(Boolean)
@@ -467,7 +488,7 @@ export function UkSalaryCalculator() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs font-bold text-muted-foreground/70">
-                    {PENSION_TYPES.find((p) => p.value === input.pensionType)!.hint}
+                    {PENSION_TYPE_INFO[input.pensionType].hint}
                   </p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
@@ -487,7 +508,16 @@ export function UkSalaryCalculator() {
                     <Segmented
                       label="Pension contribution method"
                       value={input.pensionMethod}
-                      onChange={(v: PensionMethod) => update("pensionMethod", v)}
+                      onChange={(v: PensionMethod) =>
+                        // The value means something different in each method, so
+                        // carry the equivalent across rather than reuse the number.
+                        setInput((prev) => ({
+                          ...prev,
+                          pensionMethod: v,
+                          pensionValue:
+                            v === "percent" ? DEFAULT_INPUT.pensionValue : Math.round(result.pensionGross),
+                        }))
+                      }
                       options={[
                         { value: "percent", label: "%" },
                         { value: "amount", label: "£" },
@@ -806,7 +836,7 @@ export function UkSalaryCalculator() {
                 <Badge variant="secondary">{result.scotland ? "Scottish rates" : "England, Wales and NI rates"}</Badge>
                 {input.taxCode.trim() && <Badge variant="secondary">Code {input.taxCode.trim().toUpperCase()}</Badge>}
                 {input.studentPlan !== "none" && (
-                  <Badge variant="secondary">{STUDENT_PLANS.find((p) => p.value === input.studentPlan)!.label}</Badge>
+                  <Badge variant="secondary">{STUDENT_PLAN_INFO[input.studentPlan].label}</Badge>
                 )}
                 {input.postgradLoan && <Badge variant="secondary">Postgrad loan</Badge>}
               </div>
@@ -825,7 +855,7 @@ export function UkSalaryCalculator() {
                   { name: "National Insurance", value: result.nationalInsurance, color: "var(--chart-4)" },
                   { name: "Pension", value: result.pensionDeducted, color: "var(--chart-3)" },
                   { name: "Student loans", value: result.studentLoan + result.postgradLoan, color: "var(--chart-5)" },
-                  { name: "Other", value: otherDeductions, color: "oklch(0.8 0.01 60)" },
+                  { name: "Other", value: otherDeductions, color: "var(--chart-neutral)" },
                 ].filter((s) => s.value > 0)}
                 format={(v) => inView(v)}
               />
@@ -879,7 +909,7 @@ export function UkSalaryCalculator() {
                       <th className="px-4 py-2.5 font-medium">&nbsp;</th>
                       {TABLE_PERIODS.map((p) => (
                         <th key={p} className="px-4 py-2.5 text-right font-medium">
-                          {PERIODS.find((x) => x.value === p)!.label}
+                          {PERIOD_INFO[p].label}
                         </th>
                       ))}
                     </tr>
@@ -1009,15 +1039,17 @@ export function UkSalaryCalculator() {
                   { name: "Take-home", color: "var(--chart-2)", values: curve.takeHome, area: true },
                   { name: "Tax, NI and loans", color: "var(--chart-1)", values: curve.deductions },
                 ]}
-                xLabel={(i) => `${money(curve.salaries[i])} salary`}
-                xTick={(i) => formatMoney(curve.salaries[i], GBP, { compact: true })}
+                xLabel={(i) => `${money(curve.salaries[i] ?? 0)} salary`}
+                xTick={(i) => formatMoney(curve.salaries[i] ?? 0, GBP, { compact: true })}
                 formatValue={(v) => money(v)}
                 formatAxis={(v) => formatMoney(v, GBP, { compact: true })}
-                extraRow={(i) =>
-                  curve.salaries[i] > 0
-                    ? { name: "Kept", value: pct(curve.takeHome[i] / curve.salaries[i], 0) }
-                    : null
-                }
+                extraRow={(i) => {
+                  const salary = curve.salaries[i] ?? 0;
+                  const kept = curve.takeHome[i];
+                  return salary > 0 && kept !== undefined
+                    ? { name: "Kept", value: pct(kept / salary, 0) }
+                    : null;
+                }}
               />
             </TabsContent>
           </Tabs>
@@ -1033,7 +1065,7 @@ export function UkSalaryCalculator() {
 }
 
 function perLabelFor(period: PayPeriod): string {
-  return PERIODS.find((p) => p.value === period)!.noun;
+  return PERIOD_INFO[period].noun;
 }
 
 function NiRow({

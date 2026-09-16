@@ -38,16 +38,16 @@ export function CompoundInterestCalculator() {
   const [years, setYears] = React.useState(20);
 
   useUrlState({
-    initial: urlField(initial, setInitial, 10_000),
-    monthly: urlField(monthly, setMonthly, 250),
-    rate: urlField(rate, setRate, 7),
+    initial: urlField(initial, setInitial, 10_000, undefined, { min: 0, max: 500_000 }),
+    monthly: urlField(monthly, setMonthly, 250, undefined, { min: 0, max: 5000 }),
+    rate: urlField(rate, setRate, 7, undefined, { min: 0, max: 20 }),
     freq: urlField(
       frequency,
       setFrequency,
       "12",
       FREQUENCIES.map((f) => f.value),
     ),
-    years: urlField(years, setYears, 20),
+    years: urlField(years, setYears, 20, undefined, { min: 1, max: 50 }),
     currency: urlField(
       code,
       setCurrency,
@@ -215,7 +215,7 @@ export function CompoundInterestCalculator() {
                   },
                   {
                     name: "Contributed",
-                    color: "oklch(0.8 0.01 60)",
+                    color: "var(--chart-neutral)",
                     values: result.contributedSeries,
                   },
                 ]}
@@ -226,7 +226,7 @@ export function CompoundInterestCalculator() {
                 extraRow={(i) => ({
                   name: "Interest",
                   value: money(
-                    result.balanceSeries[i] - result.contributedSeries[i],
+                    (result.balanceSeries[i] ?? 0) - (result.contributedSeries[i] ?? 0),
                   ),
                 })}
               />

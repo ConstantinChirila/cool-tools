@@ -1,6 +1,6 @@
 import type { ToolContent } from "@/lib/tool-content";
 
-const content: ToolContent = {
+export const content: ToolContent = {
   intro: [
     "This compound interest calculator shows how a lump sum, plus a regular monthly contribution, grows once interest starts earning interest on itself. Set an initial deposit, a monthly amount, a rate and a term, and it plots the balance year by year so you can see how much is your own money versus growth.",
     "Use it to sanity-check a savings goal or compare what happens at different rates and contribution levels over time.",
@@ -82,5 +82,3 @@ const content: ToolContent = {
     },
   ],
 };
-
-export default content;

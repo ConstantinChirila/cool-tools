@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
 import { formatNumber } from "@/lib/currency";
+import { calculatePercentage, type PercentDirection, type PercentMode } from "@/lib/percentage";
 import { cn } from "@/lib/utils";
 
 function InlineNumber({
@@ -38,29 +39,24 @@ function parse(raw: string): number {
   return Number.parseFloat(raw.replace(/,/g, ""));
 }
 
-type Mode = "of" | "what" | "change" | "adjust";
+type Mode = PercentMode;
 
-const MODES: {
-  value: Mode;
-  title: string;
-  example: string;
-  bg: string;
-  tilt: string;
-}[] = [
-  { value: "of", title: "% of a number", example: "15% of 200", bg: "bg-yellow", tilt: "tilt-3" },
-  { value: "what", title: "What % is it", example: "40 out of 250", bg: "bg-pink", tilt: "tilt-2" },
-  { value: "change", title: "% change", example: "from 50 to 65", bg: "bg-mint", tilt: "tilt-5" },
-  { value: "adjust", title: "Add or take off %", example: "80 up 25%", bg: "bg-sky", tilt: "tilt-4" },
-];
+const MODE_INFO: Record<Mode, { title: string; example: string; bg: string; tilt: string }> = {
+  of: { title: "% of a number", example: "15% of 200", bg: "bg-yellow", tilt: "tilt-3" },
+  what: { title: "What % is it", example: "40 out of 250", bg: "bg-pink", tilt: "tilt-2" },
+  change: { title: "% change", example: "from 50 to 65", bg: "bg-mint", tilt: "tilt-5" },
+  adjust: { title: "Add or take off %", example: "80 up 25%", bg: "bg-sky", tilt: "tilt-4" },
+};
+const MODES = (Object.keys(MODE_INFO) as Mode[]).map((value) => ({ value, ...MODE_INFO[value] }));
 
 export function PercentageCalculator() {
   const [mode, setMode] = React.useState<Mode>("of");
   const [a, setA] = React.useState("15");
   const [b, setB] = React.useState("200");
-  const [direction, setDirection] = React.useState<"increase" | "decrease">("increase");
+  const [direction, setDirection] = React.useState<PercentDirection>("increase");
 
   useUrlState({
-    mode: urlField(mode, setMode, "of" as Mode, ["of", "what", "change", "adjust"]),
+    mode: urlField(mode, setMode, "of" as Mode, Object.keys(MODE_INFO)),
     a: urlField(a, setA, "15"),
     b: urlField(b, setB, "200"),
     dir: urlField(direction, setDirection, "increase", ["increase", "decrease"]),
@@ -69,52 +65,10 @@ export function PercentageCalculator() {
   const x = parse(a);
   const y = parse(b);
   const valid = Number.isFinite(x) && Number.isFinite(y);
-
   const decimals = 4;
-  const fx = formatNumber(x, decimals);
-  const fy = formatNumber(y, decimals);
-  let result: number | null = null;
-  let explanation = "";
-  let formula = "";
-  let resultSuffix = "";
-  let zeroMessage: string | null = null;
-
-  if (valid) {
-    switch (mode) {
-      case "of":
-        result = (x / 100) * y;
-        explanation = `${fx}% of ${fy}`;
-        formula = `${fx} ÷ 100 × ${fy}`;
-        break;
-      case "what":
-        result = y === 0 ? null : (x / y) * 100;
-        explanation = `${fx} out of ${fy}`;
-        formula = `${fx} ÷ ${fy} × 100`;
-        resultSuffix = "%";
-        if (y === 0) {
-          zeroMessage = "Can't divide by zero: the second number needs to be non-zero";
-        }
-        break;
-      case "change":
-        result = x === 0 ? null : ((y - x) / Math.abs(x)) * 100;
-        explanation = `from ${fx} to ${fy}`;
-        formula = `(${fy} - ${fx}) ÷ ${formatNumber(Math.abs(x), decimals)} × 100`;
-        resultSuffix = "%";
-        if (x === 0) {
-          zeroMessage = "Percentage change from zero is undefined";
-        }
-        break;
-      case "adjust":
-        result = direction === "increase" ? y * (1 + x / 100) : y * (1 - x / 100);
-        explanation = `${fy} ${direction}d by ${fx}%`;
-        formula = `${fy} × (1 ${direction === "increase" ? "+" : "-"} ${fx} ÷ 100)`;
-        break;
-    }
-  }
-
-  if (result !== null && Object.is(result, -0)) {
-    result = 0;
-  }
+  const { value: result, explanation, formula, suffix: resultSuffix, error: zeroMessage } = valid
+    ? calculatePercentage(mode, x, y, direction, decimals)
+    : { value: null, explanation: "", formula: "", suffix: "", error: null };
 
   const sentence: Record<Mode, React.ReactNode> = {
     of: (
@@ -166,7 +120,7 @@ export function PercentageCalculator() {
     ),
   };
 
-  const active = MODES.find((m) => m.value === mode)!;
+  const active = MODE_INFO[mode];
   const showChangeBadge = mode === "change" && result !== null;
 
   return (

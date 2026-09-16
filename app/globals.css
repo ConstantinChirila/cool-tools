@@ -88,6 +88,8 @@
   --chart-3: oklch(0.7 0.16 80);
   --chart-4: oklch(0.6 0.13 235);
   --chart-5: oklch(0.66 0.17 350);
+  /* Neutral series (contributions, "other" deductions). */
+  --chart-neutral: oklch(0.8 0.01 60);
   --radius: 1rem;
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.2 0.01 60);
@@ -147,7 +149,7 @@
 
 /* Faint dot grid behind pages. */
 @utility dot-grid {
-  background-image: radial-gradient(oklch(0.2 0.01 60 / 22%) 1.2px, transparent 1.2px);
+  background-image: radial-gradient(color-mix(in oklch, var(--foreground) 22%, transparent) 1.2px, transparent 1.2px);
   background-size: 28px 28px;
 }
 
