@@ -1,4 +1,5 @@
 import {
+  Hourglass,
   House,
   Percent,
   PiggyBank,
@@ -145,6 +146,23 @@ export const tools: Tool[] = [
       title: "Commute Time Calculator: Hours per Year",
       description:
         "Work out how many hours and full days a year you spend commuting, what it costs, and how much time and money working from home a few days a week would save.",
+    },
+    updated: "2026-09-16",
+  },
+  {
+    slug: "countdown-calculator",
+    name: "Countdown Calculator",
+    shortName: "Countdown",
+    description:
+      "Days, hours, minutes and seconds until any date, ticking live, plus the weeks, sleeps, weekends and working days to go.",
+    category: "Everyday",
+    icon: Hourglass,
+    keywords: ["countdown", "days until", "days left", "days to go", "time until", "how many days", "how long until", "sleeps", "weeks until", "working days", "days since", "days between", "christmas", "new year", "timer", "date", "event", "deadline"],
+    tint: "var(--sticker-lilac)",
+    seo: {
+      title: "Countdown Calculator: Days Until Any Date",
+      description:
+        "Count down the days, hours, minutes and seconds to any date and time, live, with the weeks, sleeps, weekends and working days to go. Name it and share the link.",
     },
     updated: "2026-09-16",
   },

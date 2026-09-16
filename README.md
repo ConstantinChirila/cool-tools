@@ -9,6 +9,7 @@ Odd little tools that just work. A growing library of free online calculators bu
 - **Mortgage Overpayment Calculator**: interest and time saved by overpaying monthly or with a lump sum, with a with/without overpayment comparison chart and yearly table
 - **Compound Interest Calculator**: growth projection with contributions, compounding frequency, chart and yearly table
 - **Percentage Calculator**: % of a number, what %, % change, increase/decrease
+- **Countdown Calculator**: live days/hours/minutes/seconds to any date and time, with calendar breakdown, weeks, sleeps, weekends and working days (engine in `lib/countdown.ts`)
 
 All financial tools default to GBP with a switchable currency (persisted in localStorage and shared across tools).
 
