@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
 import { UkSalaryCalculator } from "@/components/tools/uk-salary-calculator";
 import { ToolPageShell } from "@/components/tool-page-shell";
+import content from "@/content/uk-salary-calculator";
+import { toolMetadata } from "@/lib/seo";
 import { getTool } from "@/lib/tools";
 
 const tool = getTool("uk-salary-calculator")!;
 
-export const metadata: Metadata = {
-  title: tool.name,
-  description: tool.description,
-};
+export const metadata: Metadata = toolMetadata(tool);
 
 export default function UkSalaryCalculatorPage() {
   return (
-    <ToolPageShell tool={tool}>
+    <ToolPageShell tool={tool} content={content}>
       <UkSalaryCalculator />
     </ToolPageShell>
   );

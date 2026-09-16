@@ -21,6 +21,10 @@ export interface Tool {
   keywords: string[];
   /** Sticker fill for the tool tile: one of the --sticker-* palette colours. */
   tint: string;
+  /** Search snippet: title under ~50 chars (the site name is appended), description under ~155. */
+  seo: { title: string; description: string };
+  /** ISO date of the last meaningful change, used for sitemap lastmod. */
+  updated: string;
 }
 
 export const tools: Tool[] = [
@@ -34,6 +38,12 @@ export const tools: Tool[] = [
     icon: Wallet,
     keywords: ["salary", "take home", "take-home", "wage", "paye", "income tax", "national insurance", "ni", "pension", "student loan", "net pay", "hmrc", "payslip", "tax code", "scotland", "gross", "hourly", "wages"],
     tint: "var(--sticker-mint)",
+    seo: {
+      title: "UK Salary Calculator 2026/27: Take-Home Pay",
+      description:
+        "Work out your take-home pay after income tax, National Insurance, pension and student loan for 2025/26 and 2026/27. Scottish rates, tax codes, bonuses and salary sacrifice.",
+    },
+    updated: "2026-09-16",
   },
   {
     slug: "mortgage-calculator",
@@ -45,6 +55,12 @@ export const tools: Tool[] = [
     icon: House,
     keywords: ["loan", "home", "house", "repayment", "amortization", "interest", "property"],
     tint: "var(--sticker-sky)",
+    seo: {
+      title: "Mortgage Calculator UK: Monthly Repayments",
+      description:
+        "See your monthly mortgage repayment, total interest and a year-by-year amortisation chart. Compare repayment and interest-only, any loan size, rate and term.",
+    },
+    updated: "2026-09-16",
   },
   {
     slug: "mortgage-overpayment-calculator",
@@ -56,6 +72,12 @@ export const tools: Tool[] = [
     icon: PiggyBank,
     keywords: ["overpay", "overpayment", "lump sum", "pay off early", "early repayment", "interest saved", "10% rule", "remortgage"],
     tint: "var(--sticker-sky)",
+    seo: {
+      title: "Mortgage Overpayment Calculator UK",
+      description:
+        "Find out how much interest and how many years you save by overpaying your mortgage monthly or with a lump sum, with a warning when you pass the 10% limit.",
+    },
+    updated: "2026-09-16",
   },
   {
     slug: "compound-interest-calculator",
@@ -67,6 +89,12 @@ export const tools: Tool[] = [
     icon: TrendingUp,
     keywords: ["savings", "investment", "growth", "interest", "wealth", "returns", "isa"],
     tint: "var(--sticker-lilac)",
+    seo: {
+      title: "Compound Interest Calculator with Monthly Deposits",
+      description:
+        "Project savings and investment growth with compound interest, regular monthly contributions and monthly, quarterly or yearly compounding. Chart and yearly table.",
+    },
+    updated: "2026-09-16",
   },
   {
     slug: "percentage-calculator",
@@ -78,6 +106,12 @@ export const tools: Tool[] = [
     icon: Percent,
     keywords: ["percent", "change", "increase", "decrease", "discount", "ratio", "difference"],
     tint: "var(--sticker-yellow)",
+    seo: {
+      title: "Percentage Calculator: Change, Increase, % Of",
+      description:
+        "Work out X% of a number, what percentage one number is of another, percentage change between two values, and increases or decreases by a percentage.",
+    },
+    updated: "2026-09-16",
   },
   {
     slug: "arrow-spine-calculator",
@@ -89,6 +123,12 @@ export const tools: Tool[] = [
     icon: Target,
     keywords: ["archery", "arrow", "spine", "stiffness", "bow", "shaft", "point", "tip", "grain", "deflection", "tuning"],
     tint: "var(--sticker-pink)",
+    seo: {
+      title: "Arrow Spine Calculator: Cut Length and Point Weight",
+      description:
+        "Estimate how cutting a shaft or changing point weight shifts an arrow's effective spine, with the nearest standard spine and a draw-weight equivalent.",
+    },
+    updated: "2026-09-16",
   },
 ];
 

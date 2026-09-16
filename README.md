@@ -37,9 +37,18 @@ pnpm lint     # eslint
    - `components/calc/mobile-result-bar.tsx`: sticky bottom result summary on mobile
    - `components/charts/growth-chart.tsx`: line/area chart with crosshair tooltip
    - `components/charts/split-bar.tsx`: part-to-whole stacked bar with legend
-3. **Create the route** at `app/tools/<slug>/page.tsx`: pull the tool from the registry, export `metadata`, and wrap the component in `ToolPageShell` (see any existing tool page, they are all ~20 lines).
+3. **Write the guide** in `content/<slug>.ts`: a `ToolContent` object (intro, sections, FAQs; type in `lib/tool-content.ts`). It renders under the calculator and feeds the FAQ structured data, so make it genuinely useful and keep the numbers verified against the engine.
+4. **Create the route** at `app/tools/<slug>/page.tsx` plus `opengraph-image.tsx`: copy any existing tool folder and change the slug. `toolMetadata(tool)` builds title, description, canonical and social tags from the registry's `seo` field; `ToolPageShell` adds breadcrumbs, JSON-LD, the guide and related tools.
 
 Pure calculation logic lives in `lib/` (see `lib/finance.ts`) so it stays testable and separate from the UI.
+
+## SEO
+
+- Site URL comes from `NEXT_PUBLIC_SITE_URL` (fallback in `lib/site.ts`); it drives canonicals, Open Graph URLs, the sitemap and structured data. Set it in Vercel before launch.
+- `app/sitemap.ts` and `app/robots.ts` are generated from the registry; `updated` on each tool feeds `lastmod`.
+- Social cards are rendered at build time by `lib/og.tsx` (one `opengraph-image.tsx` per route).
+- Structured data: `WebApplication` + `BreadcrumbList` + `FAQPage` per tool, `WebSite` + `Organization` + `ItemList` on the homepage (`lib/seo.ts`). Validate with https://search.google.com/test/rich-results after deploying.
+- Analytics: Cloudflare Web Analytics beacon in `app/layout.tsx`.
 
 ## Design system notes
 
