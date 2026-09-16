@@ -4,8 +4,10 @@ export interface Currency {
   label: string;
 }
 
+const GBP: Currency = { code: "GBP", symbol: "£", label: "British Pound" };
+
 export const currencies: Currency[] = [
-  { code: "GBP", symbol: "£", label: "British Pound" },
+  GBP,
   { code: "EUR", symbol: "€", label: "Euro" },
   { code: "USD", symbol: "$", label: "US Dollar" },
   { code: "RON", symbol: "lei", label: "Romanian Leu" },
@@ -17,7 +19,25 @@ export const currencies: Currency[] = [
 export const DEFAULT_CURRENCY = "GBP";
 
 export function getCurrency(code: string): Currency {
-  return currencies.find((c) => c.code === code) ?? currencies[0];
+  return currencies.find((c) => c.code === code) ?? GBP;
+}
+
+/**
+ * Intl.NumberFormat construction is the expensive half of formatting and the
+ * calculators format dozens of values per slider frame, so formatters are
+ * cached by their options. The key space (7 currencies x compact x a couple
+ * of decimal settings) is bounded.
+ */
+const formatters = new Map<string, Intl.NumberFormat>();
+
+function numberFormat(options: Intl.NumberFormatOptions): Intl.NumberFormat {
+  const key = JSON.stringify(options);
+  let formatter = formatters.get(key);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat("en-GB", options);
+    formatters.set(key, formatter);
+  }
+  return formatter;
 }
 
 export function formatMoney(
@@ -26,7 +46,7 @@ export function formatMoney(
   options?: { compact?: boolean; decimals?: number },
 ): string {
   if (!Number.isFinite(value)) return "—";
-  return new Intl.NumberFormat("en-GB", {
+  return numberFormat({
     style: "currency",
     currency: code,
     notation: options?.compact ? "compact" : "standard",
@@ -37,7 +57,7 @@ export function formatMoney(
 
 export function formatNumber(value: number, decimals = 2): string {
   if (!Number.isFinite(value)) return "—";
-  return new Intl.NumberFormat("en-GB", {
+  return numberFormat({
     minimumFractionDigits: 0,
     maximumFractionDigits: decimals,
   }).format(value);

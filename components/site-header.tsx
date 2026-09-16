@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { LogoMark, Wordmark } from "@/components/logo";
-import { openCommandPalette } from "@/components/command-palette";
+import { openCommandPalette } from "@/components/command-palette-events";
 
 export function SiteHeader() {
   return (

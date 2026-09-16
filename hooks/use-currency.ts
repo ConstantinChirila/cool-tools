@@ -10,7 +10,12 @@ const listeners = new Set<() => void>();
 
 function getSnapshot(): string {
   if (currentCode === null) {
-    currentCode = localStorage.getItem(STORAGE_KEY) ?? DEFAULT_CURRENCY;
+    try {
+      currentCode = localStorage.getItem(STORAGE_KEY) ?? DEFAULT_CURRENCY;
+    } catch {
+      // Storage blocked (privacy mode, embedded frame): keep the default in memory.
+      currentCode = DEFAULT_CURRENCY;
+    }
   }
   return currentCode;
 }
@@ -26,7 +31,11 @@ function subscribe(listener: () => void): () => void {
 
 function setCurrency(next: string) {
   currentCode = next;
-  localStorage.setItem(STORAGE_KEY, next);
+  try {
+    localStorage.setItem(STORAGE_KEY, next);
+  } catch {
+    // Storage blocked: the choice still applies for this page load.
+  }
   listeners.forEach((l) => l());
 }
 

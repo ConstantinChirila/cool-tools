@@ -1,95 +1,39 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
-import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { useRecentTools } from "@/hooks/use-recent-tools";
-import { categories, tools } from "@/lib/tools";
+import dynamic from "next/dynamic";
+import { OPEN_PALETTE_EVENT } from "@/components/command-palette-events";
 
-export const OPEN_PALETTE_EVENT = "bitsbobs:open-palette";
-
-export function openCommandPalette() {
-  window.dispatchEvent(new Event(OPEN_PALETTE_EVENT));
-}
+// cmdk and the dialog only matter once someone presses Cmd+K or the search
+// button, so the body stays out of every route's initial bundle until then.
+const CommandPaletteDialog = dynamic(() => import("@/components/command-palette-dialog"), {
+  ssr: false,
+});
 
 export function CommandPalette() {
-  const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const recent = useRecentTools();
-  const [search, setSearch] = React.useState("");
+  const [everOpened, setEverOpened] = React.useState(false);
 
   React.useEffect(() => {
+    const show = () => {
+      setEverOpened(true);
+      setOpen(true);
+    };
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
+        setEverOpened(true);
         setOpen((v) => !v);
       }
     };
-    const onOpen = () => setOpen(true);
     document.addEventListener("keydown", onKeyDown);
-    window.addEventListener(OPEN_PALETTE_EVENT, onOpen);
+    window.addEventListener(OPEN_PALETTE_EVENT, show);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener(OPEN_PALETTE_EVENT, onOpen);
+      window.removeEventListener(OPEN_PALETTE_EVENT, show);
     };
   }, []);
 
-  const go = (href: string) => {
-    setOpen(false);
-    router.push(href);
-  };
-
-  return (
-    <CommandDialog
-      open={open}
-      onOpenChange={setOpen}
-      title="Search tools"
-      description="Search for a tool to open"
-    >
-      <Command>
-        <CommandInput placeholder="Search tools…" value={search} onValueChange={setSearch} />
-        <CommandList>
-          <CommandEmpty>No tools found.</CommandEmpty>
-          {!search && recent.length > 0 && (
-            <CommandGroup heading="Recent">
-              {recent.map((tool) => (
-                <CommandItem
-                  key={`recent-${tool.slug}`}
-                  value={`recent ${tool.name}`}
-                  onSelect={() => go(`/tools/${tool.slug}`)}
-                >
-                  <tool.icon className="size-4" style={{ color: tool.tint }} />
-                  <span>{tool.name}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-          {categories.map((category) => (
-            <CommandGroup key={category} heading={category}>
-              {tools
-                .filter((tool) => tool.category === category)
-                .map((tool) => (
-                  <CommandItem
-                    key={tool.slug}
-                    value={`${tool.name} ${tool.keywords.join(" ")}`}
-                    onSelect={() => go(`/tools/${tool.slug}`)}
-                  >
-                    <tool.icon className="size-4" style={{ color: tool.tint }} />
-                    <span>{tool.name}</span>
-                  </CommandItem>
-                ))}
-            </CommandGroup>
-          ))}
-        </CommandList>
-      </Command>
-    </CommandDialog>
-  );
+  if (!everOpened) return null;
+  return <CommandPaletteDialog open={open} onOpenChange={setOpen} />;
 }
