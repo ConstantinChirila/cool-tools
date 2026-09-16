@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CurrencySelect } from "@/components/calc/currency-select";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
-import { Segmented } from "@/components/calc/segmented";
+import { NumberField } from "@/components/calc/number-field";
 import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { GrowthChart } from "@/components/charts/growth-chart";
@@ -17,24 +17,37 @@ import { formatMoney } from "@/lib/currency";
 
 const TERM_PRESETS = [15, 20, 25, 30];
 
-type MortgageType = "repayment" | "interestOnly";
+function formatDuration(totalMonths: number): string {
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years} ${years === 1 ? "yr" : "yrs"}`);
+  if (months > 0 || years === 0) {
+    parts.push(`${months} ${months === 1 ? "mo" : "mos"}`);
+  }
+  return parts.join(" ");
+}
 
-const MORTGAGE_TYPE_OPTIONS = [
-  { value: "repayment" as const, label: "Repayment" },
-  { value: "interestOnly" as const, label: "Interest-only" },
-];
+function padSeries(values: number[], length: number): number[] {
+  if (values.length >= length) return values;
+  return [...values, ...Array(length - values.length).fill(0)];
+}
 
-export function MortgageCalculator() {
+export function MortgageOverpaymentCalculator() {
   const { code, currency, setCurrency } = useCurrency();
   const [amount, setAmount] = React.useState(250_000);
   const [rate, setRate] = React.useState(4.5);
   const [term, setTerm] = React.useState(25);
-  const [mortgageType, setMortgageType] = React.useState<MortgageType>("repayment");
-  const interestOnly = mortgageType === "interestOnly";
+  const [monthlyOverpayment, setMonthlyOverpayment] = React.useState(200);
+  const [lumpSum, setLumpSum] = React.useState(0);
 
-  const result = React.useMemo(
-    () => calculateMortgage(amount, rate, term, { interestOnly }),
-    [amount, rate, term, interestOnly],
+  const base = React.useMemo(
+    () => calculateMortgage(amount, rate, term),
+    [amount, rate, term],
+  );
+  const over = React.useMemo(
+    () => calculateMortgage(amount, rate, term, { monthlyOverpayment, lumpSum }),
+    [amount, rate, term, monthlyOverpayment, lumpSum],
   );
 
   const money = React.useCallback(
@@ -46,6 +59,35 @@ export function MortgageCalculator() {
     [code],
   );
 
+  const interestSaved = Math.max(base.totalInterest - over.totalInterest, 0);
+  const timeSavedMonths = Math.max(base.monthsToPayoff - over.monthsToPayoff, 0);
+  const monthlyTotal = over.monthlyPayment + monthlyOverpayment;
+
+  // Check every year of the overpaid schedule against that year's opening
+  // balance, not just year 1 against the original loan amount.
+  const capWarningYear = React.useMemo(() => {
+    for (let i = 1; i <= over.years.length; i++) {
+      const openingBalance = over.balanceSeries[i - 1];
+      if (openingBalance <= 0) continue;
+      const monthsElapsedBefore = (i - 1) * 12;
+      const monthsPaidThisYear = Math.min(
+        12,
+        Math.max(over.monthsToPayoff - monthsElapsedBefore, 0),
+      );
+      const yearOverpayment =
+        monthlyOverpayment * monthsPaidThisYear + (i === 1 ? lumpSum : 0);
+      if (yearOverpayment > openingBalance * 0.1) {
+        return i;
+      }
+    }
+    return null;
+  }, [over, monthlyOverpayment, lumpSum]);
+  const showCapWarning = capWarningYear !== null;
+
+  const pointCount = Math.max(base.balanceSeries.length, over.balanceSeries.length);
+  const balanceWithout = padSeries(base.balanceSeries, pointCount);
+  const balanceWith = padSeries(over.balanceSeries, pointCount);
+
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-[5fr_6fr] lg:items-start">
@@ -56,14 +98,8 @@ export function MortgageCalculator() {
             <CurrencySelect value={code} onChange={setCurrency} />
           </CardHeader>
           <CardContent className="space-y-7">
-            <Segmented
-              label="Mortgage type"
-              value={mortgageType}
-              onChange={setMortgageType}
-              options={MORTGAGE_TYPE_OPTIONS}
-            />
             <SliderField
-              id="mortgage-amount"
+              id="overpayment-amount"
               label="Loan amount"
               value={amount}
               onChange={setAmount}
@@ -76,7 +112,7 @@ export function MortgageCalculator() {
               decimals={0}
             />
             <SliderField
-              id="mortgage-rate"
+              id="overpayment-rate"
               label="Interest rate"
               value={rate}
               onChange={setRate}
@@ -88,7 +124,7 @@ export function MortgageCalculator() {
             />
             <div className="space-y-3">
               <SliderField
-                id="mortgage-term"
+                id="overpayment-term"
                 label="Term"
                 value={term}
                 onChange={setTerm}
@@ -115,6 +151,40 @@ export function MortgageCalculator() {
                 ))}
               </div>
             </div>
+
+            <div className="space-y-5 border-t border-foreground/15 pt-6">
+              <p className="text-sm font-bold">Overpayments</p>
+              <SliderField
+                id="overpayment-monthly"
+                label="Monthly overpayment"
+                value={monthlyOverpayment}
+                onChange={setMonthlyOverpayment}
+                min={0}
+                max={3000}
+                step={10}
+                sliderStep={25}
+                prefix={currency.symbol}
+                grouped
+                decimals={0}
+              />
+              <NumberField
+                id="overpayment-lump-sum"
+                label="One-off lump sum"
+                value={lumpSum}
+                onChange={setLumpSum}
+                prefix={currency.symbol}
+                grouped
+                decimals={0}
+                hint="Paid alongside month 1"
+              />
+              {showCapWarning && (
+                <p className="sticker-sm rounded-xl border-[2.5px] border-foreground bg-yellow px-3 py-2 text-xs font-semibold">
+                  From year {capWarningYear} your overpayments exceed 10% of the
+                  remaining balance. Many UK fixed-rate deals charge an early
+                  repayment fee above that. Check your lender&apos;s terms.
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -123,33 +193,22 @@ export function MortgageCalculator() {
           <Card>
             <CardContent className="space-y-6 pt-6">
               <HeroStat
-                label="Monthly repayment"
-                value={money(result.monthlyPayment, 2)}
-                hint={
-                  interestOnly
-                    ? `interest only, for ${term} ${term === 1 ? "year" : "years"} at ${rate}%`
-                    : `for ${term} ${term === 1 ? "year" : "years"} at ${rate}%`
-                }
+                label="Interest saved"
+                value={money(interestSaved)}
+                hint={`vs no overpayments over ${term} ${term === 1 ? "year" : "years"}`}
               />
-              {interestOnly && (
-                <p className="sticker-sm rounded-xl border-[2.5px] border-foreground bg-yellow px-3 py-2 text-xs font-semibold">
-                  You&apos;ll still owe {money(result.endingBalance)} at the end of the term.
-                </p>
-              )}
               <div className="grid grid-cols-2 gap-4 border-t border-foreground/15 pt-5">
-                <Stat label="Total repaid" value={money(result.totalPaid)} />
-                <Stat label="Total interest" value={money(result.totalInterest)} />
+                <Stat label="Paid off in" value={formatDuration(over.monthsToPayoff)} />
+                <Stat label="Time saved" value={formatDuration(timeSavedMonths)} />
+                <Stat label="New total interest" value={money(over.totalInterest)} />
+                <Stat label="Monthly total" value={money(monthlyTotal, 2)} />
               </div>
               <SplitBar
                 segments={[
+                  { name: "Interest saved", value: interestSaved, color: "var(--chart-2)" },
                   {
-                    name: interestOnly ? "Loan (still owed)" : "Principal",
-                    value: amount,
-                    color: "var(--chart-2)",
-                  },
-                  {
-                    name: "Interest",
-                    value: result.totalInterest,
+                    name: "Interest still paid",
+                    value: over.totalInterest,
                     color: "var(--chart-3)",
                   },
                 ]}
@@ -158,10 +217,10 @@ export function MortgageCalculator() {
             </CardContent>
           </Card>
           <Link
-            href="/tools/mortgage-overpayment-calculator"
+            href="/tools/mortgage-calculator"
             className="inline-flex h-10 items-center gap-1.5 rounded-full border-[2.5px] border-foreground bg-card px-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
           >
-            Thinking of overpaying? Try the Mortgage Overpayment Calculator
+            Just want the monthly payment? Mortgage Calculator
           </Link>
         </div>
       </div>
@@ -180,15 +239,15 @@ export function MortgageCalculator() {
               <GrowthChart
                 series={[
                   {
-                    name: "Remaining balance",
-                    color: "var(--chart-2)",
-                    values: result.balanceSeries,
-                    area: true,
+                    name: "Balance without overpaying",
+                    color: "var(--chart-3)",
+                    values: balanceWithout,
                   },
                   {
-                    name: "Interest paid",
-                    color: "var(--chart-3)",
-                    values: result.interestSeries,
+                    name: "Balance with overpaying",
+                    color: "var(--chart-2)",
+                    values: balanceWith,
+                    area: true,
                   },
                 ]}
                 xLabel={(i) => (i === 0 ? "Start" : `Year ${i}`)}
@@ -209,7 +268,7 @@ export function MortgageCalculator() {
                     </tr>
                   </thead>
                   <tbody className="text-numeric">
-                    {result.years.map((row) => (
+                    {over.years.map((row) => (
                       <tr
                         key={row.year}
                         className="border-b border-foreground/10 last:border-0 hover:bg-secondary"
@@ -228,7 +287,7 @@ export function MortgageCalculator() {
         </CardContent>
       </Card>
 
-      <MobileResultBar label="Monthly repayment" value={money(result.monthlyPayment, 2)} />
+      <MobileResultBar label="Interest saved" value={money(interestSaved)} />
     </>
   );
 }

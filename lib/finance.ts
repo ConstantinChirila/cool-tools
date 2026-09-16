@@ -6,9 +6,14 @@ export interface AmortizationYear {
 }
 
 export interface MortgageResult {
+  /** Scheduled payment: interest-only for interest-only mode, annuity payment otherwise. */
   monthlyPayment: number;
   totalPaid: number;
   totalInterest: number;
+  /** Actual months until the balance reaches 0. Equals the term in months when there is no overpayment, or for interest-only (balance never reaches 0 within the term). */
+  monthsToPayoff: number;
+  /** Remaining balance once the term/payoff loop ends. Nonzero only for interest-only mortgages. */
+  endingBalance: number;
   years: AmortizationYear[];
   /** Remaining balance at the end of each year, starting with year 0 (loan amount). */
   balanceSeries: number[];
@@ -16,51 +21,114 @@ export interface MortgageResult {
   interestSeries: number[];
 }
 
+export interface MortgageOptions {
+  /** Pay interest only; the balance never reduces during the term. Default false. */
+  interestOnly?: boolean;
+  /** Extra amount paid every month on top of the scheduled payment. Ignored when interestOnly is true. Default 0. */
+  monthlyOverpayment?: number;
+  /** One-off extra amount paid alongside the month 1 payment. Ignored when interestOnly is true. Default 0. */
+  lumpSum?: number;
+}
+
 export function calculateMortgage(
   principal: number,
   annualRatePct: number,
   termYears: number,
+  options: MortgageOptions = {},
 ): MortgageResult {
+  const { interestOnly = false, monthlyOverpayment = 0, lumpSum = 0 } = options;
   const months = Math.round(termYears * 12);
   const r = annualRatePct / 100 / 12;
-  const monthlyPayment =
-    r === 0 ? principal / months : (principal * r) / (1 - (1 + r) ** -months);
+  const monthlyPayment = interestOnly
+    ? principal * r
+    : r === 0
+      ? principal / months
+      : (principal * r) / (1 - (1 + r) ** -months);
 
   const years: AmortizationYear[] = [];
   const balanceSeries: number[] = [principal];
   const interestSeries: number[] = [0];
 
+  // Interest-only: the balance never reduces during the term, so the
+  // borrower still owes the full principal at the end. Overpayments are
+  // ignored in this mode since there is no scheduled principal reduction
+  // to apply them against.
+  if (interestOnly) {
+    let cumulativeInterest = 0;
+    let yearInterest = 0;
+
+    for (let m = 1; m <= months; m++) {
+      const interest = principal * r;
+      cumulativeInterest += interest;
+      yearInterest += interest;
+
+      if (m % 12 === 0 || m === months) {
+        years.push({
+          year: Math.ceil(m / 12),
+          interestPaid: yearInterest,
+          principalPaid: 0,
+          balance: principal,
+        });
+        balanceSeries.push(principal);
+        interestSeries.push(cumulativeInterest);
+        yearInterest = 0;
+      }
+    }
+
+    return {
+      monthlyPayment,
+      totalPaid: cumulativeInterest,
+      totalInterest: cumulativeInterest,
+      monthsToPayoff: months,
+      endingBalance: principal,
+      years,
+      balanceSeries,
+      interestSeries,
+    };
+  }
+
   let balance = principal;
   let cumulativeInterest = 0;
   let yearInterest = 0;
   let yearPrincipal = 0;
+  let monthsToPayoff = months;
 
   for (let m = 1; m <= months; m++) {
     const interest = balance * r;
-    const principalPart = Math.min(monthlyPayment - interest, balance);
-    balance -= principalPart;
+    const extra = monthlyOverpayment + (m === 1 ? lumpSum : 0);
+    // Cap the principal portion at the remaining balance so the loan
+    // never overpays once it is cleared.
+    const principalPart = Math.min(monthlyPayment - interest + extra, balance);
+    balance = Math.max(balance - principalPart, 0);
+    if (Math.abs(balance) < 1e-6) balance = 0;
     cumulativeInterest += interest;
     yearInterest += interest;
     yearPrincipal += principalPart;
+    monthsToPayoff = m;
 
-    if (m % 12 === 0 || m === months) {
+    const payoff = balance <= 0;
+    if (m % 12 === 0 || payoff || m === months) {
       years.push({
         year: Math.ceil(m / 12),
         interestPaid: yearInterest,
         principalPaid: yearPrincipal,
-        balance: Math.max(balance, 0),
+        balance,
       });
-      balanceSeries.push(Math.max(balance, 0));
+      balanceSeries.push(balance);
       interestSeries.push(cumulativeInterest);
       yearInterest = 0;
       yearPrincipal = 0;
     }
+
+    if (payoff) break;
   }
 
   return {
     monthlyPayment,
-    totalPaid: monthlyPayment * months,
-    totalInterest: monthlyPayment * months - principal,
+    totalPaid: cumulativeInterest + (principal - balance),
+    totalInterest: cumulativeInterest,
+    monthsToPayoff,
+    endingBalance: balance,
     years,
     balanceSeries,
     interestSeries,
@@ -70,7 +138,10 @@ export function calculateMortgage(
 export interface CompoundYear {
   year: number;
   contributed: number;
+  /** Cumulative interest earned by the end of this year. */
   interestEarned: number;
+  /** Interest earned during this year alone. */
+  interestThisYear: number;
   balance: number;
 }
 
@@ -105,6 +176,8 @@ export function calculateCompound(
   const periodRate = rate / compoundsPerYear;
 
   for (let year = 1; year <= termYears; year++) {
+    const balanceStartOfYear = balance;
+    const contributedStartOfYear = contributed;
     for (let m = 1; m <= 12; m++) {
       balance += monthlyContribution;
       contributed += monthlyContribution;
@@ -116,6 +189,8 @@ export function calculateCompound(
       year,
       contributed,
       interestEarned: balance - contributed,
+      interestThisYear:
+        balance - balanceStartOfYear - (contributed - contributedStartOfYear),
       balance,
     });
     balanceSeries.push(balance);

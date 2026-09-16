@@ -1,6 +1,7 @@
 import {
   House,
   Percent,
+  PiggyBank,
   Target,
   TrendingUp,
   Wallet,
@@ -43,6 +44,17 @@ export const tools: Tool[] = [
     category: "Finance",
     icon: House,
     keywords: ["loan", "home", "house", "repayment", "amortization", "interest", "property"],
+    tint: "var(--sticker-sky)",
+  },
+  {
+    slug: "mortgage-overpayment-calculator",
+    name: "Mortgage Overpayment Calculator",
+    shortName: "Overpayments",
+    description:
+      "See how much interest and how many years you save by overpaying your mortgage each month or with a lump sum.",
+    category: "Finance",
+    icon: PiggyBank,
+    keywords: ["overpay", "overpayment", "lump sum", "pay off early", "early repayment", "interest saved", "10% rule", "remortgage"],
     tint: "var(--sticker-sky)",
   },
   {
