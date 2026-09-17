@@ -36,6 +36,8 @@ export interface Unit {
   format?: "minsec";
   /** Extra spellings the phrase parser and picker accept, beyond name and symbol. */
   aliases: readonly string[];
+  /** Smaller unit this one is customarily paired with: feet and inches, stone and pounds. */
+  minor?: string;
 }
 
 export interface UnitCategory {
@@ -64,7 +66,7 @@ function u(
   sym: string,
   factor: number,
   aliases: readonly string[] = [],
-  extra: Pick<Unit, "offset" | "inverse" | "format"> = {},
+  extra: Pick<Unit, "offset" | "inverse" | "format" | "minor"> = {},
 ): Unit {
   return { id, name, sym, factor, aliases, ...extra };
 }
@@ -86,8 +88,8 @@ export const categories: readonly UnitCategory[] = [
       u("nm","Nanometre","nm",1e-9,["nanometer"]),
       u("ang","Ångström","Å",1e-10,["angstrom","angstroms"]),
       u("in","Inch","in",0.0254,["inch","inches"]),
-      u("ft","Foot","ft",0.3048,["foot","feet"]),
-      u("yd","Yard","yd",0.9144,["yard","yards"]),
+      u("ft","Foot","ft",0.3048,["foot","feet"],{ minor: "in" }),
+      u("yd","Yard","yd",0.9144,["yard","yards"],{ minor: "ft" }),
       u("mi","Mile","mi",1609.344,["mile","miles"]),
       u("nmi","Nautical mile","nmi",1852,["nautical mile","nautical miles"]),
       u("thou","Thou (mil)","thou",2.54e-5,["mil","thousandth of an inch"]),
@@ -176,8 +178,8 @@ export const categories: readonly UnitCategory[] = [
       u("kg","Kilogram","kg",1,["kilo","kilos","kilograms","kgs"]),
       u("t","Tonne","t",1000,["tonnes","metric ton","metric tons"]),
       u("oz","Ounce","oz",0.028349523125,["ounce","ounces"]),
-      u("lb","Pound","lb",0.45359237,["pound","pounds","lbs"]),
-      u("st","Stone","st",6.35029318,["stone","stones"]),
+      u("lb","Pound","lb",0.45359237,["pound","pounds","lbs"],{ minor: "oz" }),
+      u("st","Stone","st",6.35029318,["stone","stones"],{ minor: "lb" }),
       u("ton_us","Short ton (US)","ton US",907.18474,["short ton","us ton","us tons"]),
       u("ton_uk","Long ton (UK)","ton",1016.0469088,["long ton","ton","tons","imperial ton"]),
       u("cwt_uk","Hundredweight (UK)","cwt",50.80234544,["hundredweight","cwt uk"]),
@@ -237,10 +239,10 @@ export const categories: readonly UnitCategory[] = [
       u("us","Microsecond","µs",1e-6,["us","microseconds"]),
       u("ms","Millisecond","ms",1e-3,["milliseconds","millis"]),
       u("s","Second","s",1,["sec","secs","second","seconds"]),
-      u("min","Minute","min",60,["minute","minutes","mins"]),
-      u("h","Hour","h",3600,["hr","hrs","hour","hours"]),
-      u("d","Day","d",86400,["day","days"]),
-      u("wk","Week","wk",604800,["week","weeks","w"]),
+      u("min","Minute","min",60,["minute","minutes","mins"],{ minor: "s" }),
+      u("h","Hour","h",3600,["hr","hrs","hour","hours"],{ minor: "min" }),
+      u("d","Day","d",86400,["day","days"],{ minor: "h" }),
+      u("wk","Week","wk",604800,["week","weeks","w"],{ minor: "d" }),
       u("fn","Fortnight","fn",1209600,["fortnight","fortnights"]),
       u("mo","Month (average)","mo",2629746,["month","months"]),
       u("yr","Year (Gregorian)","yr",31556952,["year","years","y"]),

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { UnitConverter } from "@/components/tools/unit-converter";
+import { UnitPairLinks } from "@/components/tools/unit-pair-links";
 import { ToolPageShell } from "@/components/tool-page-shell";
 import { content } from "@/content/unit-converter";
 import { toolMetadata } from "@/lib/seo";
@@ -13,6 +14,7 @@ export default function UnitConverterPage() {
   return (
     <ToolPageShell tool={tool} content={content}>
       <UnitConverter />
+      <UnitPairLinks />
     </ToolPageShell>
   );
 }

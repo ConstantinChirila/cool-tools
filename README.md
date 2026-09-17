@@ -50,6 +50,7 @@ Pure calculation logic lives in `lib/` (see `lib/finance.ts`) so it stays testab
 - Social cards are rendered at build time by `lib/og.tsx` (one `opengraph-image.tsx` per route).
 - Structured data: `WebApplication` + `BreadcrumbList` + `FAQPage` per tool, `WebSite` + `Organization` + `ItemList` on the homepage (`lib/seo.ts`). Validate with https://search.google.com/test/rich-results after deploying.
 - Analytics: Cloudflare Web Analytics beacon in `app/layout.tsx`.
+- Unit converter landing pages: `lib/units/pairs.ts` is a curated list of conversions (stone to kg, mpg to L/100km…) that each get a static page at `/tools/unit-converter/<slug>` via `app/tools/unit-converter/[pair]/page.tsx`, with their own metadata, quick table, FAQ structured data and sitemap entries. Add a pair there; nothing else needs registering.
 
 ## Design system notes
 

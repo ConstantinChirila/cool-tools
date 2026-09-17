@@ -1,4 +1,4 @@
-import type { Unit } from "@/lib/units/data";
+import { getUnit, type Unit, type UnitCategory } from "@/lib/units/data";
 
 export type Precision = "auto" | "2dp" | "4dp" | "max";
 
@@ -92,4 +92,26 @@ export function describeRelation(from: Unit, to: Unit): Relation {
   const factor = fromInverse ? to.factor / from.factor : from.factor / to.factor;
   const offset = ((from.offset ?? 0) - (to.offset ?? 0)) / to.factor;
   return offset === 0 ? { kind: "linear", factor } : { kind: "affine", factor, offset };
+}
+
+/**
+ * Express a value in a unit's customary pair, "5 ft 11 in" or "11 st 4 lb",
+ * for units that declare a minor unit. Returns null when it does not apply.
+ */
+export function formatCompound(category: UnitCategory, unit: Unit, value: number): string | null {
+  if (!unit.minor || !Number.isFinite(value) || unit.inverse || unit.offset) return null;
+  const minor = getUnit(category, unit.minor);
+  if (!minor) return null;
+  // 12 inches to the foot, 14 pounds to the stone; rounded so 0.3048/0.0254 is exactly 12.
+  const perMajor = Math.round((unit.factor / minor.factor) * 1e6) / 1e6;
+  const sign = value < 0 ? "-" : "";
+  const magnitude = Math.abs(value);
+  let major = Math.floor(magnitude);
+  let rest = Math.round((magnitude - major) * perMajor * 10) / 10;
+  if (rest >= perMajor) {
+    major += 1;
+    rest = 0;
+  }
+  const restText = Number.isInteger(rest) ? String(rest) : rest.toFixed(1);
+  return `${sign}${major.toLocaleString("en-GB")} ${unit.sym} ${restText} ${minor.sym}`;
 }

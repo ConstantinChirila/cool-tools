@@ -1,3 +1,4 @@
+import { fromBase, parseNumber, toBase } from "@/lib/units/convert";
 import { categories, type Unit, type UnitCategory } from "@/lib/units/data";
 
 export interface UnitRef {
@@ -72,45 +73,136 @@ export function lookupUnit(raw: string): UnitRef | null {
   );
 }
 
-export interface ParsedQuery {
-  /** The number as typed, or "" when the phrase had no number. */
+export interface Segment {
   numberRaw: string;
-  /** Everything after the number. */
+  value: number;
+  ref: UnitRef;
+}
+
+/** "5'11\"" → "5 ft 11 in", "6'" → "6 ft", "30\"" → "30 in". */
+export function expandMarks(s: string): string {
+  return s
+    .replace(/(\d)\s*['′]\s*(\d+(?:\.\d+)?)\s*(?:["″]|'')?/g, "$1 ft $2 in")
+    .replace(/(\d)\s*['′]/g, "$1 ft")
+    .replace(/(\d)\s*(?:["″]|'')/g, "$1 in");
+}
+
+const SEGMENT = /([-+]?(?:\d[\d,]*(?:\.\d*)?|\.\d+))\s*([^\d\s][^\d]*?)?(?=\s*[-+]?\d|$)/g;
+
+/**
+ * Split "5 ft 11 in" or "11st 4lb" into number-unit segments. A trailing
+ * number with no unit takes the previous unit's minor ("5ft11" is 5 ft 11 in).
+ * Returns null unless every segment resolves to a unit in one category that
+ * can be added up (no temperature scales, no reciprocal units).
+ */
+export function parseSegments(text: string): Segment[] | null {
+  const segments: Segment[] = [];
+  let previous: UnitRef | null = null;
+  for (const match of text.trim().matchAll(SEGMENT)) {
+    const numberRaw = match[1] ?? "";
+    const unitText = (match[2] ?? "").trim();
+    let ref: UnitRef | null = null;
+    if (unitText) ref = lookupUnit(unitText);
+    else if (previous?.unit.minor) {
+      const minorId = previous.unit.minor;
+      const minorUnit: Unit | undefined = previous.category.units.find((u: Unit) => u.id === minorId);
+      if (minorUnit) ref = { category: previous.category, unit: minorUnit };
+    }
+    if (!ref || ref.unit.inverse || ref.unit.offset) return null;
+    if (previous && ref.category !== previous.category) return null;
+    const value = parseNumber(numberRaw);
+    if (Number.isNaN(value)) return null;
+    segments.push({ numberRaw, value, ref });
+    previous = ref;
+  }
+  return segments.length > 0 ? segments : null;
+}
+
+/**
+ * Read a typed amount in a given unit: a plain number, m:ss, or a compound
+ * like "5 ft 11 in" whose parts all belong to the unit's category. NaN when
+ * the text is not an amount in this category.
+ */
+export function parseQuantity(raw: string, unit: Unit, category: UnitCategory): number {
+  const plain = parseNumber(raw);
+  if (!Number.isNaN(plain)) return plain;
+  if (!/[a-z°µ′″'"]/i.test(raw)) return NaN;
+  const segments = parseSegments(expandMarks(raw));
+  if (!segments || segments.some((s) => s.ref.category !== category)) return NaN;
+  const base = segments.reduce((sum, s) => sum + toBase(s.ref.unit, s.value), 0);
+  return fromBase(unit, base);
+}
+
+export interface ParsedQuery {
+  /** The amount as typed: a number, or the whole compound ("5 ft 11 in"); "" when absent. */
+  numberRaw: string;
+  /** Everything after the number, or the compound text. */
   rest: string;
   from: UnitRef | null;
   to: UnitRef | null;
+  /** True when the amount was a compound of several units. */
+  compound: boolean;
 }
 
-const SEPARATOR = /\s+(?:to|in|into|as|→|->|=)\s+|\s*(?:→|->|=)\s*/i;
+/** "to", "into", "as" and arrows always separate the two halves. */
+const STRONG_SEPARATOR = /\s+(?:to|into|as|→|->|=)\s+|\s*(?:→|->|=)\s*/i;
 const LEADING_NUMBER =
   /^([-+]?\d+:\d{1,2}(?::\d{1,2})?|[-+]?(?:\d[\d,]*(?:\.\d*)?|\.\d+)(?:e[-+]?\d+)?)?\s*(.*)$/i;
 
 /** Does this look like "45 mpg in l/100km" rather than a bare number? */
 export function isPhrase(raw: string): boolean {
-  return /[a-z°µ′″]/i.test(raw) && !/^[-+]?(\d+\.?\d*|\.\d+)e[-+]?\d+$/i.test(raw.trim());
+  return /[a-z°µ′″'"]/i.test(raw) && !/^[-+]?(\d+\.?\d*|\.\d+)e[-+]?\d+$/i.test(raw.trim());
+}
+
+function splitOn(text: string, separator: RegExp): [string, string] | null {
+  const match = text.match(separator);
+  if (!match || match.index === undefined) return null;
+  const left = text.slice(0, match.index).trim();
+  const right = text.slice(match.index + match[0].length).trim();
+  return left && right ? [left, right] : null;
 }
 
 /**
- * Parse "45 mpg in l/100km", "6 ft to cm", "stone kg" or just "psi". The
- * number is optional; the target unit is optional; "in" only separates when
- * it has a space on both sides, so "5 in to cm" still means inches.
+ * "in" is also a unit (inches), so it only separates as a last resort, and
+ * at its last occurrence: "5 ft 11 in in cm" splits before "cm".
  */
-export function parseQuery(text: string): ParsedQuery {
-  const match = text.trim().match(LEADING_NUMBER);
+function splitOnLastIn(text: string): [string, string] | null {
+  let at = -1;
+  for (const match of text.matchAll(/\bin\b/gi)) {
+    const i = match.index;
+    if (/\s/.test(text[i - 1] ?? "") && /\s/.test(text[i + 2] ?? "")) at = i;
+  }
+  if (at < 0) return null;
+  const left = text.slice(0, at).trim();
+  const right = text.slice(at + 2).trim();
+  return left && right ? [left, right] : null;
+}
+
+function readHalves(left: string, right: string): ParsedQuery {
+  const segments = /\d/.test(left) ? parseSegments(left) : null;
+  if (segments && segments.length >= 2 && segments[0]) {
+    return {
+      numberRaw: left,
+      rest: left,
+      from: segments[0].ref,
+      to: right ? lookupUnit(right) : null,
+      compound: true,
+    };
+  }
+
+  const match = left.match(LEADING_NUMBER);
   const numberRaw = match?.[1] ?? "";
   const rest = (match?.[2] ?? "").trim();
-  const parts = rest.split(SEPARATOR).map((p) => p.trim()).filter(Boolean);
   let from: UnitRef | null = null;
   let to: UnitRef | null = null;
-  if (parts.length >= 2) {
-    from = lookupUnit(parts[0] ?? "");
-    to = lookupUnit(parts[parts.length - 1] ?? "");
-  } else if (parts.length === 1) {
-    const only = parts[0] ?? "";
-    from = lookupUnit(only);
+  if (right) {
+    from = lookupUnit(rest);
+    to = lookupUnit(right);
+  } else if (rest) {
+    from = lookupUnit(rest);
     if (!from) {
-      // "stone kg" with no separator: try every split point.
-      const tokens = only.split(/\s+/);
+      // "stone kg" or "in cm" with no separator: try every split point.
+      const tokens = rest.split(/\s+/);
       for (let i = 1; i < tokens.length && !from; i++) {
         const a = lookupUnit(tokens.slice(0, i).join(" "));
         const b = lookupUnit(tokens.slice(i).join(" "));
@@ -121,7 +213,25 @@ export function parseQuery(text: string): ParsedQuery {
       }
     }
   }
-  return { numberRaw, rest, from, to };
+  return { numberRaw, rest, from, to, compound: false };
+}
+
+/**
+ * Parse "45 mpg in l/100km", "6 ft to cm", "5 ft 11 in to cm", "stone kg" or
+ * just "psi". The number is optional; the target unit is optional. "in" is
+ * tried as a separator only when nothing stronger is present, and only if
+ * the left half then reads as a unit, so "5 in to cm" still means inches.
+ */
+export function parseQuery(text: string): ParsedQuery {
+  const expanded = expandMarks(text.trim());
+  const strong = splitOn(expanded, STRONG_SEPARATOR);
+  if (strong) return readHalves(strong[0], strong[1]);
+  const weak = splitOnLastIn(expanded);
+  if (weak) {
+    const parsed = readHalves(weak[0], weak[1]);
+    if (parsed.from) return parsed;
+  }
+  return readHalves(expanded, "");
 }
 
 /** Search every unit for the picker: name, symbol or alias containing the query. */

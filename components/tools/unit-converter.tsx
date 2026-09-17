@@ -17,10 +17,10 @@ import {
   PRECISIONS,
   convert,
   describeRelation,
+  formatCompound,
   formatNumber,
   formatQuantity,
   fromBase,
-  parseNumber,
   toBase,
   type Precision,
 } from "@/lib/units/convert";
@@ -35,7 +35,7 @@ import {
   type UnitCategory,
   type UnitGroupId,
 } from "@/lib/units/data";
-import { isPhrase, normalise, parseQuery, searchUnits, type UnitRef } from "@/lib/units/parse";
+import { isPhrase, normalise, parseQuantity, parseQuery, searchUnits, type UnitRef } from "@/lib/units/parse";
 import { cn } from "@/lib/utils";
 
 const DEFAULT = { category: "fuel", from: "mpg_uk", to: "l100km", value: "45" } as const;
@@ -52,6 +52,14 @@ const PRECISION_OPTIONS: { value: Precision; label: string }[] = [
 
 type Side = "from" | "to";
 type GroupTab = UnitGroupId | "all";
+
+/** Where a page opens the converter (pair landing pages pass this). */
+export interface UnitConverterInitial {
+  category: string;
+  from: string;
+  to: string;
+  value: string;
+}
 
 function fallbackTo(category: UnitCategory, fromId: string): string {
   return category.preset.to !== fromId ? category.preset.to : category.preset.from;
@@ -72,11 +80,12 @@ function resolve(categoryId: string, fromId: string, toId: string) {
   return { category, from, to };
 }
 
-export function UnitConverter() {
-  const [categoryId, setCategoryId] = React.useState<string>(DEFAULT.category);
-  const [fromId, setFromId] = React.useState<string>(DEFAULT.from);
-  const [toId, setToId] = React.useState<string>(DEFAULT.to);
-  const [raw, setRaw] = React.useState<string>(DEFAULT.value);
+export function UnitConverter({ initial }: { initial?: UnitConverterInitial }) {
+  const start: UnitConverterInitial = initial ?? DEFAULT;
+  const [categoryId, setCategoryId] = React.useState<string>(start.category);
+  const [fromId, setFromId] = React.useState<string>(start.from);
+  const [toId, setToId] = React.useState<string>(start.to);
+  const [raw, setRaw] = React.useState<string>(start.value);
   const [precision, setPrecision] = React.useState<Precision>("auto");
   /** null means "follow the current category's group". */
   const [groupTab, setGroupTab] = React.useState<GroupTab | null>(null);
@@ -86,10 +95,10 @@ export function UnitConverter() {
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   useUrlState({
-    c: urlField(categoryId, setCategoryId, DEFAULT.category, CATEGORY_IDS),
-    f: urlField(fromId, setFromId, DEFAULT.from, UNIT_IDS),
-    t: urlField(toId, setToId, DEFAULT.to, UNIT_IDS),
-    v: urlField(raw, setRaw, DEFAULT.value),
+    c: urlField(categoryId, setCategoryId, start.category, CATEGORY_IDS),
+    f: urlField(fromId, setFromId, start.from, UNIT_IDS),
+    t: urlField(toId, setToId, start.to, UNIT_IDS),
+    v: urlField(raw, setRaw, start.value),
     p: urlField(precision, setPrecision, "auto", PRECISIONS),
   });
 
@@ -100,10 +109,14 @@ export function UnitConverter() {
     activeTab === "all" ? categories : categories.filter((c) => c.group === activeTab);
 
   const input = raw.length > MAX_INPUT ? "" : raw;
-  const phrase = isPhrase(input);
-  const value = phrase ? NaN : parseNumber(input);
+  // A plain number, m:ss, or a compound in this category ("5 ft 11 in"); NaN otherwise.
+  const value = parseQuantity(input, from, category);
+  /** Text that is not an amount here yet: a phrase waiting for Enter. */
+  const pending = Number.isNaN(value) && isPhrase(input);
+  const compoundInput = !Number.isNaN(value) && isPhrase(input);
   const result = Number.isNaN(value) ? NaN : convert(from, to, value);
   const resultText = Number.isNaN(result) ? "…" : formatQuantity(to, result, precision);
+  const compoundResult = Number.isNaN(result) ? null : formatCompound(category, to, result);
   const base = Number.isNaN(value) ? NaN : toBase(from, value);
 
   /* ---------- state changes ---------- */
@@ -121,7 +134,7 @@ export function UnitConverter() {
   const selectCategory = (next: UnitCategory) => {
     if (next.id === category.id) return;
     setUnits(next, next.preset.from, next.preset.to);
-    if (!phrase) setRaw(String(next.preset.value));
+    if (!pending) setRaw(String(next.preset.value));
   };
 
   const chooseUnit = (side: Side, ref: UnitRef) => {
@@ -142,7 +155,7 @@ export function UnitConverter() {
 
   /** Turn "45 mpg in l/100km" typed into the value box into units plus a number. */
   const commitPhrase = (): boolean => {
-    if (!phrase) return false;
+    if (!pending) return false;
     const parsed = parseQuery(input);
     if (!parsed.from) {
       if (!parsed.to) return false;
@@ -175,7 +188,20 @@ export function UnitConverter() {
   /* ---------- derived copy ---------- */
 
   const hint = (() => {
-    if (!phrase) return <>Type a number, or a phrase like <b>11 stone to kg</b>.</>;
+    if (compoundInput) {
+      return (
+        <>
+          {input.trim()} = {formatQuantity(from, value, precision)} {from.sym}
+        </>
+      );
+    }
+    if (!pending) {
+      return (
+        <>
+          Type a number, a phrase like <b>11 stone to kg</b>, or a compound like <b>5 ft 11 in</b>.
+        </>
+      );
+    }
     const parsed = parseQuery(input);
     if (!parsed.from) {
       if (parsed.to) return <>Converting into {parsed.to.unit.name}: press <Kbd>↵</Kbd></>;
@@ -318,6 +344,11 @@ export function UnitConverter() {
                   {resultText}
                 </output>
                 <span className="shrink-0 font-mono text-base font-bold">{to.sym}</span>
+                {compoundResult && (
+                  <span className="shrink-0 rounded-full border-2 border-foreground bg-card px-2.5 py-0.5 font-mono text-[13px] font-bold text-numeric">
+                    {compoundResult}
+                  </span>
+                )}
               </div>
               <div className="flex max-w-full flex-wrap items-center gap-2.5">
                 <UnitButton unit={to} side="to" onClick={() => setPicker("to")} />
