@@ -1,4 +1,5 @@
 import {
+  ArrowLeftRight,
   Hourglass,
   House,
   Percent,
@@ -165,6 +166,23 @@ export const tools: Tool[] = [
         "Count down the days, hours, minutes and seconds to any date and time, live, with the weeks, sleeps, weekends and working days to go. Name it and share the link.",
     },
     updated: "2026-09-16",
+  },
+  {
+    slug: "unit-converter",
+    name: "Unit Converter",
+    shortName: "Units",
+    description:
+      "Convert length, weight, volume, temperature, speed, fuel economy, data, pressure and more across 300 units, including mpg to L/100km and stone to kg.",
+    category: "Everyday",
+    icon: ArrowLeftRight,
+    keywords: ["unit", "units", "convert", "conversion", "converter", "metric", "imperial", "mpg", "l/100km", "fuel economy", "stone", "kg", "lbs", "pounds", "kilograms", "miles", "km", "feet", "inches", "cm", "celsius", "fahrenheit", "litres", "gallons", "pints", "cups", "ounces", "psi", "bar", "kwh", "gb", "gib", "knots", "pace", "min/km", "measurement"],
+    tint: "var(--sticker-yellow)",
+    seo: {
+      title: "Unit Converter: mpg to L/100km, Stone to kg",
+      description:
+        "Convert 300 units across length, weight, volume, temperature, speed, fuel economy, pressure, energy and data. Type 45 mpg in l/100km or 11 stone to kg.",
+    },
+    updated: "2026-09-17",
   },
 ];
 
