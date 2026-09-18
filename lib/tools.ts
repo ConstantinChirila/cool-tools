@@ -46,7 +46,7 @@ export const tools: Tool[] = [
       description:
         "Work out your take-home pay after income tax, National Insurance, pension and student loan for 2025/26 and 2026/27. Scottish rates, tax codes, bonuses and salary sacrifice.",
     },
-    updated: "2026-09-16",
+    updated: "2026-09-18",
   },
   {
     slug: "mortgage-calculator",
@@ -114,7 +114,7 @@ export const tools: Tool[] = [
       description:
         "Work out X% of a number, what percentage one number is of another, percentage change between two values, and increases or decreases by a percentage.",
     },
-    updated: "2026-09-16",
+    updated: "2026-09-18",
   },
   {
     slug: "arrow-spine-calculator",
@@ -165,7 +165,7 @@ export const tools: Tool[] = [
       description:
         "Count down the days, hours, minutes and seconds to any date and time, live, with the weeks, sleeps, weekends and working days to go. Name it and share the link.",
     },
-    updated: "2026-09-16",
+    updated: "2026-09-18",
   },
   {
     slug: "unit-converter",

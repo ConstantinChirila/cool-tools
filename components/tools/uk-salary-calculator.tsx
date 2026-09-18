@@ -448,16 +448,13 @@ export function UkSalaryCalculator() {
                 <SwitchField
                   id="scotland"
                   label="I live in Scotland"
-                  hint="Scottish income tax bands"
                   checked={input.scotland}
                   onCheckedChange={(v) => update("scotland", v)}
-                  className="rounded-2xl border-[2.5px] border-foreground bg-card px-3 py-2"
+                  className="h-10 rounded-2xl border-[2.5px] border-foreground bg-card px-3"
                 />
-                {result.scotlandFromCode && (
-                  <p className="text-xs font-bold text-muted-foreground/70">
-                    Scottish rates set by tax code
-                  </p>
-                )}
+                <p className="text-xs font-bold text-muted-foreground/70">
+                  {result.scotlandFromCode ? "Scottish rates set by tax code" : "Uses the Scottish income tax bands"}
+                </p>
               </div>
             </div>
 

@@ -14,7 +14,12 @@ export const MS_PER_DAY = 24 * MS_PER_HOUR;
 
 /** Widest date the tool accepts; keeps the weekday walk bounded. */
 export const MIN_YEAR = 1900;
-export const MAX_YEAR = 2200;
+export const MAX_YEAR = 2500;
+
+/** Longest occasion name accepted from the input or the URL. */
+export const NAME_MAX = 40;
+/** Time of day used when none is given. */
+export const DEFAULT_TIME = "00:00";
 
 export interface CalendarBreakdown {
   years: number;

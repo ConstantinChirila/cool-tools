@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +10,10 @@ import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { Stat } from "@/components/calc/stat";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
 import {
+  DEFAULT_TIME,
   MAX_YEAR,
   MIN_YEAR,
+  NAME_MAX,
   PRESETS,
   calculateCountdown,
   isValidDateString,
@@ -23,8 +27,6 @@ import {
 import { formatNumber } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
-const NAME_MAX = 40;
-const DEFAULT_TIME = "00:00";
 const TILE_STYLES = ["bg-yellow tilt-1", "bg-sky tilt-2", "bg-pink tilt-3"];
 
 /* ---------- A once-a-second clock shared by every mounted countdown ---------- */
@@ -54,7 +56,7 @@ function subscribe(listener: () => void) {
 }
 
 /** Current time in ms, floored to the second, or null before hydration. */
-function useNow(): number | null {
+export function useNow(): number | null {
   return React.useSyncExternalStore(subscribe, () => nowSnapshot, () => null);
 }
 
@@ -96,7 +98,17 @@ const longDate = new Intl.DateTimeFormat("en-GB", {
 
 const shortDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
-function nextNewYear(now: Date): string {
+/** Path of the standalone card page for a given target. */
+export function cardHref({ to, at, name }: { to: string; at: string; name: string }): string {
+  const params = new URLSearchParams();
+  if (to) params.set("to", to);
+  if (at && at !== DEFAULT_TIME) params.set("at", at);
+  if (name) params.set("name", name);
+  const query = params.toString();
+  return `/tools/countdown-calculator/card${query ? `?${query}` : ""}`;
+}
+
+export function nextNewYear(now: Date): string {
   return toDateString(new Date(now.getFullYear() + 1, 0, 1));
 }
 
@@ -106,6 +118,8 @@ interface InputsProps {
   date: string;
   time: string;
   name: string;
+  /** True once the chosen moment is behind us, so the card reads "since" not "to". */
+  isPast: boolean;
   onDate: (v: string) => void;
   onTime: (v: string) => void;
   onName: (v: string) => void;
@@ -115,6 +129,7 @@ const CountdownInputs = React.memo(function CountdownInputs({
   date,
   time,
   name,
+  isPast,
   onDate,
   onTime,
   onName,
@@ -131,7 +146,7 @@ const CountdownInputs = React.memo(function CountdownInputs({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Counting down to</CardTitle>
+        <CardTitle className="text-base">{isPast ? "Counting up from" : "Counting down to"}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
@@ -204,10 +219,10 @@ const CountdownInputs = React.memo(function CountdownInputs({
 
 /* ---------- Results ---------- */
 
-function ClockTile({ value, unit }: { value: number; unit: string }) {
+function ClockTile({ value, unit, large }: { value: number; unit: string; large?: boolean }) {
   return (
-    <div className="rounded-2xl border-[2.5px] border-foreground bg-card px-1 py-3 text-center sm:py-4">
-      <p className="font-heading text-3xl font-black tracking-tighter text-numeric sm:text-5xl">
+    <div className={cn("rounded-2xl border-[2.5px] border-foreground bg-card px-1 py-3 text-center sm:py-4", large && "sm:py-6")}>
+      <p className={cn("font-heading text-3xl font-black tracking-tighter text-numeric sm:text-5xl", large && "sm:text-7xl")}>
         {unit === "days" ? formatNumber(value, 0) : pad(value)}
       </p>
       <p className="mt-1 text-[11px] font-bold tracking-wide text-muted-foreground uppercase sm:text-xs">
@@ -217,12 +232,14 @@ function ClockTile({ value, unit }: { value: number; unit: string }) {
   );
 }
 
-function CountdownResults({
+export function CountdownResults({
   result,
   target,
   name,
   timeZone,
   requestedTime,
+  shareHref,
+  size = "default",
 }: {
   result: CountdownResult | null;
   target: Date | null;
@@ -230,6 +247,10 @@ function CountdownResults({
   timeZone: string | null;
   /** The HH:MM the user asked for, to flag when the date has no such time. */
   requestedTime: string;
+  /** When set, a button in the hero opens the standalone, read-only card page. */
+  shareHref?: string;
+  /** "lg" is the standalone card page: bigger clock and tiles. */
+  size?: "default" | "lg";
 }) {
   const occasion = name.trim();
   const subject = occasion || (target ? shortDate.format(target) : "then");
@@ -247,18 +268,35 @@ function CountdownResults({
       ]
     : [];
 
+  const large = size === "lg";
+
   return (
     <Card>
-      <CardContent className="space-y-5 pt-5">
-        <div className="rounded-2xl border-[2.5px] border-foreground bg-lilac p-4 sm:p-5">
-          <p className="truncate font-heading text-lg font-extrabold sm:text-xl" aria-live="polite">
-            {arrived ? `It's here${occasion ? `: ${occasion}` : ""}!` : heading}
-          </p>
+      <CardContent className={cn("space-y-5 pt-5", large && "sm:space-y-6 sm:pt-6")}>
+        <div className={cn("rounded-2xl border-[2.5px] border-foreground bg-lilac p-4 sm:p-5", large && "sm:p-6")}>
+          <div className="flex items-start justify-between gap-3">
+            <p
+              className={cn("min-w-0 truncate font-heading text-lg font-extrabold sm:text-xl", large && "sm:text-2xl")}
+              aria-live="polite"
+            >
+              {arrived ? `It's here${occasion ? `: ${occasion}` : ""}!` : heading}
+            </p>
+            {shareHref && (
+              <Link
+                href={shareHref}
+                title="Open this card on its own page, ready to share"
+                className="sticker-sm inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-card px-3 text-xs font-bold transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+              >
+                <ExternalLink className="size-3.5" strokeWidth={2.5} />
+                Card page
+              </Link>
+            )}
+          </div>
           <div className="mt-3 grid grid-cols-4 gap-2 sm:gap-3" aria-label="Countdown clock">
-            <ClockTile value={days} unit="days" />
-            <ClockTile value={clock.hours} unit="hours" />
-            <ClockTile value={clock.minutes} unit="minutes" />
-            <ClockTile value={clock.seconds} unit="seconds" />
+            <ClockTile value={days} unit="days" large={large} />
+            <ClockTile value={clock.hours} unit="hours" large={large} />
+            <ClockTile value={clock.minutes} unit="minutes" large={large} />
+            <ClockTile value={clock.seconds} unit="seconds" large={large} />
           </div>
           <p className="mt-3 text-sm font-semibold text-foreground/75">
             {target ? (
@@ -287,8 +325,8 @@ function CountdownResults({
         {tiles.length > 0 && (
           <div className="grid gap-4 border-t border-foreground/15 pt-5 sm:grid-cols-3">
             {tiles.map((tile, i) => (
-              <div key={tile.key} className={cn("sticker rounded-2xl p-4", TILE_STYLES[i % TILE_STYLES.length])}>
-                <p className="font-heading text-4xl font-black tracking-tighter text-numeric">
+              <div key={tile.key} className={cn("sticker rounded-2xl p-4", large && "sm:p-5", TILE_STYLES[i % TILE_STYLES.length])}>
+                <p className={cn("font-heading text-4xl font-black tracking-tighter text-numeric", large && "sm:text-5xl")}>
                   {formatNumber(tile.value, 0)}
                 </p>
                 <p className="mt-1 text-sm font-bold">{tile.value === 1 ? tile.unit : `${tile.unit}s`}</p>
@@ -339,24 +377,27 @@ export function CountdownCalculator() {
 
   const barLabel = result?.isPast ? "Days since" : "Days to go";
   const barValue = result ? plural(result.wholeDays, "day") : "—";
+  const shareHref = cardHref({ to: resolvedDate, at: validTime, name: name.trim() });
 
   return (
     <>
-      <div className="mx-auto max-w-3xl space-y-6">
-        <CountdownInputs
-          date={date ?? defaultDate}
-          time={time}
-          name={name}
-          onDate={setDate}
-          onTime={setTime}
-          onName={setName}
-        />
+      <div className="grid gap-6 lg:grid-cols-[6fr_5fr] lg:items-start">
         <CountdownResults
           result={result}
           target={target}
           name={name}
           timeZone={timeZone}
           requestedTime={validTime}
+          shareHref={shareHref}
+        />
+        <CountdownInputs
+          date={date ?? defaultDate}
+          time={time}
+          name={name}
+          isPast={result?.isPast ?? false}
+          onDate={setDate}
+          onTime={setTime}
+          onName={setName}
         />
       </div>
       <MobileResultBar label={barLabel} value={barValue} />

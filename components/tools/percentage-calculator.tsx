@@ -28,7 +28,7 @@ function InlineNumber({
       value={value}
       onChange={(e) => onChange(e.target.value.replace(/[^\d.,-]/g, ""))}
       className={cn(
-        "h-14 w-32 rounded-2xl border-[2.5px] border-foreground bg-card px-3 text-center font-heading text-2xl font-extrabold text-numeric outline-none transition-shadow focus:ring-[3px] focus:ring-ring/60",
+        "h-14 w-32 rounded-2xl border-[2.5px] border-foreground bg-card px-3 text-center font-heading text-2xl font-extrabold text-numeric outline-none transition-shadow focus:ring-[3px] focus:ring-ring/60 sm:h-16 sm:w-36 sm:text-3xl",
         className,
       )}
     />
@@ -74,7 +74,7 @@ export function PercentageCalculator() {
     of: (
       <>
         <span>What is</span>
-        <InlineNumber value={a} onChange={setA} ariaLabel="Percentage" className="w-24" />
+        <InlineNumber value={a} onChange={setA} ariaLabel="Percentage" className="w-24 sm:w-28" />
         <span>% of</span>
         <InlineNumber value={b} onChange={setB} ariaLabel="Value" />
         <span>?</span>
@@ -102,7 +102,7 @@ export function PercentageCalculator() {
         <button
           type="button"
           onClick={() => setDirection((d) => (d === "increase" ? "decrease" : "increase"))}
-          className="inline-flex h-14 items-center gap-1.5 rounded-2xl border-[2.5px] border-foreground bg-foreground px-4 font-heading text-xl font-extrabold text-background transition-transform hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none"
+          className="inline-flex h-14 items-center gap-1.5 rounded-2xl border-[2.5px] border-foreground bg-foreground px-4 font-heading text-xl font-extrabold text-background sm:h-16 sm:text-2xl transition-transform hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none"
           aria-label={`Switch to ${direction === "increase" ? "decrease" : "increase"}`}
         >
           {direction === "increase" ? (
@@ -114,7 +114,7 @@ export function PercentageCalculator() {
         </button>
         <InlineNumber value={b} onChange={setB} ariaLabel="Value" />
         <span>by</span>
-        <InlineNumber value={a} onChange={setA} ariaLabel="Percentage" className="w-24" />
+        <InlineNumber value={a} onChange={setA} ariaLabel="Percentage" className="w-24 sm:w-28" />
         <span>%</span>
       </>
     ),
@@ -124,8 +124,8 @@ export function PercentageCalculator() {
   const showChangeBadge = mode === "change" && result !== null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div role="radiogroup" aria-label="What do you want to work out" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div role="radiogroup" aria-label="What do you want to work out" className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         {MODES.map((m) => {
           const selected = m.value === mode;
           return (
@@ -136,30 +136,35 @@ export function PercentageCalculator() {
               aria-checked={selected}
               onClick={() => setMode(m.value)}
               className={cn(
-                "rounded-2xl border-[2.5px] border-foreground px-3 py-3 text-left transition-transform hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none",
-                selected ? cn("sticker", m.bg, m.tilt) : "bg-card",
+                "flex min-h-24 flex-col justify-between gap-3 rounded-2xl border-[2.5px] border-foreground px-4 py-4 text-left transition-transform hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none",
+                selected ? cn("sticker", m.bg, m.tilt) : "bg-card hover:bg-secondary",
               )}
             >
-              <p className="font-heading text-[15px] font-extrabold leading-tight">{m.title}</p>
-              <p className={cn("mt-1 font-mono text-xs font-bold", selected ? "text-foreground/70" : "text-muted-foreground")}>
-                e.g. {m.example}
-              </p>
+              <span className="font-heading text-lg leading-tight font-extrabold sm:text-xl">{m.title}</span>
+              <span
+                className={cn(
+                  "w-fit max-w-full truncate rounded-full border-2 px-2.5 py-0.5 font-mono text-xs font-bold",
+                  selected ? "border-foreground/30 bg-card/60 text-foreground" : "border-foreground/15 text-muted-foreground",
+                )}
+              >
+                {m.example}
+              </span>
             </button>
           );
         })}
       </div>
 
       <Card>
-        <CardContent className="space-y-6 py-7">
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-3 font-heading text-2xl font-extrabold">
+        <CardContent className="space-y-7 py-8">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-3 font-heading text-2xl font-extrabold sm:text-3xl">
             {sentence[mode]}
           </div>
 
-          <div className={cn("rounded-2xl border-[2.5px] border-foreground p-6 text-center", active.bg)}>
+          <div className={cn("rounded-2xl border-[2.5px] border-foreground p-6 text-center sm:p-8", active.bg)}>
             {result !== null && valid ? (
               <>
-                <p className="text-[15px] font-bold text-foreground/70">{explanation}</p>
-                <p className="mt-1 font-heading text-6xl font-black tracking-tighter text-numeric sm:text-7xl">
+                <p className="text-base font-bold text-foreground/70 sm:text-lg">{explanation}</p>
+                <p className="mt-1 font-heading text-6xl font-black tracking-tighter text-numeric sm:text-8xl">
                   {formatNumber(result, decimals)}
                   {resultSuffix && (
                     <span className="ml-1 text-4xl font-extrabold text-foreground/60">{resultSuffix}</span>
@@ -177,7 +182,7 @@ export function PercentageCalculator() {
                     {result === 0 ? "No change" : result > 0 ? "Increase" : "Decrease"}
                   </p>
                 )}
-                <p className="mx-auto mt-4 w-fit rounded-full border-2 border-foreground/20 bg-card/60 px-3 py-1 font-mono text-sm font-bold text-numeric">
+                <p className="mx-auto mt-5 w-fit max-w-full rounded-full border-2 border-foreground/20 bg-card/60 px-4 py-1.5 font-mono text-sm font-bold text-numeric sm:text-base">
                   {formula} = {formatNumber(result, decimals)}
                   {resultSuffix}
                 </p>
