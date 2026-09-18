@@ -48,7 +48,7 @@ export function ToolsGrid() {
           {!query && (
             <FeedbackLink
               subject="Bits & Bobs: tool idea"
-              className="tilt-6 flex min-h-56 flex-col items-center justify-center gap-2.5 rounded-3xl border-[2.5px] border-dashed border-foreground bg-card p-5 text-center transition-transform hover:rotate-0"
+              className="tilt-6 flex min-h-36 flex-col items-center justify-center gap-2.5 rounded-3xl border-[2.5px] border-dashed border-foreground bg-card p-5 text-center transition-transform hover:rotate-0"
             >
               <span className="flex size-11 items-center justify-center rounded-full border-[2.5px] border-foreground">
                 <Plus className="size-5" strokeWidth={2.5} />
