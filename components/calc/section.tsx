@@ -72,3 +72,19 @@ export function Section({
     </div>
   );
 }
+
+/** Which sections are open, by key. Lives here so every Section user shares one implementation. */
+export function useSectionState(initiallyOpen: string[] = []) {
+  const [open, setOpen] = React.useState<Set<string>>(() => new Set(initiallyOpen));
+  const toggle = React.useCallback(
+    (key: string) =>
+      setOpen((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key);
+        else next.add(key);
+        return next;
+      }),
+    [],
+  );
+  return { isOpen: (key: string) => open.has(key), toggle };
+}

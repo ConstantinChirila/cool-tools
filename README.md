@@ -41,7 +41,7 @@ pnpm lint     # eslint
 3. **Write the guide** in `content/<slug>.ts`: a `ToolContent` object (intro, sections, FAQs; type in `lib/tool-content.ts`). It renders under the calculator and feeds the FAQ structured data, so make it genuinely useful and keep the numbers verified against the engine.
 4. **Create the route** at `app/tools/<slug>/page.tsx` plus `opengraph-image.tsx`: copy any existing tool folder and change the slug. `toolMetadata(tool)` builds title, description, canonical and social tags from the registry's `seo` field; `ToolPageShell` adds breadcrumbs, JSON-LD, the guide and related tools.
 
-Pure calculation logic lives in `lib/` (see `lib/finance.ts`) so it stays testable and separate from the UI.
+Pure calculation logic lives in `lib/` (see `lib/finance.ts`) so it stays testable and separate from the UI. Engine tests sit beside the code as `lib/<name>.test.ts` and run with `pnpm test` (Vitest, Node environment).
 
 ## SEO
 

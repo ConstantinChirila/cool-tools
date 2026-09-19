@@ -19,6 +19,11 @@ export interface NumberRange {
   max: number;
 }
 
+/** Clamp for any money amount read from the URL. */
+export const MONEY_RANGE: NumberRange = { min: 0, max: 10_000_000 };
+/** Clamp for a whole percentage read from the URL. */
+export const PERCENT_RANGE: NumberRange = { min: 0, max: 100 };
+
 /** Describe one piece of state to mirror into the URL query string. */
 export function urlField<T extends Primitive>(
   value: T,

@@ -377,7 +377,15 @@ function taxOnBands(taxable: number, bands: Band[], extend: number): BandResult[
   return out;
 }
 
-function compute(input: UkSalaryInput): Omit<UkSalaryResult, "marginalRate"> {
+/** Everything except the marginal rate, which costs a second pass of the engine. */
+export type UkSalaryBase = Omit<UkSalaryResult, "marginalRate">;
+
+/** One pass of the engine, for callers that compare scenarios and never read the marginal rate. */
+export function calculateUkSalaryBase(input: UkSalaryInput): UkSalaryBase {
+  return compute(input);
+}
+
+function compute(input: UkSalaryInput): UkSalaryBase {
   const cfg = TAX_YEARS[input.taxYear];
   const hoursPerWeek = Math.max(input.hoursPerWeek, 1);
   const daysPerWeek = clamp(input.daysPerWeek, 1, 7);
@@ -574,7 +582,7 @@ export function calculateUkSalary(input: UkSalaryInput): UkSalaryResult {
     pensionMethod: "amount",
     pensionValue: base.pensionGross,
   });
-  const deductions = (r: Omit<UkSalaryResult, "marginalRate">) =>
+  const deductions = (r: UkSalaryBase) =>
     r.incomeTax + r.nationalInsurance + r.studentLoan + r.postgradLoan;
   const extra = bumped.gross - base.gross;
   const marginalRate = extra > 0 ? clamp((deductions(bumped) - deductions(base)) / extra, 0, 1) : 0;

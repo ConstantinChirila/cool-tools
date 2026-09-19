@@ -24,14 +24,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Callout } from "@/components/calc/callout";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { NumberField } from "@/components/calc/number-field";
-import { Section } from "@/components/calc/section";
+import { Section, useSectionState } from "@/components/calc/section";
 import { Segmented } from "@/components/calc/segmented";
 import { SliderField } from "@/components/calc/slider-field";
+import { StudentLoanFields } from "@/components/calc/student-loan-fields";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { SwitchField } from "@/components/calc/switch-field";
 import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
-import { useUrlState, urlField, type NumberRange, type UrlField } from "@/hooks/use-url-state";
+import { MONEY_RANGE as MONEY, useUrlState, urlField, type NumberRange, type UrlField } from "@/hooks/use-url-state";
 import { formatMoney } from "@/lib/currency";
 import {
   calculateUkSalary,
@@ -48,7 +49,6 @@ import {
   type PayPeriod,
   type PensionMethod,
   type PensionType,
-  type StudentPlan,
   type TaxYear,
   type UkSalaryInput,
 } from "@/lib/uk-tax";
@@ -130,7 +130,6 @@ const ALLOWED_VALUES: Partial<Record<keyof UkSalaryInput, readonly string[]>> = 
   pensionMethod: ["percent", "amount"],
 };
 
-const MONEY: NumberRange = { min: 0, max: 10_000_000 };
 /** Clamp ranges for the numeric fields of UkSalaryInput when read from the URL. */
 const NUMBER_RANGES: Partial<Record<keyof UkSalaryInput, NumberRange>> = {
   salary: MONEY,
@@ -173,20 +172,13 @@ function bindInputField<K extends keyof UkSalaryInput>(
 export function UkSalaryCalculator() {
   const [input, setInput] = React.useState<UkSalaryInput>(DEFAULT_INPUT);
   const [view, setView] = React.useState<PayPeriod>("month");
-  const [open, setOpen] = React.useState<Set<string>>(() => new Set(["pension"]));
+  const sections = useSectionState(["pension"]);
 
   const update = React.useCallback(
     <K extends keyof UkSalaryInput>(key: K, value: UkSalaryInput[K]) =>
       setInput((prev) => ({ ...prev, [key]: value })),
     [],
   );
-  const toggleSection = (key: string) =>
-    setOpen((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
 
   useUrlState({
     ...Object.fromEntries(
@@ -390,8 +382,8 @@ export function UkSalaryCalculator() {
                 title="Pension"
                 summary={pensionSummary}
                 active={result.pensionGross > 0}
-                open={open.has("pension")}
-                onToggle={() => toggleSection("pension")}
+                open={sections.isOpen("pension")}
+                onToggle={() => sections.toggle("pension")}
               >
                 <div className="space-y-1.5">
                   <Label className="text-sm font-bold text-muted-foreground">Scheme type</Label>
@@ -475,41 +467,15 @@ export function UkSalaryCalculator() {
                 title="Student loan"
                 summary={loanSummary}
                 active={input.studentPlan !== "none" || input.postgradLoan}
-                open={open.has("loan")}
-                onToggle={() => toggleSection("loan")}
+                open={sections.isOpen("loan")}
+                onToggle={() => sections.toggle("loan")}
               >
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-bold text-muted-foreground">Repayment plan</Label>
-                  <Select
-                    value={input.studentPlan}
-                    onValueChange={(v) => update("studentPlan", v as StudentPlan)}
-                  >
-                    <SelectTrigger aria-label="Student loan plan" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STUDENT_PLANS.map((p) => (
-                        <SelectItem key={p.value} value={p.value}>
-                          {p.label}
-                          {p.hint && (
-                            <span className="text-xs font-bold text-muted-foreground">{p.hint}</span>
-                          )}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {input.studentPlan !== "none" && (
-                    <p className="text-xs font-bold text-muted-foreground/70">
-                      9% of earnings above {money(year.studentLoan[input.studentPlan])} a year
-                    </p>
-                  )}
-                </div>
-                <SwitchField
-                  id="postgrad"
-                  label="Postgraduate loan"
-                  hint={`6% of earnings above ${money(year.postgradThreshold)}, on top of any plan`}
-                  checked={input.postgradLoan}
-                  onCheckedChange={(v) => update("postgradLoan", v)}
+                <StudentLoanFields
+                  taxYear={input.taxYear}
+                  studentPlan={input.studentPlan}
+                  postgradLoan={input.postgradLoan}
+                  onPlanChange={(v) => update("studentPlan", v)}
+                  onPostgradChange={(v) => update("postgradLoan", v)}
                 />
               </Section>
 
@@ -518,8 +484,8 @@ export function UkSalaryCalculator() {
                 title="Bonus and overtime"
                 summary={extrasSummary}
                 active={result.bonus > 0 || result.overtime > 0}
-                open={open.has("extras")}
-                onToggle={() => toggleSection("extras")}
+                open={sections.isOpen("extras")}
+                onToggle={() => sections.toggle("extras")}
               >
                 <NumberField
                   id="bonus"
@@ -568,8 +534,8 @@ export function UkSalaryCalculator() {
                   input.childcareVouchers > 0 ||
                   input.salarySacrifice > 0
                 }
-                open={open.has("benefits")}
-                onToggle={() => toggleSection("benefits")}
+                open={sections.isOpen("benefits")}
+                onToggle={() => sections.toggle("benefits")}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <NumberField
@@ -635,8 +601,8 @@ export function UkSalaryCalculator() {
                 title="Allowances"
                 summary={allowancesSummary}
                 active={input.blind || input.marriage !== "none" || input.noNi}
-                open={open.has("allowances")}
-                onToggle={() => toggleSection("allowances")}
+                open={sections.isOpen("allowances")}
+                onToggle={() => sections.toggle("allowances")}
               >
                 <div className="space-y-1.5">
                   <Label className="text-sm font-bold text-muted-foreground">Marriage Allowance</Label>
@@ -678,8 +644,8 @@ export function UkSalaryCalculator() {
                 title="Working pattern and deductions"
                 summary={patternSummary}
                 active={input.preTaxDeduction > 0 || input.postTaxDeduction > 0}
-                open={open.has("pattern")}
-                onToggle={() => toggleSection("pattern")}
+                open={sections.isOpen("pattern")}
+                onToggle={() => sections.toggle("pattern")}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <NumberField

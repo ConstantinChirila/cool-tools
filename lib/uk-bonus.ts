@@ -17,7 +17,7 @@
 import {
   PERIOD_INFO,
   TAX_YEARS,
-  calculateUkSalary,
+  calculateUkSalaryBase,
   periodsPerYear,
   type BandResult,
   type PayPeriod,
@@ -25,7 +25,7 @@ import {
   type StudentPlan,
   type TaxYear,
   type UkSalaryInput,
-  type UkSalaryResult,
+  type UkSalaryBase,
 } from "./uk-tax";
 
 /** The pay periods a bonus can land in: the subset of PayPeriod that payroll actually runs on. */
@@ -68,7 +68,7 @@ export interface BonusResult {
   nationalInsurance: number;
   studentLoan: number;
   postgradLoan: number;
-  /** Regular pension contribution taken from the cash bonus. */
+  /** Regular pension contribution taken from the cash bonus: what leaves your pay, net of relief at source. */
   pension: number;
   /** What reaches the bank account. */
   takeHome: number;
@@ -96,8 +96,8 @@ export interface BonusResult {
   loanTriggeredByBonus: boolean;
   /** How much lower period NI is than the annual-basis figure; 0 for directors. */
   niSavedVsAnnual: number;
-  without: UkSalaryResult;
-  withBonus: UkSalaryResult;
+  without: UkSalaryBase;
+  withBonus: UkSalaryBase;
 }
 
 /**
@@ -166,15 +166,15 @@ function salaryInput(input: BonusInput, bonus: number): UkSalaryInput {
 /** Below this, a difference is rounding noise rather than something to tell the user about. */
 const NEGLIGIBLE = 1;
 
-export function calculateBonus(input: BonusInput, baseline?: UkSalaryResult): BonusResult {
+export function calculateBonus(input: BonusInput, baseline?: UkSalaryBase): BonusResult {
   const cfg = TAX_YEARS[input.taxYear];
   const bonus = Math.max(input.bonus, 0);
   const sacrificed = bonus * (Math.min(Math.max(input.sacrificePct, 0), 100) / 100);
   const cashBonus = bonus - sacrificed;
 
   // The year without the bonus does not depend on the sacrifice, so scenarios can share it.
-  const without = baseline ?? calculateUkSalary(salaryInput(input, 0));
-  const withBonus = calculateUkSalary(salaryInput(input, cashBonus));
+  const without = baseline ?? calculateUkSalaryBase(salaryInput(input, 0));
+  const withBonus = calculateUkSalaryBase(salaryInput(input, cashBonus));
 
   const incomeTax = withBonus.incomeTax - without.incomeTax;
   const pension = withBonus.pensionDeducted - without.pensionDeducted;
@@ -197,7 +197,9 @@ export function calculateBonus(input: BonusInput, baseline?: UkSalaryResult): Bo
     input.studentPlan === "none" ? 0 : loan(cfg.studentLoan[input.studentPlan], cfg.studentLoanRate);
   const postgradLoan = input.postgradLoan ? loan(cfg.postgradThreshold, cfg.postgradRate) : 0;
 
-  const takeHome = cashBonus - incomeTax - nationalInsurance - studentLoan - postgradLoan - pension;
+  // Floored like the salary engine's take-home: a pension set to swallow the whole
+  // bonus still owes period NI, which comes out of salary rather than making this negative.
+  const takeHome = Math.max(cashBonus - incomeTax - nationalInsurance - studentLoan - postgradLoan - pension, 0);
 
   const taxBands = withBonus.bands
     .map((band, i) => {
@@ -211,7 +213,7 @@ export function calculateBonus(input: BonusInput, baseline?: UkSalaryResult): Bo
     })
     .filter((band) => Math.abs(band.amount) > 0.005);
 
-  const top = (r: UkSalaryResult) => r.bands.reduce((last, band, i) => (band.amount > 0 ? i : last), -1);
+  const top = (r: UkSalaryBase) => r.bands.reduce((last, band, i) => (band.amount > 0 ? i : last), -1);
   const crossedInto = top(withBonus) > top(without) ? (withBonus.bands[top(withBonus)]?.name ?? null) : null;
 
   const loans = studentLoan + postgradLoan;
@@ -256,7 +258,7 @@ export interface SacrificeComparison {
 
 /** The chosen split beside the two extremes, sharing one no-bonus baseline. */
 export function compareSacrifice(input: BonusInput): SacrificeComparison {
-  const baseline = calculateUkSalary(salaryInput(input, 0));
+  const baseline = calculateUkSalaryBase(salaryInput(input, 0));
   const at = (sacrificePct: number) => calculateBonus({ ...input, sacrificePct }, baseline);
   const result = at(input.sacrificePct);
   const allCash = input.sacrificePct <= 0 ? result : at(0);
