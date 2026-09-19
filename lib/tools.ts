@@ -1,5 +1,6 @@
 import {
   ArrowLeftRight,
+  Dices,
   Hourglass,
   House,
   Percent,
@@ -183,6 +184,23 @@ export const tools: Tool[] = [
         "Convert 300 units across length, weight, volume, temperature, speed, fuel economy, pressure, energy and data. Type 45 mpg in l/100km or 11 stone to kg.",
     },
     updated: "2026-09-17",
+  },
+  {
+    slug: "dice-roller",
+    name: "Dice Roller & Coin Flip",
+    shortName: "Dice & Coin",
+    description:
+      "Roll up to five dice, from a d4 to a d20, or flip a coin and call it, with the total and a tally of what came up.",
+    category: "Everyday",
+    icon: Dices,
+    keywords: ["dice", "die", "roll", "roller", "d4", "d6", "d8", "d10", "d12", "d20", "dnd", "d&d", "rpg", "board game", "coin", "flip", "toss", "heads", "tails", "heads or tails", "random", "decide", "yes or no"],
+    tint: "var(--sticker-pink)",
+    seo: {
+      title: "Dice Roller & Coin Flip: d4 to d20, Heads or Tails",
+      description:
+        "Roll up to five dice at once (d4, d6, d8, d10, d12 or d20) with the total added up, or flip a coin and call heads or tails. Fair, instant and free.",
+    },
+    updated: "2026-09-19",
   },
 ];
 
