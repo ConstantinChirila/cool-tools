@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   Dices,
+  Gift,
   Hourglass,
   House,
   Percent,
@@ -48,6 +49,23 @@ export const tools: Tool[] = [
         "Work out your take-home pay after income tax, National Insurance, pension and student loan for 2025/26 and 2026/27. Scottish rates, tax codes, bonuses and salary sacrifice.",
     },
     updated: "2026-09-18",
+  },
+  {
+    slug: "bonus-tax-calculator",
+    name: "Bonus After Tax Calculator",
+    shortName: "Bonus Tax",
+    description:
+      "What a UK bonus is worth after income tax, National Insurance and student loan, and what you gain by sacrificing some of it into your pension.",
+    category: "Finance",
+    icon: Gift,
+    keywords: ["bonus", "bonus tax", "after tax", "net bonus", "take home", "paye", "national insurance", "ni", "student loan", "bonus sacrifice", "salary sacrifice", "pension", "60% tax trap", "100k", "personal allowance", "commission", "one-off payment", "hmrc"],
+    tint: "var(--sticker-mint)",
+    seo: {
+      title: "Bonus After Tax Calculator UK 2026/27",
+      description:
+        "See how much of your UK bonus you keep after income tax, National Insurance and student loan for 2026/27, with Scottish rates, the £100k trap and bonus sacrifice into a pension.",
+    },
+    updated: "2026-09-19",
   },
   {
     slug: "mortgage-calculator",

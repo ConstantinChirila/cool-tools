@@ -4,14 +4,10 @@ import * as React from "react";
 import {
   CalendarClock,
   Car,
-  ChevronDown,
   GraduationCap,
   HeartHandshake,
-  Info,
   PiggyBank,
   Sparkles,
-  TriangleAlert,
-  type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,8 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Callout } from "@/components/calc/callout";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { NumberField } from "@/components/calc/number-field";
+import { Section } from "@/components/calc/section";
 import { Segmented } from "@/components/calc/segmented";
 import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
@@ -166,78 +164,6 @@ function bindInputField<K extends keyof UkSalaryInput>(
   const def = DEFAULT_INPUT[key] as string | number | boolean;
   const set = (v: string | number | boolean) => update(key, v as UkSalaryInput[K]);
   return urlField(value, set, def, ALLOWED_VALUES[key], NUMBER_RANGES[key]);
-}
-
-/* ------------------------------------------------------------------ */
-/* Collapsible section                                                  */
-/* ------------------------------------------------------------------ */
-
-function Section({
-  icon: Icon,
-  title,
-  summary,
-  active,
-  open,
-  onToggle,
-  children,
-}: {
-  icon: LucideIcon;
-  title: string;
-  summary: string;
-  active: boolean;
-  open: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  const id = React.useId();
-  return (
-    <div className={cn("rounded-2xl border-[2.5px] border-foreground transition-colors", active ? "bg-lilac" : "bg-card")}>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        aria-controls={id}
-        className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left transition-colors hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
-      >
-        <span
-          className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors",
-            active ? "border-2 border-foreground bg-card" : "bg-secondary text-muted-foreground",
-          )}
-        >
-          <Icon className="size-4" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-medium">{title}</span>
-          <span
-            className={cn(
-              "block truncate text-xs",
-              active ? "text-foreground/80" : "text-muted-foreground/70",
-            )}
-          >
-            {summary}
-          </span>
-        </span>
-        <ChevronDown
-          className={cn(
-            "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
-            open && "rotate-180",
-          )}
-        />
-      </button>
-      <div
-        id={id}
-        className={cn(
-          "grid transition-[grid-template-rows] duration-200 ease-out",
-          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-        )}
-      >
-        <div className="overflow-hidden">
-          <div className="space-y-4 border-t border-foreground/15 px-3.5 pt-4 pb-4">{children}</div>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -1085,22 +1011,5 @@ function NiRow({
       <td className="px-4 py-2.5 text-right">{money(amount)}</td>
       <td className="px-4 py-2.5 text-right">{money(tax)}</td>
     </tr>
-  );
-}
-
-function Callout({ children, tone = "info" }: { children: React.ReactNode; tone?: "info" | "warn" }) {
-  const Icon = tone === "warn" ? TriangleAlert : Info;
-  return (
-    <div
-      className={cn(
-        "flex gap-2.5 rounded-xl border px-3 py-2.5 text-xs font-semibold leading-relaxed",
-        tone === "warn"
-          ? "border-2 border-foreground bg-pink text-foreground"
-          : "border-2 border-foreground bg-card text-foreground",
-      )}
-    >
-      <Icon className={cn("mt-0.5 size-3.5 shrink-0", tone === "warn" ? "text-foreground" : "text-muted-foreground")} />
-      <p>{children}</p>
-    </div>
   );
 }
