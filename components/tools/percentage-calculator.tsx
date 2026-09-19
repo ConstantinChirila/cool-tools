@@ -124,7 +124,7 @@ export function PercentageCalculator() {
   const showChangeBadge = mode === "change" && result !== null;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="space-y-6">
       <div role="radiogroup" aria-label="What do you want to work out" className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         {MODES.map((m) => {
           const selected = m.value === mode;

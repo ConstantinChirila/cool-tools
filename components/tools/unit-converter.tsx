@@ -229,7 +229,7 @@ export function UnitConverter({ initial }: { initial?: UnitConverterInitial }) {
   const relation = describeRelation(from, to);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="space-y-8">
       {/* Group tabs + category chips */}
       <nav aria-label="Categories" className="space-y-3">
         <div role="tablist" aria-label="Category groups" className="flex flex-wrap gap-2">
