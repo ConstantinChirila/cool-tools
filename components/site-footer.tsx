@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InstallApp } from "@/components/install-app";
 import { categories, tools } from "@/lib/tools";
 
 export function SiteFooter() {
@@ -26,7 +27,10 @@ export function SiteFooter() {
           ))}
         </nav>
         <div className="mt-10 flex flex-col gap-2 border-t border-foreground/15 pt-6 text-sm font-bold sm:flex-row sm:items-center sm:justify-between">
-          <p>Bits &amp; Bobs</p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+            <p>Bits &amp; Bobs</p>
+            <InstallApp />
+          </div>
           <p className="text-muted-foreground">
             Free, fast, no sign-up. Made in the UK by{" "}
             <a
