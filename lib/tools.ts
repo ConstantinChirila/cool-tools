@@ -1,10 +1,12 @@
 import {
   ArrowLeftRight,
+  Binary,
   Dices,
   FileDiff,
   Gift,
   Hourglass,
   House,
+  KeyRound,
   Percent,
   PiggyBank,
   Target,
@@ -235,6 +237,40 @@ export const tools: Tool[] = [
       title: "Text Diff Checker: Compare Two Texts Online",
       description:
         "Paste two versions of a text or code and see the added, removed and changed lines highlighted word by word. Side by side or inline, private: nothing is uploaded.",
+    },
+    updated: "2026-09-20",
+  },
+  {
+    slug: "encoder-decoder",
+    name: "Encoder & Decoder",
+    shortName: "Encode / Decode",
+    description:
+      "Encode and decode Base64, URLs, HTML entities, hex and Unicode escapes, with proper UTF-8 handling and clear errors when something will not decode.",
+    category: "Text",
+    icon: Binary,
+    keywords: ["encode", "decode", "encoder", "decoder", "base64", "base64url", "url encode", "url decode", "urlencode", "percent encoding", "%20", "html entities", "escape", "unescape", "html escape", "&amp;", "hex", "hexadecimal", "text to hex", "hex to text", "unicode", "\\u", "utf-8", "utf8", "ascii", "bytes", "convert"],
+    tint: "var(--sticker-lilac)",
+    seo: {
+      title: "Base64, URL, HTML, Hex Encoder and Decoder",
+      description:
+        "Encode and decode Base64, URL percent-encoding, HTML entities, hex and Unicode escapes in one place. UTF-8 and emoji safe, clear error messages, nothing uploaded.",
+    },
+    updated: "2026-09-20",
+  },
+  {
+    slug: "jwt-decoder",
+    name: "JWT Decoder",
+    shortName: "JWT",
+    description:
+      "Decode a JSON Web Token to read its header, claims and expiry in plain English, and check an HMAC signature, without the token leaving your browser.",
+    category: "Text",
+    icon: KeyRound,
+    keywords: ["jwt", "json web token", "token", "decode", "decoder", "bearer", "access token", "id token", "oauth", "oidc", "openid", "claims", "exp", "iat", "expiry", "expired", "hs256", "rs256", "signature", "verify", "auth", "authorization", "jws", "debugger"],
+    tint: "var(--sticker-pink)",
+    seo: {
+      title: "JWT Decoder: Read Claims and Expiry Privately",
+      description:
+        "Paste a JSON Web Token to see its header, payload and claims, with exp and iat as real dates and whether it has expired. HS256 signature check. Nothing is uploaded.",
     },
     updated: "2026-09-20",
   },

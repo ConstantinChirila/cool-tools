@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { CountdownResults, nextNewYear, useNow } from "@/components/tools/countdown-calculator";
+import { CountdownResults, nextNewYear } from "@/components/tools/countdown-calculator";
+import { useNow } from "@/hooks/use-now";
 import { DEFAULT_TIME, calculateCountdown, toLocalDate } from "@/lib/countdown";
 
 /**

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { codecPagePath, codecPages } from "@/lib/encoding-pages";
 import { absoluteUrl } from "@/lib/site";
 import { getTool, tools } from "@/lib/tools";
 import { pairPath, pairs } from "@/lib/units/pairs";
@@ -21,6 +22,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...pairs.map((pair) => ({
       url: absoluteUrl(pairPath(pair)),
       lastModified: new Date(getTool("unit-converter")?.updated ?? newest ?? Date.now()),
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
+    ...codecPages.map((page) => ({
+      url: absoluteUrl(codecPagePath(page)),
+      lastModified: new Date(getTool("encoder-decoder")?.updated ?? newest ?? Date.now()),
       changeFrequency: "monthly" as const,
       priority: 0.6,
     })),

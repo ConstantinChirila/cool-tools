@@ -11,6 +11,8 @@ Odd little tools that just work. A growing library of free online calculators bu
 - **Percentage Calculator**: % of a number, what %, % change, increase/decrease
 - **Countdown Calculator**: live days/hours/minutes/seconds to any date and time, with calendar breakdown, weeks, sleeps, weekends and working days (engine in `lib/countdown.ts`)
 - **Text Diff Checker**: line-by-line comparison of two texts with word-level highlights, side by side or inline, ignore case/whitespace, folding of unchanged runs and copy as unified patch (engine in `lib/text-diff.ts`, built on jsdiff; `hooks/use-text-diff.ts` runs small diffs during render and sends anything over 20,000 characters to the `lib/text-diff.worker.ts` web worker). The texts are deliberately kept out of the URL: only the view options are shareable
+- **Encoder & Decoder**: Base64, URL percent-encoding, HTML entities, hex and Unicode escapes in one two-box tool (engine in `lib/encoding.ts`, HTML entities via the `entities` package). Each codec also has a static landing page at `/tools/encoder-decoder/<slug>` driven by `lib/encoding-pages.ts` (title, examples run through the engine at build time, sections, FAQs): add a page there and the route, sitemap and guide chips pick it up
+- **JWT Decoder**: header, payload and claims with time claims as dates, expiry status and HS256/384/512 signature check via WebCrypto (engine in `lib/jwt.ts`). No signature verification for RS/ES/PS/EdDSA
 
 All financial tools default to GBP with a switchable currency (persisted in localStorage and shared across tools).
 
@@ -34,6 +36,7 @@ pnpm lint     # eslint
    - `components/calc/number-field.tsx`: labelled numeric input without a slider, for typed amounts
    - `components/calc/segmented.tsx`: compact single-choice pill control (2-6 short options)
    - `components/calc/switch-field.tsx`: labelled toggle row with a hint
+   - `components/calc/pill-button.tsx`: `PillButton` and `TogglePill` for toolbars (swap, clear, copy, on/off options)
    - `components/calc/stat.tsx`: `Stat` and `HeroStat` result displays
    - `components/calc/currency-select.tsx` + `hooks/use-currency.ts`: shared currency choice
    - `components/calc/mobile-result-bar.tsx`: sticky bottom result summary on mobile

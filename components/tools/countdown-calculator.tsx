@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { Stat } from "@/components/calc/stat";
+import { useNow } from "@/hooks/use-now";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
 import {
   DEFAULT_TIME,
@@ -28,37 +29,6 @@ import { formatNumber } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 const TILE_STYLES = ["bg-yellow tilt-1", "bg-sky tilt-2", "bg-pink tilt-3"];
-
-/* ---------- A once-a-second clock shared by every mounted countdown ---------- */
-
-let nowSnapshot: number | null = null;
-const listeners = new Set<() => void>();
-let timer: number | undefined;
-
-function tick() {
-  const next = Math.floor(Date.now() / 1000) * 1000;
-  if (next === nowSnapshot) return;
-  nowSnapshot = next;
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  if (listeners.size === 1) timer = window.setInterval(tick, 250);
-  tick();
-  return () => {
-    listeners.delete(listener);
-    if (listeners.size === 0) {
-      window.clearInterval(timer);
-      nowSnapshot = null;
-    }
-  };
-}
-
-/** Current time in ms, floored to the second, or null before hydration. */
-export function useNow(): number | null {
-  return React.useSyncExternalStore(subscribe, () => nowSnapshot, () => null);
-}
 
 /* ---------- Formatting ---------- */
 

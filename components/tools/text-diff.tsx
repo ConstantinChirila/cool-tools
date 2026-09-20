@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ArrowLeftRight, Check, Copy, Eraser, FoldVertical, LoaderCircle, Sparkles, UnfoldVertical } from "lucide-react";
 import { Callout } from "@/components/calc/callout";
+import { PillButton, TogglePill } from "@/components/calc/pill-button";
 import { Segmented } from "@/components/calc/segmented";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -250,30 +251,6 @@ function TextPane({
   );
 }
 
-const PILL =
-  "inline-flex h-9 items-center gap-1.5 rounded-full border-[2.5px] border-foreground px-3.5 text-sm font-bold whitespace-nowrap transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40";
-
-function TogglePill({
-  pressed,
-  onPressedChange,
-  children,
-}: {
-  pressed: boolean;
-  onPressedChange: (pressed: boolean) => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      onClick={() => onPressedChange(!pressed)}
-      className={cn(PILL, pressed ? "bg-foreground text-background" : "bg-card hover:bg-secondary")}
-    >
-      {children}
-    </button>
-  );
-}
-
 function count(n: number, noun: string) {
   return `${n.toLocaleString("en-GB")} ${noun}`;
 }
@@ -364,41 +341,35 @@ export function TextDiff() {
               Ignore whitespace
             </TogglePill>
             <span className="grow" />
-            <button
-              type="button"
+            <PillButton
               onClick={() => {
                 setOldText(newText);
                 setNewText(oldText);
               }}
               disabled={empty}
-              className={cn(PILL, "bg-card hover:bg-secondary")}
             >
               <ArrowLeftRight className="size-4" strokeWidth={2.5} />
               Swap
-            </button>
-            <button
-              type="button"
+            </PillButton>
+            <PillButton
               onClick={() => {
                 setOldText(SAMPLE_OLD);
                 setNewText(SAMPLE_NEW);
               }}
-              className={cn(PILL, "bg-card hover:bg-secondary")}
             >
               <Sparkles className="size-4" strokeWidth={2.5} />
               Sample
-            </button>
-            <button
-              type="button"
+            </PillButton>
+            <PillButton
               onClick={() => {
                 setOldText("");
                 setNewText("");
               }}
               disabled={empty}
-              className={cn(PILL, "bg-card hover:bg-secondary")}
             >
               <Eraser className="size-4" strokeWidth={2.5} />
               Clear
-            </button>
+            </PillButton>
           </div>
         </CardContent>
       </Card>
@@ -442,12 +413,10 @@ export function TextDiff() {
               ]}
               className="hidden md:flex"
             />
-            <button
-              type="button"
+            <PillButton
               onClick={copyPatch}
               disabled={pending || result?.status !== "ok" || result.identical}
               aria-live="polite"
-              className={cn(PILL, "bg-card hover:bg-secondary")}
             >
               {copyState === "copied" ? (
                 <Check className="size-4" strokeWidth={2.5} />
@@ -455,7 +424,7 @@ export function TextDiff() {
                 <Copy className="size-4" strokeWidth={2.5} />
               )}
               {copyState === "copied" ? "Patch copied" : copyState === "failed" ? "Could not copy" : "Copy patch"}
-            </button>
+            </PillButton>
           </div>
 
           {result === null ? (
