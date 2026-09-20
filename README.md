@@ -10,6 +10,7 @@ Odd little tools that just work. A growing library of free online calculators bu
 - **Compound Interest Calculator**: growth projection with contributions, compounding frequency, chart and yearly table
 - **Percentage Calculator**: % of a number, what %, % change, increase/decrease
 - **Countdown Calculator**: live days/hours/minutes/seconds to any date and time, with calendar breakdown, weeks, sleeps, weekends and working days (engine in `lib/countdown.ts`)
+- **Text Diff Checker**: line-by-line comparison of two texts with word-level highlights, side by side or inline, ignore case/whitespace, folding of unchanged runs and copy as unified patch (engine in `lib/text-diff.ts`, built on jsdiff; `hooks/use-text-diff.ts` runs small diffs during render and sends anything over 20,000 characters to the `lib/text-diff.worker.ts` web worker). The texts are deliberately kept out of the URL: only the view options are shareable
 
 All financial tools default to GBP with a switchable currency (persisted in localStorage and shared across tools).
 

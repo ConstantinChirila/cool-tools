@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   Dices,
+  FileDiff,
   Gift,
   Hourglass,
   House,
@@ -13,7 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type ToolCategory = "Finance" | "Maths" | "Sport" | "Everyday";
+export type ToolCategory = "Finance" | "Maths" | "Sport" | "Everyday" | "Text";
 
 export interface Tool {
   slug: string;
@@ -220,9 +221,26 @@ export const tools: Tool[] = [
     },
     updated: "2026-09-19",
   },
+  {
+    slug: "text-diff",
+    name: "Text Diff Checker",
+    shortName: "Text Diff",
+    description:
+      "Compare two texts and see every line and word that was added, removed or changed, side by side or inline.",
+    category: "Text",
+    icon: FileDiff,
+    keywords: ["diff", "difference", "differences", "compare", "comparison", "compare text", "text compare", "diff checker", "changes", "changed", "versions", "side by side", "unified", "patch", "code", "document", "draft", "contract", "proofread", "whitespace", "merge"],
+    tint: "var(--sticker-sky)",
+    seo: {
+      title: "Text Diff Checker: Compare Two Texts Online",
+      description:
+        "Paste two versions of a text or code and see the added, removed and changed lines highlighted word by word. Side by side or inline, private: nothing is uploaded.",
+    },
+    updated: "2026-09-20",
+  },
 ];
 
-export const categories: ToolCategory[] = ["Finance", "Maths", "Sport", "Everyday"];
+export const categories: ToolCategory[] = ["Finance", "Maths", "Sport", "Everyday", "Text"];
 
 export function getTool(slug: string): Tool | undefined {
   return tools.find((t) => t.slug === slug);
