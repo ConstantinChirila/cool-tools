@@ -1,5 +1,6 @@
+import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { claimTime, decodeJwt, jwtStatus, roughDuration, verifyHmac } from "@/lib/jwt";
+import { claimTime, decodeJwt, isHmac, jwtStatus, roughDuration, verifyHmac } from "@/lib/jwt";
 
 /** HS256, secret "bits-and-bobs-demo-secret", iat 2026-01-01, exp 2030-01-01. Made with node:crypto. */
 const TOKEN =
@@ -9,7 +10,13 @@ const SECRET = "bits-and-bobs-demo-secret";
 function decoded(input = TOKEN) {
   const r = decodeJwt(input);
   if (!r.ok) throw new Error(r.error);
-  return r.jwt;
+  return r.value;
+}
+
+function sign(alg: string, hash: string, payload: object = { sub: "x" }) {
+  const part = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64url");
+  const body = `${part({ alg, typ: "JWT" })}.${part(payload)}`;
+  return `${body}.${createHmac(hash, SECRET).update(body).digest("base64url")}`;
 }
 
 describe("decodeJwt", () => {
@@ -24,6 +31,8 @@ describe("decodeJwt", () => {
     const wrapped = `Authorization: Bearer ${TOKEN.slice(0, 40)}\n${TOKEN.slice(40)}`;
     expect(decoded(wrapped).payload.sub).toBe("user_8675309");
     expect(decoded(`"${TOKEN}"`).payload.sub).toBe("user_8675309");
+    expect(decoded(`"Bearer ${TOKEN}"`).payload.sub).toBe("user_8675309");
+    expect(decoded(`Authorization: "Bearer ${TOKEN}"`).payload.sub).toBe("user_8675309");
   });
 
   it("explains what is wrong with things that are not JWTs", () => {
@@ -42,6 +51,15 @@ describe("claims and status", () => {
     expect(claimTime("exp", 1893456000000)).toBe(Date.UTC(2030, 0, 1));
     expect(claimTime("sub", 1893456000)).toBeNull();
     expect(claimTime("exp", "1893456000")).toBeNull();
+  });
+
+  it("treats values no Date can hold as plain numbers", () => {
+    expect(claimTime("exp", Number.MAX_SAFE_INTEGER)).toBeNull();
+    expect(claimTime("exp", 1e16)).toBeNull();
+    expect(claimTime("iat", -1e13)).toBeNull();
+    // The last representable instant still counts.
+    expect(claimTime("exp", 8.64e15)).toBe(8.64e15);
+    expect(jwtStatus({ exp: Number.MAX_SAFE_INTEGER }, 0)).toEqual({ kind: "no-expiry" });
   });
 
   it("compares exp and nbf with the clock", () => {
@@ -63,6 +81,27 @@ describe("verifyHmac", () => {
   it("accepts the right secret and rejects a wrong one", async () => {
     expect(await verifyHmac(decoded(), SECRET, false)).toBe("valid");
     expect(await verifyHmac(decoded(), "wrong", false)).toBe("invalid");
+  });
+
+  it.each([
+    ["HS384", "sha384"],
+    ["HS512", "sha512"],
+  ])("verifies %s with the matching hash", async (alg, hash) => {
+    expect(await verifyHmac(decoded(sign(alg, hash)), SECRET, false)).toBe("valid");
+    expect(await verifyHmac(decoded(sign(alg, hash)), "wrong", false)).toBe("invalid");
+  });
+
+  it("only treats the three HS algorithms as HMAC, whatever the header claims", async () => {
+    expect(isHmac("HS256")).toBe(true);
+    for (const alg of ["none", "RS256", "toString", "constructor", "__proto__"]) expect(isHmac(alg)).toBe(false);
+    expect(isHmac(null)).toBe(false);
+    expect(await verifyHmac(decoded(sign("toString", "sha256")), SECRET, false)).toBe("unsupported");
+  });
+
+  it("rejects an empty secret and a signature that is not Base64", async () => {
+    expect(await verifyHmac(decoded(), "", false)).toBe("bad-secret");
+    const [h, p] = TOKEN.split(".");
+    expect(await verifyHmac(decoded(`${h}.${p}.!!!`), SECRET, false)).toBe("invalid");
   });
 
   it("accepts the secret as Base64", async () => {

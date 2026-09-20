@@ -156,7 +156,7 @@ export const codecPages: readonly CodecPage[] = [
     title: "HTML Entity Encode and Decode",
     seoTitle: "HTML Entity Encoder and Decoder",
     description:
-      "Escape text for HTML (&lt; &gt; &amp; &quot;) or decode named and numeric entities such as &eacute; and &#8364; back to characters. Every HTML5 entity name supported.",
+      "Escape text for HTML (&lt; &gt; &amp; &quot;) or decode named and numeric entities such as &eacute; and &#8364; back to characters. Every HTML5 name supported.",
     lead: "Escape text so it displays literally on a web page, or turn &amp;, &eacute; and &#8364; back into the characters they stand for.",
     examples: [
       { text: "<script>alert(1)</script>", variant: "essential", note: "Shown as text instead of being run" },
@@ -293,7 +293,7 @@ export const codecPages: readonly CodecPage[] = [
         heading: "Unescaping",
         paragraphs: [
           "Decoding understands \\uXXXX (pairing surrogates back into one character), \\u{…}, two-digit \\xXX, and the common single-letter escapes \\n, \\t, \\r, \\\\, \\\" and \\'. Anything that is not a complete escape is left exactly as written rather than rejected, so you can paste a whole log line or JSON document and only the escapes change.",
-          "When encoding, only the characters themselves are escaped. Backslashes and quotes already in your text are left alone, so the output is ready to paste between quotes only if the text had none of its own.",
+          "When encoding, a backslash already in your text is doubled (\\\\), so that C:\\new is not read back as a line break and encoding then decoding always returns the original. Quotes are left alone, so add your own escaping for those if you are pasting the result between quotes.",
         ],
       },
     ],

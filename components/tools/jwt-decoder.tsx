@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Check, Copy, Eraser, ShieldAlert, ShieldCheck, ShieldQuestion, Sparkles } from "lucide-react";
+import { Check, Copy, Eraser, ShieldAlert, ShieldCheck, ShieldQuestion, Sparkles, type LucideIcon } from "lucide-react";
 import { Callout } from "@/components/calc/callout";
+import { CodeTextarea } from "@/components/calc/code-textarea";
 import { PillButton, TogglePill } from "@/components/calc/pill-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { useCopy } from "@/hooks/use-copy";
 import { useNow } from "@/hooks/use-now";
 import {
   CLAIM_NAMES,
@@ -34,14 +35,10 @@ const PART_STYLE = {
   signature: "bg-sky/60",
 } as const;
 
-/** Before hydration there is no local time zone to trust, so times are shown in UTC. */
-function formatTime(ms: number, local: boolean): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "medium",
-    timeStyle: "long",
-    timeZone: local ? undefined : "UTC",
-  }).format(new Date(ms));
-}
+const TIME_FORMAT = { dateStyle: "medium", timeStyle: "long" } as const;
+// Built once: constructing a formatter is the slow part of Intl.
+const LOCAL_TIME = new Intl.DateTimeFormat("en-GB", TIME_FORMAT);
+const UTC_TIME = new Intl.DateTimeFormat("en-GB", { ...TIME_FORMAT, timeZone: "UTC" });
 
 function relative(ms: number, now: number): string {
   return ms <= now ? `${roughDuration(now - ms)} ago` : `in ${roughDuration(ms - now)}`;
@@ -51,44 +48,49 @@ function showValue(value: unknown): string {
   return typeof value === "string" ? value : JSON.stringify(value);
 }
 
+/**
+ * A time claim as a date plus how far away it is. The only part of a panel
+ * that follows the clock, so the once-a-second tick re-renders this and
+ * nothing around it. Before hydration there is no local time zone to trust,
+ * so the date is shown in UTC.
+ */
+function ClaimTime({ ms }: { ms: number }) {
+  const now = useNow();
+  return (
+    <>
+      {(now === null ? UTC_TIME : LOCAL_TIME).format(new Date(ms))}
+      {now !== null && <span className="ml-2 font-semibold text-muted-foreground">({relative(ms, now)})</span>}
+    </>
+  );
+}
+
 function CopyButton({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = React.useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard is unavailable (permissions or an insecure context).
-    }
-  };
+  const { state, copy } = useCopy();
   return (
     <button
       type="button"
-      onClick={copy}
+      onClick={() => copy(text)}
       aria-live="polite"
       className="flex h-8 shrink-0 items-center gap-1.5 rounded-xl px-2 text-[13px] font-bold text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
-      {copied ? <Check className="size-3.5" strokeWidth={2.5} /> : <Copy className="size-3.5" strokeWidth={2.5} />}
-      {copied ? "Copied" : label}
+      {state === "copied" ? <Check className="size-3.5" strokeWidth={2.5} /> : <Copy className="size-3.5" strokeWidth={2.5} />}
+      {state === "copied" ? "Copied" : state === "failed" ? "Could not copy" : label}
     </button>
   );
 }
 
-function JsonPanel({
+const JsonPanel = React.memo(function JsonPanel({
   title,
   tone,
   data,
   names,
-  now,
 }: {
   title: string;
   tone: string;
   data: JsonObject;
   names: Record<string, string>;
-  now: number | null;
 }) {
-  const json = JSON.stringify(data, null, 2);
+  const json = React.useMemo(() => JSON.stringify(data, null, 2), [data]);
   const entries = Object.entries(data);
   return (
     <section className="overflow-hidden rounded-2xl border-[2.5px] border-foreground bg-card">
@@ -108,10 +110,7 @@ function JsonPanel({
                 <dt className="font-mono text-[13px] font-bold">{name}</dt>
                 <dd className="min-w-0 space-y-0.5">
                   <p className="text-[15px] font-bold [overflow-wrap:anywhere]">
-                    {time === null ? showValue(value) : formatTime(time, now !== null)}
-                    {time !== null && now !== null && (
-                      <span className="ml-2 font-semibold text-muted-foreground">({relative(time, now)})</span>
-                    )}
+                    {time === null ? showValue(value) : <ClaimTime ms={time} />}
                   </p>
                   {names[name] && <p className="text-xs font-semibold text-muted-foreground">{names[name]}</p>}
                 </dd>
@@ -122,9 +121,10 @@ function JsonPanel({
       )}
     </section>
   );
-}
+});
 
-function StatusSticker({ jwt, now }: { jwt: DecodedJwt; now: number | null }) {
+function StatusSticker({ jwt }: { jwt: DecodedJwt }) {
+  const now = useNow();
   // The clock only exists in the browser; until then say nothing rather than guess.
   if (now === null) return <div className="h-[74px]" aria-hidden="true" />;
   const status = jwtStatus(jwt.payload, now);
@@ -132,7 +132,7 @@ function StatusSticker({ jwt, now }: { jwt: DecodedJwt; now: number | null }) {
     valid: { bg: "bg-mint", title: "Not expired", detail: status.kind === "valid" ? `Expires ${relative(status.expiresAt, now)}` : "" },
     expired: { bg: "bg-pink", title: "Expired", detail: status.kind === "expired" ? `Expired ${relative(status.expiredAt, now)}` : "" },
     "not-yet": { bg: "bg-yellow", title: "Not valid yet", detail: status.kind === "not-yet" ? `Becomes valid ${relative(status.validFrom, now)}` : "" },
-    "no-expiry": { bg: "bg-yellow", title: "Never expires", detail: "There is no exp claim, so this token is valid until its key is changed" },
+    "no-expiry": { bg: "bg-yellow", title: "Never expires", detail: "There is no usable exp claim, so this token is valid until its key is changed" },
   }[status.kind];
   return (
     <div className={cn("sticker tilt-3 w-fit rounded-2xl px-5 py-3", view.bg)} role="status">
@@ -141,6 +141,25 @@ function StatusSticker({ jwt, now }: { jwt: DecodedJwt; now: number | null }) {
     </div>
   );
 }
+
+/** One entry per outcome, so tsc flags a new VerifyResult that has no message. */
+const VERIFY_VIEW: Record<VerifyResult | "unchecked", { icon: LucideIcon; badge?: string; tone?: string; text: string }> = {
+  valid: {
+    icon: ShieldCheck,
+    badge: "Signature verified",
+    tone: "bg-mint",
+    text: "The token was signed with this secret and has not been changed.",
+  },
+  invalid: {
+    icon: ShieldAlert,
+    badge: "Signature does not match",
+    tone: "bg-pink",
+    text: "Wrong secret, or the token was altered after signing.",
+  },
+  "bad-secret": { icon: ShieldAlert, text: "That secret is not valid Base64." },
+  unsupported: { icon: ShieldQuestion, text: "This browser cannot check signatures here." },
+  unchecked: { icon: ShieldQuestion, text: "Signature not checked. Decoding never needs the secret." },
+};
 
 function SignatureCheck({ jwt, isSample }: { jwt: DecodedJwt; isSample: boolean }) {
   const [secret, setSecret] = React.useState("");
@@ -163,6 +182,7 @@ function SignatureCheck({ jwt, isSample }: { jwt: DecodedJwt; isSample: boolean 
   }, [jwt, secret, secretIsBase64, key]);
 
   const result = secret !== "" && checked?.key === key ? checked.result : null;
+  const shown = VERIFY_VIEW[result ?? "unchecked"];
 
   if (!isHmac(jwt.algorithm)) {
     return (
@@ -196,41 +216,12 @@ function SignatureCheck({ jwt, isSample }: { jwt: DecodedJwt; isSample: boolean 
         </TogglePill>
         {isSample && <PillButton onClick={() => setSecret(SAMPLE_SECRET)}>Sample secret</PillButton>}
       </div>
-      <p
-        role="status"
-        className={cn(
-          "flex flex-wrap items-center gap-2 text-[15px] font-bold",
-          result === null && "text-muted-foreground",
+      <p role="status" className={cn("flex flex-wrap items-center gap-2 text-[15px] font-bold", !shown.badge && "text-muted-foreground")}>
+        <shown.icon className="size-5 shrink-0" strokeWidth={2.5} />
+        {shown.badge && (
+          <span className={cn("rounded-full border-2 border-foreground px-2.5 py-0.5", shown.tone)}>{shown.badge}</span>
         )}
-      >
-        {result === "valid" ? (
-          <>
-            <ShieldCheck className="size-5 shrink-0" strokeWidth={2.5} />
-            <span className="rounded-full border-2 border-foreground bg-mint px-2.5 py-0.5">Signature verified</span>
-            <span className="font-semibold text-muted-foreground">The token was signed with this secret and has not been changed.</span>
-          </>
-        ) : result === "invalid" ? (
-          <>
-            <ShieldAlert className="size-5 shrink-0" strokeWidth={2.5} />
-            <span className="rounded-full border-2 border-foreground bg-pink px-2.5 py-0.5">Signature does not match</span>
-            <span className="font-semibold text-muted-foreground">Wrong secret, or the token was altered after signing.</span>
-          </>
-        ) : result === "bad-secret" ? (
-          <>
-            <ShieldAlert className="size-5 shrink-0" strokeWidth={2.5} />
-            That secret is not valid Base64.
-          </>
-        ) : result === "unsupported" ? (
-          <>
-            <ShieldQuestion className="size-5 shrink-0" strokeWidth={2.5} />
-            This browser cannot check signatures here.
-          </>
-        ) : (
-          <>
-            <ShieldQuestion className="size-5 shrink-0" strokeWidth={2.5} />
-            Signature not checked. Decoding never needs the secret.
-          </>
-        )}
+        <span className={cn(shown.badge && "font-semibold text-muted-foreground")}>{shown.text}</span>
       </p>
     </div>
   );
@@ -238,7 +229,6 @@ function SignatureCheck({ jwt, isSample }: { jwt: DecodedJwt; isSample: boolean 
 
 export function JwtDecoder() {
   const [token, setToken] = React.useState(SAMPLE_TOKEN);
-  const now = useNow();
   const result = React.useMemo(() => decodeJwt(token), [token]);
 
   return (
@@ -251,15 +241,12 @@ export function JwtDecoder() {
             </label>
             <span className="text-xs font-semibold text-muted-foreground">Stays in your browser</span>
           </div>
-          <Textarea
+          <CodeTextarea
             id="jwt-token"
             value={token}
             onChange={(e) => setToken(e.target.value)}
             placeholder="Paste a JWT: eyJhbGciOi…"
-            spellCheck={false}
-            autoComplete="off"
-            autoCapitalize="off"
-            className="h-32 resize-y field-sizing-fixed rounded-2xl border-[2.5px] border-foreground bg-card px-3.5 py-3 font-mono text-base leading-6 break-all focus-visible:border-foreground focus-visible:ring-[3px] focus-visible:ring-ring/60 md:text-[13px]"
+            className="h-32 break-all"
           />
           <div className="flex flex-wrap items-center gap-2">
             <PillButton onClick={() => setToken(SAMPLE_TOKEN)}>
@@ -289,27 +276,27 @@ export function JwtDecoder() {
           ) : (
             <>
               <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-                <StatusSticker jwt={result.jwt} now={now} />
+                <StatusSticker jwt={result.value} />
                 <p className="max-w-xl min-w-0 flex-1 basis-72 font-mono text-xs leading-5 break-all" aria-label="The three parts of the token">
-                  <span className={cn("rounded-[3px]", PART_STYLE.header)}>{result.jwt.parts.header}</span>.
-                  <span className={cn("rounded-[3px]", PART_STYLE.payload)}>{result.jwt.parts.payload}</span>.
-                  <span className={cn("rounded-[3px]", PART_STYLE.signature)}>{result.jwt.parts.signature}</span>
+                  <span className={cn("rounded-[3px]", PART_STYLE.header)}>{result.value.parts.header}</span>.
+                  <span className={cn("rounded-[3px]", PART_STYLE.payload)}>{result.value.parts.payload}</span>.
+                  <span className={cn("rounded-[3px]", PART_STYLE.signature)}>{result.value.parts.signature}</span>
                 </p>
               </div>
 
               <div className="grid items-start gap-5 lg:grid-cols-2">
                 <div className="space-y-5">
-                  <JsonPanel title="Header" tone={PART_STYLE.header} data={result.jwt.header} names={HEADER_NAMES} now={now} />
+                  <JsonPanel title="Header" tone={PART_STYLE.header} data={result.value.header} names={HEADER_NAMES} />
                   <section className="overflow-hidden rounded-2xl border-[2.5px] border-foreground bg-card">
                     <div className={cn("border-b-[2.5px] border-foreground px-4 py-2.5", PART_STYLE.signature)}>
                       <h3 className="font-heading text-lg font-extrabold">Signature</h3>
                     </div>
                     <div className="px-4 py-4">
-                      <SignatureCheck jwt={result.jwt} isSample={token === SAMPLE_TOKEN} />
+                      <SignatureCheck jwt={result.value} isSample={token === SAMPLE_TOKEN} />
                     </div>
                   </section>
                 </div>
-                <JsonPanel title="Payload" tone={PART_STYLE.payload} data={result.jwt.payload} names={CLAIM_NAMES} now={now} />
+                <JsonPanel title="Payload" tone={PART_STYLE.payload} data={result.value.payload} names={CLAIM_NAMES} />
               </div>
             </>
           )}

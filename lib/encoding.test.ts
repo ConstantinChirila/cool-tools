@@ -13,7 +13,7 @@ const value = (id: CodecId, text: string, option = true) => {
   return r.value;
 };
 
-const TRICKY = "Café & crème <b>\"5 €\"</b> it's 😀\n\ttab 100% a+b/c?d=e#f \\ end";
+const TRICKY = "Café & crème <b>\"5 €\"</b> it's 😀\n\ttab 100% a+b/c?d=e#f \\ C:\\new\\table \\u00e9 \\x41 end";
 
 describe("round trips", () => {
   for (const codec of codecs) {
@@ -128,6 +128,15 @@ describe("unicode escapes", () => {
 
   it("decodes \\u, \\u{}, \\x and simple escapes, leaving anything else alone", () => {
     expect(value("unicode", "caf\\u00e9 \\ud83d\\ude00 \\u{1F600} \\x41 a\\tb \\q \\u12")).toBe("café 😀 😀 A a\tb \\q \\u12");
+  });
+
+  it("doubles backslashes already in the text so they survive the round trip", () => {
+    const source = "C:\\new\\table \\u00e9";
+    expect(enc("unicode", source, "nonascii")).toBe("C:\\\\new\\\\table \\\\u00e9");
+    expect(enc("unicode", source, "codepoint")).toBe("C:\\\\new\\\\table \\\\u00e9");
+    for (const variant of ["nonascii", "all", "codepoint"]) {
+      expect(value("unicode", enc("unicode", source, variant))).toBe(source);
+    }
   });
 
   it("rejects code points past the end of Unicode", () => {

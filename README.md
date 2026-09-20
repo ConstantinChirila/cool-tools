@@ -37,6 +37,9 @@ pnpm lint     # eslint
    - `components/calc/segmented.tsx`: compact single-choice pill control (2-6 short options)
    - `components/calc/switch-field.tsx`: labelled toggle row with a hint
    - `components/calc/pill-button.tsx`: `PillButton` and `TogglePill` for toolbars (swap, clear, copy, on/off options)
+   - `components/calc/code-textarea.tsx`: monospace paste box for text, code and tokens
+   - `hooks/use-copy.ts`: copy to clipboard with `idle` / `copied` / `failed` button state
+   - `hooks/use-now.ts`: shared once-a-second clock, `null` before hydration
    - `components/calc/stat.tsx`: `Stat` and `HeroStat` result displays
    - `components/calc/currency-select.tsx` + `hooks/use-currency.ts`: shared currency choice
    - `components/calc/mobile-result-bar.tsx`: sticky bottom result summary on mobile
@@ -44,6 +47,10 @@ pnpm lint     # eslint
    - `components/charts/split-bar.tsx`: part-to-whole stacked bar with legend
 3. **Write the guide** in `content/<slug>.ts`: a `ToolContent` object (intro, sections, FAQs; type in `lib/tool-content.ts`). It renders under the calculator and feeds the FAQ structured data, so make it genuinely useful and keep the numbers verified against the engine.
 4. **Create the route** at `app/tools/<slug>/page.tsx` plus `opengraph-image.tsx`: copy any existing tool folder and change the slug. `toolMetadata(tool)` builds title, description, canonical and social tags from the registry's `seo` field; `ToolPageShell` adds breadcrumbs, JSON-LD, the guide and related tools.
+
+Static pages under a tool (unit conversion pairs, codec pages) render through the same `ToolPageShell` with its `subPage` prop, and take their metadata and structured data from `subPageMetadata` / `subPageJsonLd` in `lib/seo.ts`.
+
+Engines that can fail return the `Result<T>` union from `lib/result.ts` (`ok`, then `value` or `error`). The React Compiler is on (`reactCompiler: true` in `next.config.ts`), so components do not need hand-placed `useMemo`; reach for `React.memo` only to stop a large subtree re-rendering from a parent that changes on every keystroke.
 
 Pure calculation logic lives in `lib/` (see `lib/finance.ts`) so it stays testable and separate from the UI. Engine tests sit beside the code as `lib/<name>.test.ts` and run with `pnpm test` (Vitest, Node environment).
 

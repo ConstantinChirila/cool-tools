@@ -1,15 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { diffText, type DiffOptions, type DiffResult } from "@/lib/text-diff";
-import type { DiffRequest, DiffResponse } from "@/lib/text-diff.worker";
+import { countLines, diffText, unifiedPatch, type DiffOptions, type DiffResult } from "@/lib/text-diff";
+import type { WorkerRequest, WorkerResponse } from "@/lib/text-diff.worker";
 
 /**
- * Up to this many characters (both texts together) the diff takes a few
- * milliseconds, so it runs during render: no flicker, and the server can
- * render it. Anything larger goes to a worker.
+ * Inputs this small diff in a few milliseconds, so they run during render: no
+ * flicker, and the server can render the result. Anything larger goes to a
+ * worker. Both limits matter: the diff's cost grows with the number of lines
+ * that differ, and 20,000 characters of one-word lines is thousands of lines.
  */
 const SYNC_MAX_CHARS = 20_000;
+const SYNC_MAX_LINES = 1_000;
 /** Wait for a pause in typing before starting a worker job. */
 const WORKER_DEBOUNCE_MS = 200;
 
@@ -24,6 +26,38 @@ const sameInputs = (a: Inputs, b: Inputs) =>
   a.ignoreCase === b.ignoreCase &&
   a.ignoreWhitespace === b.ignoreWhitespace;
 
+function isSmall(oldText: string, newText: string): boolean {
+  return (
+    oldText.length + newText.length <= SYNC_MAX_CHARS &&
+    countLines(oldText) + countLines(newText) <= SYNC_MAX_LINES
+  );
+}
+
+function startWorker(): Worker {
+  return new Worker(new URL("../lib/text-diff.worker.ts", import.meta.url));
+}
+
+/**
+ * Builds the unified patch off the main thread when the texts are large. Uses
+ * a worker of its own, so it never queues behind (or is cancelled with) a diff.
+ */
+export function createPatch(oldText: string, newText: string): Promise<string | undefined> {
+  if (isSmall(oldText, newText) || typeof Worker === "undefined") {
+    return Promise.resolve(unifiedPatch(oldText, newText));
+  }
+  return new Promise((resolve) => {
+    const worker = startWorker();
+    const finish = (patch: string | undefined) => {
+      worker.terminate();
+      resolve(patch);
+    };
+    worker.onmessage = (event: MessageEvent<WorkerResponse>) =>
+      finish(event.data.kind === "patch" ? event.data.patch : undefined);
+    worker.onerror = () => finish(unifiedPatch(oldText, newText));
+    worker.postMessage({ id: 0, kind: "patch", oldText, newText } satisfies WorkerRequest);
+  });
+}
+
 /**
  * Diffs two texts without blocking typing. `pending` is true while a worker
  * job for the current inputs is still running; `result` is then the last
@@ -34,7 +68,7 @@ export function useTextDiff(
   newText: string,
   { ignoreCase, ignoreWhitespace }: DiffOptions,
 ): { result: DiffResult | null; pending: boolean } {
-  const small = oldText.length + newText.length <= SYNC_MAX_CHARS;
+  const small = React.useMemo(() => isSmall(oldText, newText), [oldText, newText]);
 
   const syncResult = React.useMemo(
     () => (small ? diffText(oldText, newText, { ignoreCase, ignoreWhitespace }) : null),
@@ -56,9 +90,9 @@ export function useTextDiff(
     const timer = window.setTimeout(() => {
       if (typeof Worker === "undefined") return onMainThread();
       const id = ++nextId.current;
-      const w = (worker.current ??= new Worker(new URL("../lib/text-diff.worker.ts", import.meta.url)));
-      w.onmessage = (event: MessageEvent<DiffResponse>) => {
-        if (event.data.id !== id) return;
+      const w = (worker.current ??= startWorker());
+      w.onmessage = (event: MessageEvent<WorkerResponse>) => {
+        if (event.data.id !== id || event.data.kind !== "diff") return;
         running = false;
         setFinished({ inputs, result: event.data.result });
       };
@@ -69,7 +103,7 @@ export function useTextDiff(
         onMainThread();
       };
       running = true;
-      w.postMessage({ id, oldText, newText, options } satisfies DiffRequest);
+      w.postMessage({ id, kind: "diff", oldText, newText, options } satisfies WorkerRequest);
     }, WORKER_DEBOUNCE_MS);
 
     return () => {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_SIZE } from "@/lib/og";
 import type { ToolContent } from "@/lib/tool-content";
 import { SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/site";
 import type { Tool } from "@/lib/tools";
@@ -72,6 +73,85 @@ export function toolJsonLd(tool: Tool, content: ToolContent) {
       {
         "@type": "FAQPage",
         mainEntity: content.faqs.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: { "@type": "Answer", text: faq.answer },
+        })),
+      },
+    ],
+  };
+}
+
+/** A static page under a tool, such as one unit conversion or one codec. */
+export interface SubPage {
+  /** Site-relative path, e.g. /tools/unit-converter/stone-to-kg. */
+  path: string;
+  /** Search title: the site name is appended. */
+  title: string;
+  /** Name in breadcrumbs. */
+  crumb: string;
+  description: string;
+}
+
+/**
+ * Metadata for a sub-page. It points at the parent tool's generated social
+ * card, because a segment's opengraph-image file does not cascade to the
+ * routes beneath it.
+ */
+export function subPageMetadata(tool: Tool, page: SubPage): Metadata {
+  const url = absoluteUrl(page.path);
+  const title = `${page.title} · ${SITE_NAME}`;
+  const image = {
+    url: absoluteUrl(`${toolPath(tool)}/opengraph-image`),
+    ...OG_SIZE,
+    alt: `${tool.name} on ${SITE_NAME}`,
+  };
+  return {
+    title: page.title,
+    description: page.description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      url,
+      title,
+      description: page.description,
+      siteName: SITE_NAME,
+      locale: "en_GB",
+      images: [image],
+    },
+    twitter: { card: "summary_large_image", title, description: page.description, images: [image.url] },
+  };
+}
+
+/** schema.org graph for a sub-page: the page, its breadcrumbs under the tool, and its FAQs. */
+export function subPageJsonLd(tool: Tool, page: SubPage, faqs: readonly { question: string; answer: string }[]) {
+  const url = absoluteUrl(page.path);
+  const toolUrl = absoluteUrl(toolPath(tool));
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": `${url}#page`,
+        name: page.title,
+        description: page.description,
+        url,
+        inLanguage: "en-GB",
+        isPartOf: { "@id": `${SITE_URL}/#website` },
+        about: { "@id": `${toolUrl}#app` },
+        dateModified: tool.updated,
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: SITE_NAME, item: `${SITE_URL}/` },
+          { "@type": "ListItem", position: 2, name: tool.name, item: toolUrl },
+          { "@type": "ListItem", position: 3, name: page.crumb, item: url },
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: faqs.map((faq) => ({
           "@type": "Question",
           name: faq.question,
           acceptedAnswer: { "@type": "Answer", text: faq.answer },

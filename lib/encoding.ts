@@ -1,9 +1,11 @@
 import { decodeHTML, encodeNonAsciiHTML, encodeXML, escapeUTF8 } from "entities";
+import { base64ToBytes, bytesToBase64 } from "@/lib/base64";
+import { fail, ok, type Result } from "@/lib/result";
 
 export type CodecId = "base64" | "url" | "html" | "hex" | "unicode";
 export type Direction = "encode" | "decode";
 
-export type CodecResult = { ok: true; value: string } | { ok: false; error: string };
+export type CodecResult = Result<string>;
 
 export interface CodecVariant {
   id: string;
@@ -27,9 +29,6 @@ export interface Codec {
   decode: (text: string, option: boolean) => CodecResult;
 }
 
-const ok = (value: string): CodecResult => ({ ok: true, value });
-const fail = (error: string): CodecResult => ({ ok: false, error });
-
 const NOT_TEXT =
   "The decoded bytes are not valid UTF-8 text. This is probably binary data (an image, a key, compressed data) rather than encoded text.";
 
@@ -46,48 +45,6 @@ function utf8Text(bytes: Uint8Array): CodecResult {
 }
 
 // --- Base64 ---------------------------------------------------------------
-
-const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-export function bytesToBase64(bytes: Uint8Array): string {
-  let out = "";
-  for (let i = 0; i < bytes.length; i += 3) {
-    const a = bytes[i] ?? 0;
-    const b = bytes[i + 1];
-    const c = bytes[i + 2];
-    out += B64.charAt(a >> 2);
-    out += B64.charAt(((a & 3) << 4) | ((b ?? 0) >> 4));
-    out += b === undefined ? "=" : B64.charAt(((b & 15) << 2) | ((c ?? 0) >> 6));
-    out += c === undefined ? "=" : B64.charAt(c & 63);
-  }
-  return out;
-}
-
-/** Accepts the standard and URL-safe alphabets, with or without padding, ignoring whitespace. */
-export function base64ToBytes(input: string): Uint8Array | { error: string } {
-  const text = input.replace(/\s+/g, "").replace(/-/g, "+").replace(/_/g, "/");
-  const body = text.replace(/=+$/, "");
-  const bad = body.search(/[^A-Za-z0-9+/]/);
-  if (bad !== -1) return { error: `"${body.charAt(bad)}" is not a Base64 character.` };
-  if (text.length - body.length > 2) return { error: "Base64 never ends with more than two = signs." };
-  if (body.length % 4 === 1) {
-    return { error: "The length is wrong for Base64: a character is missing or has been added." };
-  }
-
-  const bytes = new Uint8Array(Math.floor((body.length * 3) / 4));
-  let at = 0;
-  for (let i = 0; i < body.length; i += 4) {
-    const n =
-      (B64.indexOf(body.charAt(i)) << 18) |
-      (B64.indexOf(body.charAt(i + 1)) << 12) |
-      ((i + 2 < body.length ? B64.indexOf(body.charAt(i + 2)) : 0) << 6) |
-      (i + 3 < body.length ? B64.indexOf(body.charAt(i + 3)) : 0);
-    bytes[at++] = n >> 16;
-    if (i + 2 < body.length) bytes[at++] = (n >> 8) & 255;
-    if (i + 3 < body.length) bytes[at++] = n & 255;
-  }
-  return bytes;
-}
 
 const base64: Codec = {
   id: "base64",
@@ -106,7 +63,7 @@ const base64: Codec = {
   },
   decode(text) {
     const bytes = base64ToBytes(text);
-    return "error" in bytes ? fail(bytes.error) : utf8Text(bytes);
+    return bytes.ok ? utf8Text(bytes.value) : bytes;
   },
 };
 
@@ -214,6 +171,8 @@ const SIMPLE_ESCAPES: Record<string, string> = {
   "/": "/",
 };
 
+const BACKSLASH = 92;
+
 const unit = (code: number) => `\\u${code.toString(16).padStart(4, "0")}`;
 
 const unicode: Codec = {
@@ -230,12 +189,18 @@ const unicode: Codec = {
     if (variant === "codepoint") {
       return Array.from(text, (char) => {
         const code = char.codePointAt(0) ?? 0;
+        if (code === BACKSLASH) return "\\\\";
         return code < 128 ? char : `\\u{${code.toString(16)}}`;
       }).join("");
     }
     let out = "";
     for (let i = 0; i < text.length; i++) {
       const code = text.charCodeAt(i);
+      // A backslash already in the text is doubled, or decoding would read it as the start of an escape.
+      if (code === BACKSLASH && variant !== "all") {
+        out += "\\\\";
+        continue;
+      }
       out += variant === "all" || code > 126 || (code < 32 && ![9, 10, 13].includes(code)) ? unit(code) : text.charAt(i);
     }
     return out;

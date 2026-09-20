@@ -3,10 +3,11 @@
 import * as React from "react";
 import { ArrowDownUp, Check, Copy, Eraser, Sparkles } from "lucide-react";
 import { Callout } from "@/components/calc/callout";
+import { CodeTextarea } from "@/components/calc/code-textarea";
 import { PillButton, TogglePill } from "@/components/calc/pill-button";
 import { Segmented } from "@/components/calc/segmented";
 import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
+import { useCopy } from "@/hooks/use-copy";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
 import {
   byteLength,
@@ -30,11 +31,14 @@ const TILE_STYLE: Record<CodecId, { bg: string; tilt: string }> = {
   unicode: { bg: "bg-yellow", tilt: "tilt-1" },
 };
 
-const BOX =
-  "h-44 resize-y field-sizing-fixed rounded-2xl border-[2.5px] border-foreground px-3.5 py-3 font-mono text-base leading-6 break-all focus-visible:border-foreground focus-visible:ring-[3px] focus-visible:ring-ring/60 md:text-[13px]";
-
+/** "42 characters, 47 bytes": bytes are only mentioned when UTF-8 makes them differ. */
 function sizeOf(text: string) {
-  const chars = Array.from(text).length;
+  // Code points, so an emoji counts once: every UTF-16 unit except the second half of a surrogate pair.
+  let chars = 0;
+  for (let i = 0; i < text.length; i++) {
+    const unit = text.charCodeAt(i);
+    if (unit < 0xdc00 || unit > 0xdfff) chars++;
+  }
   const bytes = byteLength(text);
   const c = `${chars.toLocaleString("en-GB")} ${chars === 1 ? "character" : "characters"}`;
   return bytes === chars ? c : `${c}, ${bytes.toLocaleString("en-GB")} bytes`;
@@ -53,7 +57,7 @@ export function EncoderDecoder({
   const [decodeOption, setDecodeOption] = React.useState(true);
   // Until something is typed, the box shows a sample that follows the chosen codec and direction.
   const [typed, setInput] = React.useState<string | null>(null);
-  const [copied, setCopied] = React.useState(false);
+  const { state: copyState, copy } = useCopy();
 
   // The text stays out of the URL on purpose: people paste tokens and keys here.
   useUrlState({
@@ -72,6 +76,9 @@ export function EncoderDecoder({
     [codecId, direction, deferredInput, variant, decodeOption],
   );
   const output = result.ok ? result.value : "";
+  // Counted from the deferred text, so a huge paste is measured once rather than on every keystroke.
+  const inputSize = React.useMemo(() => sizeOf(deferredInput), [deferredInput]);
+  const outputSize = React.useMemo(() => sizeOf(output), [output]);
 
   const pickCodec = (next: CodecId) => {
     if (next === codecId) return;
@@ -90,16 +97,6 @@ export function EncoderDecoder({
   };
 
   const loadSample = () => setInput(null);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(output);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard is unavailable (permissions or an insecure context).
-    }
-  };
 
   const plainLabel = "Plain text";
   const inputLabel = direction === "encode" ? plainLabel : codec.encodedLabel;
@@ -173,17 +170,14 @@ export function EncoderDecoder({
                 <label htmlFor="codec-input" className="text-[15px] font-bold">
                   {inputLabel}
                 </label>
-                <span className="text-xs font-semibold text-muted-foreground text-numeric">{sizeOf(input)}</span>
+                <span className="text-xs font-semibold text-muted-foreground text-numeric">{inputSize}</span>
               </div>
-              <Textarea
+              <CodeTextarea
                 id="codec-input"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={direction === "encode" ? "Type or paste text to encode" : `Paste ${codec.encodedLabel.toLowerCase()} to decode`}
-                spellCheck={false}
-                autoComplete="off"
-                autoCapitalize="off"
-                className={cn(BOX, "bg-card")}
+                className="h-44 break-all"
               />
             </div>
 
@@ -193,17 +187,16 @@ export function EncoderDecoder({
                   {outputLabel}
                 </label>
                 <span className="text-xs font-semibold text-muted-foreground text-numeric" aria-live="polite">
-                  {result.ok ? sizeOf(output) : "Cannot decode"}
+                  {result.ok ? outputSize : "Cannot decode"}
                 </span>
               </div>
               {result.ok ? (
-                <Textarea
+                <CodeTextarea
                   id="codec-output"
                   value={output}
                   readOnly
                   placeholder="The result appears here"
-                  spellCheck={false}
-                  className={cn(BOX, "bg-secondary")}
+                  className="h-44 bg-secondary break-all"
                 />
               ) : (
                 <div id="codec-output" role="alert" className="flex h-44 flex-col justify-center rounded-2xl border-[2.5px] border-dashed border-foreground/40 px-4">
@@ -231,13 +224,13 @@ export function EncoderDecoder({
               {direction === "encode" ? "Decode this" : "Encode this"}
             </PillButton>
             <PillButton
-              onClick={copy}
+              onClick={() => copy(output)}
               disabled={!result.ok || output === ""}
               aria-live="polite"
               className="bg-yellow hover:bg-yellow"
             >
-              {copied ? <Check className="size-4" strokeWidth={2.5} /> : <Copy className="size-4" strokeWidth={2.5} />}
-              {copied ? "Copied" : "Copy result"}
+              {copyState === "copied" ? <Check className="size-4" strokeWidth={2.5} /> : <Copy className="size-4" strokeWidth={2.5} />}
+              {copyState === "copied" ? "Copied" : copyState === "failed" ? "Could not copy" : "Copy result"}
             </PillButton>
           </div>
         </CardContent>

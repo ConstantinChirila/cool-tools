@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { JsonLd } from "@/components/json-ld";
-import { RecordRecentTool } from "@/components/record-recent-tool";
-import { ShareLink } from "@/components/share-link";
+import { ArrowRight } from "lucide-react";
+import { ToolPageShell } from "@/components/tool-page-shell";
 import { UnitConverter } from "@/components/tools/unit-converter";
 import { UnitPairLinks } from "@/components/tools/unit-pair-links";
-import { toolPath } from "@/lib/seo";
-import { SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/site";
+import { subPageJsonLd, subPageMetadata, type SubPage } from "@/lib/seo";
 import { requireTool } from "@/lib/tools";
 import { convert, describeRelation, formatCompound, formatNumber, formatQuantity, type Relation } from "@/lib/units/convert";
 import { getPair, pairPath, pairs, resolvePair, reversePair, type ResolvedPair } from "@/lib/units/pairs";
@@ -52,31 +49,13 @@ function howTo(pair: ResolvedPair, relation: Relation): string {
   }
 }
 
+function subPage(pair: ResolvedPair): SubPage {
+  return { path: pairPath(pair), title: `${pair.title} Converter`, crumb: pair.title, description: describe(pair) };
+}
+
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { pair: slug } = await params;
-  const pair = load(slug);
-  if (!pair) return {};
-  const title = `${pair.title} Converter`;
-  const description = describe(pair);
-  const url = absoluteUrl(pairPath(pair));
-  // Pair pages share the converter's generated social card; a segment's
-  // opengraph-image file does not cascade to routes beneath it.
-  const image = { url: absoluteUrl(`${toolPath(tool)}/opengraph-image`), width: 1200, height: 630, alt: `${tool.name} on ${SITE_NAME}` };
-  return {
-    title,
-    description,
-    alternates: { canonical: url },
-    openGraph: {
-      type: "website",
-      url,
-      title: `${title} · ${SITE_NAME}`,
-      description,
-      siteName: SITE_NAME,
-      locale: "en_GB",
-      images: [image],
-    },
-    twitter: { card: "summary_large_image", title: `${title} · ${SITE_NAME}`, description, images: [image.url] },
-  };
+  const pair = load((await params).pair);
+  return pair ? subPageMetadata(tool, subPage(pair)) : {};
 }
 
 export default async function UnitPairPage({ params }: { params: Params }) {
@@ -87,7 +66,6 @@ export default async function UnitPairPage({ params }: { params: Params }) {
   const { fromUnit: from, toUnit: to, categoryData: category } = pair;
   const relation = describeRelation(from, to);
   const reverse = reversePair(pair);
-  const url = absoluteUrl(pairPath(pair));
   const sampleValue = pair.table[Math.floor(pair.table.length / 2)] ?? 1;
   const sampleResult = formatQuantity(to, convert(from, to, sampleValue));
   const rows = pair.table.map((value) => {
@@ -120,70 +98,15 @@ export default async function UnitPairPage({ params }: { params: Params }) {
     },
   ];
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "WebPage",
-        "@id": `${url}#page`,
-        name: `${pair.title} Converter`,
-        description: describe(pair),
-        url,
-        inLanguage: "en-GB",
-        isPartOf: { "@id": `${SITE_URL}/#website` },
-        about: { "@id": `${absoluteUrl(toolPath(tool))}#app` },
-        dateModified: tool.updated,
-      },
-      {
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          { "@type": "ListItem", position: 1, name: SITE_NAME, item: `${SITE_URL}/` },
-          { "@type": "ListItem", position: 2, name: tool.name, item: absoluteUrl(toolPath(tool)) },
-          { "@type": "ListItem", position: 3, name: pair.title, item: url },
-        ],
-      },
-      {
-        "@type": "FAQPage",
-        mainEntity: faqs.map((faq) => ({
-          "@type": "Question",
-          name: faq.question,
-          acceptedAnswer: { "@type": "Answer", text: faq.answer },
-        })),
-      },
-    ],
-  };
-
   return (
-    <article className="mx-auto w-full max-w-7xl px-4 pb-28 sm:px-6">
-      <JsonLd data={jsonLd} />
-      <RecordRecentTool slug={tool.slug} />
-      <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 py-6">
-        <Link
-          href={toolPath(tool)}
-          className="inline-flex h-10 items-center gap-1.5 rounded-full border-[2.5px] border-foreground bg-card px-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
-        >
-          <ArrowLeft className="size-4" strokeWidth={2.5} />
-          {tool.name}
-        </Link>
-        <ShareLink />
-      </nav>
-
-      <header className="mb-8 flex items-center gap-5">
-        <span
-          className="sticker flex size-16 shrink-0 -rotate-6 items-center justify-center rounded-[22px] sm:size-[72px]"
-          style={{ background: tool.tint }}
-          aria-hidden="true"
-        >
-          <tool.icon className="size-8" strokeWidth={2.25} />
-        </span>
-        <div>
-          <h1 className="text-3xl font-black tracking-tight sm:text-5xl">{pair.title}</h1>
-          <p className="mt-1.5 max-w-2xl font-semibold text-muted-foreground sm:text-lg">
-            1 {from.sym} = {one(pair)} {to.sym}. Type a figure below, or scan the table for the usual values.
-          </p>
-        </div>
-      </header>
-
+    <ToolPageShell
+      tool={tool}
+      subPage={{
+        title: pair.title,
+        lead: `1 ${from.sym} = ${one(pair)} ${to.sym}. Type a figure below, or scan the table for the usual values.`,
+        jsonLd: subPageJsonLd(tool, subPage(pair), faqs),
+      }}
+    >
       <UnitConverter
         initial={{ category: category.id, from: from.id, to: to.id, value: String(sampleValue) }}
       />
@@ -263,6 +186,6 @@ export default async function UnitPairPage({ params }: { params: Params }) {
       </div>
 
       <UnitPairLinks exclude={pair.slug} />
-    </article>
+    </ToolPageShell>
   );
 }

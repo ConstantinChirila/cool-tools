@@ -34,7 +34,7 @@ export const content: ToolContent = {
       bullets: [
         "**Ignore case** treats capital and small letters as the same, so Hello and hello match.",
         "**Ignore whitespace** ignores spaces and tabs at the start and end of a line, and treats any run of spaces or tabs inside a line as a single space. Re-indented code and text with trailing spaces then count as unchanged. Removing the space between two words entirely still counts as a change.",
-        "Line endings never count. A file saved on Windows (CRLF) and the same file saved on a Mac or Linux (LF) compare as identical, and so do two texts that differ only by a final empty line.",
+        "Line endings never count. A file saved on Windows (CRLF) and the same file saved on a Mac or Linux (LF) compare as identical. If the only difference is that one text ends with a line break and the other does not, every line still matches: the result says so, and Copy patch includes it.",
       ],
     },
     {

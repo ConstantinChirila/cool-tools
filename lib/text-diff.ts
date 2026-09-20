@@ -29,7 +29,15 @@ export interface DiffStats {
 }
 
 export type DiffResult =
-  | { status: "ok"; blocks: DiffBlock[]; stats: DiffStats; identical: boolean }
+  | {
+      status: "ok";
+      blocks: DiffBlock[];
+      stats: DiffStats;
+      /** No line was added or removed, under the options given. */
+      identical: boolean;
+      /** One text ends with a line break and the other does not: invisible line by line, real in a patch. */
+      finalNewlineDiffers: boolean;
+    }
   /** The texts were too large and too different to compare within the time budget. */
   | { status: "timeout" };
 
@@ -48,6 +56,23 @@ export function splitLines(text: string): string[] {
   const lines = text.split(/\r\n|\n|\r/);
   if (lines[lines.length - 1] === "") lines.pop();
   return lines;
+}
+
+const endsWithNewline = (text: string) => /[\r\n]$/.test(text);
+
+/** Line count without building the lines: cheap enough to run on every keystroke. */
+export function countLines(text: string): number {
+  if (text === "") return 0;
+  let lines = 1;
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    // \r\n is one break: count the \r and skip the \n.
+    if (code === 13) {
+      lines++;
+      if (text.charCodeAt(i + 1) === 10) i++;
+    } else if (code === 10) lines++;
+  }
+  return endsWithNewline(text) ? lines - 1 : lines;
 }
 
 function lineKey(line: string, options: DiffOptions): string {
@@ -193,12 +218,85 @@ export function diffText(
     });
   }
 
-  return { status: "ok", blocks, stats, identical: stats.added === 0 && stats.removed === 0 };
+  return {
+    status: "ok",
+    blocks,
+    stats,
+    identical: stats.added === 0 && stats.removed === 0,
+    finalNewlineDiffers: endsWithNewline(oldText) !== endsWithNewline(newText),
+  };
 }
 
 /** Standard unified diff (the format `git diff` and `patch` use). Undefined if it takes too long. */
-export function unifiedPatch(oldText: string, newText: string): string | undefined {
+export function unifiedPatch(
+  oldText: string,
+  newText: string,
+  timeoutMs = MAIN_THREAD_TIMEOUT_MS,
+): string | undefined {
   return createTwoFilesPatch("original", "changed", oldText, newText, undefined, undefined, {
-    timeout: MAIN_THREAD_TIMEOUT_MS,
+    timeout: timeoutMs,
   });
+}
+
+/* ---------- Rows: what the result view draws ---------- */
+
+export type DiffView = "split" | "unified";
+
+export type DiffRow =
+  | { kind: "same"; old: DiffLine; new: DiffLine }
+  /** Split view pairs a removed line with an added one; unified view has one or the other. */
+  | { kind: "change"; removed?: DiffLine; added?: DiffLine }
+  /** Stands in for `count` unchanged lines of block `block`. */
+  | { kind: "fold"; block: number; count: number };
+
+/** Unchanged lines kept either side of a change when the rest is folded away. */
+export const FOLD_CONTEXT = 3;
+/** Folding fewer lines than this saves no space once the fold row itself is counted. */
+export const FOLD_MIN = 4;
+
+/**
+ * Flattens blocks into display rows. With `fold` on, the middle of a long
+ * unchanged block becomes one fold row, unless its index is in `unfolded`.
+ * The first block keeps no leading context and the last no trailing context,
+ * since there is no change on that side to give context to.
+ */
+export function buildRows(
+  blocks: readonly DiffBlock[],
+  view: DiffView,
+  fold: boolean,
+  unfolded: ReadonlySet<number>,
+): DiffRow[] {
+  const rows: DiffRow[] = [];
+  blocks.forEach((block, index) => {
+    if (block.kind === "change") {
+      if (view === "unified") {
+        for (const removed of block.removed) rows.push({ kind: "change", removed });
+        for (const added of block.added) rows.push({ kind: "change", added });
+      } else {
+        const height = Math.max(block.removed.length, block.added.length);
+        for (let i = 0; i < height; i++) {
+          rows.push({ kind: "change", removed: block.removed[i], added: block.added[i] });
+        }
+      }
+      return;
+    }
+    const start = index === 0 ? 0 : FOLD_CONTEXT;
+    const end = block.lines.length - (index === blocks.length - 1 ? 0 : FOLD_CONTEXT);
+    const folded = fold && !unfolded.has(index) && end - start >= FOLD_MIN;
+    block.lines.forEach((line, i) => {
+      if (folded && i >= start && i < end) {
+        if (i === start) rows.push({ kind: "fold", block: index, count: end - start });
+        return;
+      }
+      rows.push({ kind: "same", ...line });
+    });
+  });
+  return rows;
+}
+
+/** A key that stays with its row when a fold opens above it. */
+export function rowKey(row: DiffRow): string {
+  if (row.kind === "fold") return `fold-${row.block}`;
+  if (row.kind === "same") return `same-${row.old.no}`;
+  return `change-${row.removed?.no ?? ""}-${row.added?.no ?? ""}`;
 }
