@@ -17,10 +17,11 @@ import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
+import { YearlyTable } from "@/components/charts/yearly-table";
 import { useCurrency } from "@/hooks/use-currency";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateCompound } from "@/lib/finance";
-import { DEFAULT_CURRENCY, currencies, formatMoney } from "@/lib/currency";
+import { DEFAULT_CURRENCY, currencies } from "@/lib/currency";
 
 const FREQUENCIES = [
   { value: "12", label: "Monthly" },
@@ -30,7 +31,7 @@ const FREQUENCIES = [
 ];
 
 export function CompoundInterestCalculator() {
-  const { code, currency, setCurrency } = useCurrency();
+  const { code, currency, setCurrency, money, axis } = useCurrency();
   const [initial, setInitial] = React.useState(10_000);
   const [monthly, setMonthly] = React.useState(250);
   const [rate, setRate] = React.useState(7);
@@ -59,15 +60,6 @@ export function CompoundInterestCalculator() {
   const result = React.useMemo(
     () => calculateCompound(initial, monthly, rate, Number(frequency), years),
     [initial, monthly, rate, frequency, years],
-  );
-
-  const money = React.useCallback(
-    (v: number, decimals = 0) => formatMoney(v, code, { decimals }),
-    [code],
-  );
-  const axis = React.useCallback(
-    (v: number) => formatMoney(v, code, { compact: true }),
-    [code],
   );
 
   const contributionsOnly = result.totalContributed - initial;
@@ -232,31 +224,14 @@ export function CompoundInterestCalculator() {
               />
             </TabsContent>
             <TabsContent value="table">
-              <div className="max-h-96 overflow-y-auto rounded-2xl border-2 border-foreground">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-card">
-                    <tr className="border-b border-foreground/15 text-left text-xs font-bold text-muted-foreground">
-                      <th className="px-4 py-2.5 font-medium">Year</th>
-                      <th className="px-4 py-2.5 text-right font-medium">Contributed</th>
-                      <th className="px-4 py-2.5 text-right font-medium">Interest this year</th>
-                      <th className="px-4 py-2.5 text-right font-medium">Balance</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-numeric">
-                    {result.years.map((row) => (
-                      <tr
-                        key={row.year}
-                        className="border-b border-foreground/10 last:border-0 hover:bg-secondary"
-                      >
-                        <td className="px-4 py-2.5 text-muted-foreground">{row.year}</td>
-                        <td className="px-4 py-2.5 text-right">{money(row.contributed)}</td>
-                        <td className="px-4 py-2.5 text-right">{money(row.interestThisYear)}</td>
-                        <td className="px-4 py-2.5 text-right">{money(row.balance)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <YearlyTable
+                rows={result.years}
+                columns={[
+                  { label: "Contributed", value: (r) => money(r.contributed) },
+                  { label: "Interest this year", value: (r) => money(r.interestThisYear) },
+                  { label: "Balance", value: (r) => money(r.balance) },
+                ]}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>

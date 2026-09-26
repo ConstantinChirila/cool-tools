@@ -22,7 +22,7 @@ export type DiffBlock =
   | { kind: "same"; lines: { old: DiffLine; new: DiffLine }[] }
   | { kind: "change"; removed: DiffLine[]; added: DiffLine[] };
 
-export interface DiffStats {
+interface DiffStats {
   added: number;
   removed: number;
   unchanged: number;
@@ -42,7 +42,7 @@ export type DiffResult =
   | { status: "timeout" };
 
 /** On the main thread, give up rather than freeze the tab on huge, unrelated texts. */
-export const MAIN_THREAD_TIMEOUT_MS = 1500;
+const MAIN_THREAD_TIMEOUT_MS = 1500;
 /** In a worker nothing freezes, so the budget is how long someone will wait. */
 export const WORKER_TIMEOUT_MS = 8000;
 /** Word-level highlighting is skipped for lines longer than this. */
@@ -252,7 +252,7 @@ export type DiffRow =
 /** Unchanged lines kept either side of a change when the rest is folded away. */
 export const FOLD_CONTEXT = 3;
 /** Folding fewer lines than this saves no space once the fold row itself is counted. */
-export const FOLD_MIN = 4;
+const FOLD_MIN = 4;
 
 /**
  * Flattens blocks into display rows. With `fold` on, the middle of a long

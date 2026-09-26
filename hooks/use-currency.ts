@@ -1,49 +1,29 @@
 "use client";
 
 import * as React from "react";
-import { DEFAULT_CURRENCY, getCurrency } from "@/lib/currency";
+import { createStorageStore } from "@/hooks/create-storage-store";
+import { DEFAULT_CURRENCY, formatMoney, getCurrency } from "@/lib/currency";
 
-const STORAGE_KEY = "bitsbobs:currency";
+const store = createStorageStore<string>({
+  key: "bitsbobs:currency",
+  fallback: DEFAULT_CURRENCY,
+  parse: (raw) => raw,
+  serialize: (code) => code,
+});
 
-let currentCode: string | null = null;
-const listeners = new Set<() => void>();
-
-function getSnapshot(): string {
-  if (currentCode === null) {
-    try {
-      currentCode = localStorage.getItem(STORAGE_KEY) ?? DEFAULT_CURRENCY;
-    } catch {
-      // Storage blocked (privacy mode, embedded frame): keep the default in memory.
-      currentCode = DEFAULT_CURRENCY;
-    }
-  }
-  return currentCode;
-}
-
-function getServerSnapshot(): string {
-  return DEFAULT_CURRENCY;
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-function setCurrency(next: string) {
-  currentCode = next;
-  try {
-    localStorage.setItem(STORAGE_KEY, next);
-  } catch {
-    // Storage blocked: the choice still applies for this page load.
-  }
-  listeners.forEach((l) => l());
-}
-
+/** The chosen currency, shared by every tool, plus formatters bound to it. */
 export function useCurrency() {
-  const code = React.useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
+  const code = React.useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
+  return React.useMemo(
+    () => ({
+      code,
+      currency: getCurrency(code),
+      setCurrency: store.set,
+      /** Whole units by default; pass `decimals` for pence. */
+      money: (v: number, decimals = 0) => formatMoney(v, code, { decimals }),
+      /** Compact form for chart axes: £250k. */
+      axis: (v: number) => formatMoney(v, code, { compact: true }),
+    }),
+    [code],
   );
-  return { code, currency: getCurrency(code), setCurrency };
 }

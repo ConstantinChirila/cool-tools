@@ -7,7 +7,7 @@ export type Direction = "encode" | "decode";
 
 export type CodecResult = Result<string>;
 
-export interface CodecVariant {
+interface CodecVariant {
   id: string;
   label: string;
   /** One line shown under the control. */

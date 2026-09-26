@@ -3,13 +3,6 @@
 import * as React from "react";
 import { Briefcase, PiggyBank, Receipt, Umbrella } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Callout } from "@/components/calc/callout";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { NumberField } from "@/components/calc/number-field";
@@ -19,6 +12,7 @@ import { Segmented } from "@/components/calc/segmented";
 import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { SwitchField } from "@/components/calc/switch-field";
+import { TaxYearSelect } from "@/components/calc/tax-year-select";
 import { GrowthChart } from "@/components/charts/growth-chart";
 import { MONEY_RANGE, PERCENT_RANGE, useUrlState, urlField, type NumberRange } from "@/hooks/use-url-state";
 import {
@@ -40,7 +34,7 @@ import {
   type Scenario,
   type ScenarioResult,
 } from "@/lib/contractor";
-import { formatMoney } from "@/lib/currency";
+import { formatGbp as money, formatMoney } from "@/lib/currency";
 import { DEFAULT_TAX_YEAR, TAX_YEARS, type TaxYear } from "@/lib/uk-tax";
 import { cn } from "@/lib/utils";
 
@@ -89,11 +83,10 @@ const COLORS: Record<Scenario, string> = {
   soleTrader: "var(--chart-2)",
 };
 
-const money = (v: number, decimals = 0) => formatMoney(v, "GBP", { decimals });
 const signed = (v: number) => `${v >= 0 ? "+" : "−"}${money(Math.abs(v))}`;
 const dayRateGap = (v: number) =>
   v === 0 ? "exactly your rate" : `${money(Math.abs(v))} ${v > 0 ? "under" : "over"} your rate`;
-const axis = (v: number) => (v >= 1000 ? `£${Math.round(v / 1000)}k` : `£${v}`);
+const axis = (v: number) => formatMoney(v, "GBP", { compact: true });
 
 export function ContractorCalculator() {
   const [input, setInput] = React.useState<ContractorInput>(DEFAULT_INPUT);
@@ -193,19 +186,7 @@ function ContractorInputs({
     <Card className="min-w-0">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">Your contract</CardTitle>
-        <Select value={input.taxYear} onValueChange={(v) => update("taxYear", v as TaxYear)}>
-          <SelectTrigger size="sm" aria-label="Tax year" className="w-fit font-medium">
-            <span className="text-muted-foreground">Tax year</span>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent align="end">
-            {(Object.keys(TAX_YEARS) as TaxYear[]).map((ty) => (
-              <SelectItem key={ty} value={ty}>
-                {TAX_YEARS[ty].label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <TaxYearSelect value={input.taxYear} onChange={(v) => update("taxYear", v)} />
       </CardHeader>
       <CardContent className="space-y-6">
         <SliderField

@@ -9,11 +9,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SwitchField } from "@/components/calc/switch-field";
-import { formatMoney } from "@/lib/currency";
+import { formatGbp as money, formatPercent as pct } from "@/lib/currency";
 import { STUDENT_PLANS, TAX_YEARS, type StudentPlan, type TaxYear } from "@/lib/uk-tax";
 
-const money = (v: number) => formatMoney(v, "GBP", { decimals: 0 });
-const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 /** Repayment plan and postgraduate loan: the same two questions in every UK pay tool. */
 export function StudentLoanFields({

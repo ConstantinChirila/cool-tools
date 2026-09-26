@@ -3,14 +3,12 @@
  * components/tools/commute-calculator.tsx only formats what comes out.
  */
 
-/** Working days in a standard 5-day year (52 weeks x 5). */
-export const WORKING_DAYS_PER_YEAR = 260;
 /** Weeks used to turn a weekly figure into a yearly one. */
-export const WEEKS_PER_YEAR = 52;
+const WEEKS_PER_YEAR = 52;
 /** Length of a working day, for the "working days" equivalent. */
-export const WORK_HOURS_PER_DAY = 8;
+const WORK_HOURS_PER_DAY = 8;
 /** Length of a working week, for the "working weeks" equivalent. */
-export const WORK_HOURS_PER_WEEK = 40;
+const WORK_HOURS_PER_WEEK = 40;
 
 export interface CommuteInputs {
   /** Door to door, one way, in minutes. */
@@ -47,7 +45,7 @@ export interface CommuteTime {
   workingWeeks: number;
 }
 
-export function commutingDaysPerYear(daysPerWeek: number, daysOffPerYear: number): number {
+function commutingDaysPerYear(daysPerWeek: number, daysOffPerYear: number): number {
   const scheduled = daysPerWeek * WEEKS_PER_YEAR;
   const off = daysOffPerYear * (daysPerWeek / 5);
   return Math.max(0, scheduled - off);

@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Pencil } from "lucide-react";
-import { ShareLink } from "@/components/share-link";
+import { Pencil } from "lucide-react";
+import { ToolPageShell } from "@/components/tool-page-shell";
 import { CountdownCard } from "@/components/tools/countdown-card";
 import { DEFAULT_TIME, NAME_MAX, isValidDateString, isValidTimeString } from "@/lib/countdown";
-import { toolPath } from "@/lib/seo";
-import { SITE_NAME, absoluteUrl } from "@/lib/site";
+import { subPageMetadata, toolPath } from "@/lib/seo";
 import { requireTool } from "@/lib/tools";
 
 const tool = requireTool("countdown-calculator");
@@ -58,15 +57,13 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   const description = name
     ? `${name}: ${when}. Days, hours, minutes and seconds, ticking live, plus the sleeps, weekends and working days to go.`
     : `Days, hours, minutes and seconds until ${when}, ticking live, plus the sleeps, weekends and working days to go.`;
-  // A segment's opengraph-image does not cascade to child routes, so point at the tool's.
-  const image = { url: absoluteUrl(`${toolPath(tool)}/opengraph-image`), width: 1200, height: 630, alt: `${tool.name} on ${SITE_NAME}` };
+  const base = subPageMetadata(tool, { path: `${toolPath(tool)}/card`, title, crumb: title, description });
   return {
-    title,
-    description,
-    // Every date and name is a new URL, so keep the endless variants out of search results.
+    ...base,
+    // Every date and name is a new URL: no canonical, no og:url, and keep the variants out of search results.
+    alternates: undefined,
+    openGraph: { ...base.openGraph, url: undefined },
     robots: { index: false, follow: true },
-    openGraph: { type: "website", title: `${title} · ${SITE_NAME}`, description, siteName: SITE_NAME, locale: "en_GB", images: [image] },
-    twitter: { card: "summary_large_image", title: `${title} · ${SITE_NAME}`, description, images: [image.url] },
   };
 }
 
@@ -79,32 +76,10 @@ export default async function CountdownCardPage({ searchParams }: { searchParams
     : "Days, hours, minutes and seconds, counting live.";
 
   return (
-    <article className="mx-auto w-full max-w-7xl px-4 pb-20 sm:px-6">
-      <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 py-6">
-        <Link
-          href="/"
-          className="inline-flex h-10 items-center gap-1.5 rounded-full border-[2.5px] border-foreground bg-card px-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
-        >
-          <ArrowLeft className="size-4" strokeWidth={2.5} />
-          All tools
-        </Link>
-        <ShareLink />
-      </nav>
-
-      <header className="mb-8 flex items-center gap-5">
-        <span
-          className="sticker flex size-16 shrink-0 -rotate-6 items-center justify-center rounded-[22px] sm:size-[72px]"
-          style={{ background: tool.tint }}
-          aria-hidden="true"
-        >
-          <tool.icon className="size-8" strokeWidth={2.25} />
-        </span>
-        <div className="min-w-0">
-          <h1 className="truncate text-3xl font-black tracking-tight sm:text-5xl">{heading}</h1>
-          <p className="mt-1.5 max-w-2xl font-semibold text-muted-foreground sm:text-lg">{subheading}</p>
-        </div>
-      </header>
-
+    <ToolPageShell
+      tool={tool}
+      subPage={{ title: heading, lead: subheading, back: { href: "/", label: "All tools" }, truncateTitle: true }}
+    >
       <CountdownCard to={to} at={at} name={name} />
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
@@ -123,6 +98,6 @@ export default async function CountdownCardPage({ searchParams }: { searchParams
           Edit this card
         </Link>
       </div>
-    </article>
+    </ToolPageShell>
   );
 }

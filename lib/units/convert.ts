@@ -1,3 +1,4 @@
+import { numberFormat } from "@/lib/currency";
 import { getUnit, type Unit, type UnitCategory } from "@/lib/units/data";
 
 export type Precision = "auto" | "2dp" | "4dp" | "max";
@@ -33,17 +34,6 @@ export function parseNumber(raw: string): number {
   return Number(s);
 }
 
-const formatters = new Map<string, Intl.NumberFormat>();
-function nf(options: Intl.NumberFormatOptions): Intl.NumberFormat {
-  const key = JSON.stringify(options);
-  let f = formatters.get(key);
-  if (!f) {
-    f = new Intl.NumberFormat("en-GB", options);
-    formatters.set(key, f);
-  }
-  return f;
-}
-
 /** Format a converted value: significant figures by default, exponent for extremes. */
 export function formatNumber(n: number, precision: Precision = "auto"): string {
   if (Number.isNaN(n)) return "";
@@ -51,13 +41,13 @@ export function formatNumber(n: number, precision: Precision = "auto"): string {
   if (n === 0) return "0";
   const magnitude = Math.abs(n);
   if (precision === "2dp" || precision === "4dp") {
-    return nf({ maximumFractionDigits: precision === "2dp" ? 2 : 4 }).format(n);
+    return numberFormat({ maximumFractionDigits: precision === "2dp" ? 2 : 4 }).format(n);
   }
   const sig = precision === "max" ? 15 : 8;
   if (magnitude >= 1e15 || magnitude < 1e-6) {
     return n.toExponential(sig - 1).replace(/\.?0+e/, "e").replace("e+", "e");
   }
-  return nf({ maximumSignificantDigits: sig }).format(n);
+  return numberFormat({ maximumSignificantDigits: sig }).format(n);
 }
 
 /** Format a value in a given unit, honouring the unit's display format (m:ss for paces). */

@@ -1,22 +1,23 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Callout } from "@/components/calc/callout";
 import { CurrencySelect } from "@/components/calc/currency-select";
+import { LOAN_DEFAULTS, LOAN_RANGES, LoanFields } from "@/components/calc/loan-fields";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { NumberField } from "@/components/calc/number-field";
+import { PillLink } from "@/components/calc/pill-button";
 import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
+import { YearlyTable } from "@/components/charts/yearly-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrency } from "@/hooks/use-currency";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateMortgage } from "@/lib/finance";
-import { DEFAULT_CURRENCY, currencies, formatMoney } from "@/lib/currency";
-
-const TERM_PRESETS = [15, 20, 25, 30];
+import { DEFAULT_CURRENCY, currencies } from "@/lib/currency";
 
 function formatDuration(totalMonths: number): string {
   const years = Math.floor(totalMonths / 12);
@@ -35,17 +36,17 @@ function padSeries(values: number[], length: number): number[] {
 }
 
 export function MortgageOverpaymentCalculator() {
-  const { code, currency, setCurrency } = useCurrency();
-  const [amount, setAmount] = React.useState(250_000);
-  const [rate, setRate] = React.useState(4.5);
-  const [term, setTerm] = React.useState(25);
+  const { code, currency, setCurrency, money, axis } = useCurrency();
+  const [amount, setAmount] = React.useState(LOAN_DEFAULTS.amount);
+  const [rate, setRate] = React.useState(LOAN_DEFAULTS.rate);
+  const [term, setTerm] = React.useState(LOAN_DEFAULTS.term);
   const [monthlyOverpayment, setMonthlyOverpayment] = React.useState(200);
   const [lumpSum, setLumpSum] = React.useState(0);
 
   useUrlState({
-    amount: urlField(amount, setAmount, 250_000, undefined, { min: 10_000, max: 1_500_000 }),
-    rate: urlField(rate, setRate, 4.5, undefined, { min: 0.1, max: 15 }),
-    term: urlField(term, setTerm, 25, undefined, { min: 1, max: 40 }),
+    amount: urlField(amount, setAmount, LOAN_DEFAULTS.amount, undefined, LOAN_RANGES.amount),
+    rate: urlField(rate, setRate, LOAN_DEFAULTS.rate, undefined, LOAN_RANGES.rate),
+    term: urlField(term, setTerm, LOAN_DEFAULTS.term, undefined, LOAN_RANGES.term),
     overpay: urlField(monthlyOverpayment, setMonthlyOverpayment, 200, undefined, { min: 0, max: 3000 }),
     lump: urlField(lumpSum, setLumpSum, 0, undefined, { min: 0, max: 10_000_000 }),
     currency: urlField(
@@ -63,15 +64,6 @@ export function MortgageOverpaymentCalculator() {
   const over = React.useMemo(
     () => calculateMortgage(amount, rate, term, { monthlyOverpayment, lumpSum }),
     [amount, rate, term, monthlyOverpayment, lumpSum],
-  );
-
-  const money = React.useCallback(
-    (v: number, decimals = 0) => formatMoney(v, code, { decimals }),
-    [code],
-  );
-  const axis = React.useCallback(
-    (v: number) => formatMoney(v, code, { compact: true }),
-    [code],
   );
 
   const interestSaved = Math.max(base.totalInterest - over.totalInterest, 0);
@@ -113,59 +105,16 @@ export function MortgageOverpaymentCalculator() {
             <CurrencySelect value={code} onChange={setCurrency} />
           </CardHeader>
           <CardContent className="space-y-7">
-            <SliderField
-              id="overpayment-amount"
-              label="Loan amount"
-              value={amount}
-              onChange={setAmount}
-              min={10_000}
-              max={1_500_000}
-              step={1000}
-              sliderStep={5000}
-              prefix={currency.symbol}
-              grouped
-              decimals={0}
+            <LoanFields
+              idPrefix="overpayment"
+              amount={amount}
+              rate={rate}
+              term={term}
+              onAmount={setAmount}
+              onRate={setRate}
+              onTerm={setTerm}
+              currencySymbol={currency.symbol}
             />
-            <SliderField
-              id="overpayment-rate"
-              label="Interest rate"
-              value={rate}
-              onChange={setRate}
-              min={0.1}
-              max={15}
-              step={0.01}
-              sliderStep={0.05}
-              suffix="%"
-            />
-            <div className="space-y-3">
-              <SliderField
-                id="overpayment-term"
-                label="Term"
-                value={term}
-                onChange={setTerm}
-                min={1}
-                max={40}
-                step={1}
-                suffix="yrs"
-                decimals={0}
-              />
-              <div className="flex gap-2">
-                {TERM_PRESETS.map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setTerm(preset)}
-                    className={`h-9 flex-1 rounded-full border-2 text-sm font-bold transition-colors ${
-                      term === preset
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-foreground bg-card text-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    {preset} yrs
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div className="space-y-5 border-t border-foreground/15 pt-6">
               <p className="text-[15px] font-bold">Overpayments</p>
@@ -193,11 +142,10 @@ export function MortgageOverpaymentCalculator() {
                 hint="Paid alongside month 1"
               />
               {showCapWarning && (
-                <p className="sticker-sm rounded-xl border-[2.5px] border-foreground bg-yellow px-3 py-2 text-xs font-semibold">
-                  From year {capWarningYear}{" "}your overpayments exceed 10% of the
-                  remaining balance. Many UK fixed-rate deals charge an early
-                  repayment fee above that. Check your lender&apos;s terms.
-                </p>
+                <Callout tone="warn">
+                  From year {capWarningYear}{" "}your overpayments exceed 10% of the remaining balance. Many UK
+                  fixed-rate deals charge an early repayment fee above that. Check your lender&apos;s terms.
+                </Callout>
               )}
             </div>
           </CardContent>
@@ -231,12 +179,7 @@ export function MortgageOverpaymentCalculator() {
               />
             </CardContent>
           </Card>
-          <Link
-            href="/tools/mortgage-calculator"
-            className="inline-flex h-10 items-center gap-1.5 rounded-full border-[2.5px] border-foreground bg-card px-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
-          >
-            Just want the monthly payment? Mortgage Calculator
-          </Link>
+          <PillLink href="/tools/mortgage-calculator">Just want the monthly payment? Mortgage Calculator</PillLink>
         </div>
       </div>
 
@@ -272,31 +215,14 @@ export function MortgageOverpaymentCalculator() {
               />
             </TabsContent>
             <TabsContent value="table">
-              <div className="max-h-96 overflow-y-auto rounded-2xl border-2 border-foreground">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-card">
-                    <tr className="border-b border-foreground/15 text-left text-xs font-bold text-muted-foreground">
-                      <th className="px-4 py-2.5 font-medium">Year</th>
-                      <th className="px-4 py-2.5 text-right font-medium">Interest</th>
-                      <th className="px-4 py-2.5 text-right font-medium">Principal</th>
-                      <th className="px-4 py-2.5 text-right font-medium">Balance</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-numeric">
-                    {over.years.map((row) => (
-                      <tr
-                        key={row.year}
-                        className="border-b border-foreground/10 last:border-0 hover:bg-secondary"
-                      >
-                        <td className="px-4 py-2.5 text-muted-foreground">{row.year}</td>
-                        <td className="px-4 py-2.5 text-right">{money(row.interestPaid)}</td>
-                        <td className="px-4 py-2.5 text-right">{money(row.principalPaid)}</td>
-                        <td className="px-4 py-2.5 text-right">{money(row.balance)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <YearlyTable
+                rows={over.years}
+                columns={[
+                  { label: "Interest", value: (r) => money(r.interestPaid) },
+                  { label: "Principal", value: (r) => money(r.principalPaid) },
+                  { label: "Balance", value: (r) => money(r.balance) },
+                ]}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>

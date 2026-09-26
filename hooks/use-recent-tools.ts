@@ -1,75 +1,25 @@
 "use client";
 
 import * as React from "react";
+import { createStorageStore } from "@/hooks/create-storage-store";
 import { getTool, type Tool } from "@/lib/tools";
 
-const STORAGE_KEY = "bitsbobs:recent";
 const MAX_RECENT = 4;
 const EMPTY: readonly string[] = [];
 
-let slugs: readonly string[] | null = null;
-const listeners = new Set<() => void>();
-
-function read(): readonly string[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed.filter((s): s is string => typeof s === "string")
-      : EMPTY;
-  } catch {
-    return EMPTY;
-  }
-}
-
-function getSnapshot(): readonly string[] {
-  if (slugs === null) slugs = read();
-  return slugs;
-}
-
-function getServerSnapshot(): readonly string[] {
-  return EMPTY;
-}
-
-function emit() {
-  listeners.forEach((l) => l());
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  const onStorage = (e: StorageEvent) => {
-    if (e.key === STORAGE_KEY) {
-      slugs = read();
-      emit();
-    }
-  };
-  window.addEventListener("storage", onStorage);
-  return () => {
-    listeners.delete(listener);
-    window.removeEventListener("storage", onStorage);
-  };
-}
+const store = createStorageStore<readonly string[]>({
+  key: "bitsbobs:recent",
+  fallback: EMPTY,
+  parse: (raw) => {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((s): s is string => typeof s === "string") : EMPTY;
+  },
+  serialize: (slugs) => JSON.stringify(slugs),
+});
 
 /** Move a tool to the front of the recently used list. */
 export function recordRecentTool(slug: string) {
-  const next = [slug, ...getSnapshot().filter((s) => s !== slug)].slice(0, MAX_RECENT);
-  slugs = next;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    // Storage unavailable (private mode, quota): keep the in-memory list.
-  }
-  emit();
-}
-
-export function clearRecentTools() {
-  slugs = EMPTY;
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // ignore
-  }
-  emit();
+  store.set([slug, ...store.getSnapshot().filter((s) => s !== slug)].slice(0, MAX_RECENT));
 }
 
 /**
@@ -78,7 +28,7 @@ export function clearRecentTools() {
  * are dropped.
  */
 export function useRecentTools(): Tool[] {
-  const list = React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const list = React.useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
   return React.useMemo(
     () => list.map(getTool).filter((t): t is Tool => t !== undefined),
     [list],

@@ -57,7 +57,7 @@ for (const category of categories) {
 }
 
 /** Resolve a typed unit name, symbol or alias. Plurals are tolerated. */
-export function lookupUnit(raw: string): UnitRef | null {
+function lookupUnit(raw: string): UnitRef | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
   const direct = exact.get(trimmed);
@@ -73,14 +73,14 @@ export function lookupUnit(raw: string): UnitRef | null {
   );
 }
 
-export interface Segment {
+interface Segment {
   numberRaw: string;
   value: number;
   ref: UnitRef;
 }
 
 /** "5'11\"" → "5 ft 11 in", "6'" → "6 ft", "30\"" → "30 in". */
-export function expandMarks(s: string): string {
+function expandMarks(s: string): string {
   return s
     .replace(/(\d)\s*['′]\s*(\d+(?:\.\d+)?)\s*(?:["″]|'')?/g, "$1 ft $2 in")
     .replace(/(\d)\s*['′]/g, "$1 ft")
@@ -95,7 +95,7 @@ const SEGMENT = /([-+]?(?:\d[\d,]*(?:\.\d*)?|\.\d+))\s*([^\d\s][^\d]*?)?(?=\s*[-
  * Returns null unless every segment resolves to a unit in one category that
  * can be added up (no temperature scales, no reciprocal units).
  */
-export function parseSegments(text: string): Segment[] | null {
+function parseSegments(text: string): Segment[] | null {
   const segments: Segment[] = [];
   let previous: UnitRef | null = null;
   for (const match of text.trim().matchAll(SEGMENT)) {

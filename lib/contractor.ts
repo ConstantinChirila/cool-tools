@@ -9,14 +9,18 @@
  * allowance taper come from the UK salary engine.
  */
 
+import { formatGbp as money, formatPercent } from "@/lib/currency";
 import {
   TAX_YEARS,
   calculateUkSalaryBase,
+  employeeNiOn,
+  employerNiOn,
   taxOnBands,
   type BandResult,
   type TaxYear,
   type UkSalaryInput,
 } from "@/lib/uk-tax";
+import { clamp } from "@/lib/utils";
 
 export const ROUTES = ["ltd", "umbrella", "soleTrader"] as const;
 export type ContractRoute = (typeof ROUTES)[number];
@@ -33,12 +37,12 @@ export const ROUTE_INFO: Record<Scenario, { label: string; short: string; hint: 
 };
 
 /** One value per contracting route, spelled out so a new route is a compile error until it is added. */
-export function byRoute<T>(f: (route: ContractRoute) => T): Record<ContractRoute, T> {
+function byRoute<T>(f: (route: ContractRoute) => T): Record<ContractRoute, T> {
   return { ltd: f("ltd"), umbrella: f("umbrella"), soleTrader: f("soleTrader") };
 }
 
 /** One value per scenario, the permanent job included. */
-export function byScenario<T>(f: (scenario: Scenario) => T): Record<Scenario, T> {
+function byScenario<T>(f: (scenario: Scenario) => T): Record<Scenario, T> {
   return { perm: f("perm"), ...byRoute(f) };
 }
 
@@ -49,7 +53,7 @@ const DIVIDENDS: Record<TaxYear, { allowance: number; rates: [number, number, nu
 };
 
 /** Corporation tax for financial years 2023 to 2026: small profits rate, main rate and marginal relief. */
-export const CORPORATION_TAX = {
+const CORPORATION_TAX = {
   smallRate: 0.19,
   mainRate: 0.25,
   lowerLimit: 50_000,
@@ -61,9 +65,9 @@ export const CORPORATION_TAX = {
 const CLASS4 = { lower: 12_570, upper: 50_270, mainRate: 0.06, upperRate: 0.02 };
 
 /** Umbrellas are large employers and most pass the 0.5% levy on through the assignment rate. */
-export const APPRENTICESHIP_LEVY = 0.005;
+const APPRENTICESHIP_LEVY = 0.005;
 
-export const WEEKS_PER_YEAR = 52;
+const WEEKS_PER_YEAR = 52;
 
 export interface ContractorInput {
   taxYear: TaxYear;
@@ -98,7 +102,7 @@ export interface ContractorInput {
   permBenefits: number;
 }
 
-export type LineKind = "heading" | "income" | "cost" | "subtotal" | "total" | "note";
+type LineKind = "heading" | "income" | "cost" | "subtotal" | "total" | "note";
 
 export interface Line {
   label: string;
@@ -136,7 +140,7 @@ export function workingDays(input: ContractorInput): WorkingDays {
   return { weekdays, daysOff, billable: Math.max(weekdays - daysOff, 0) };
 }
 
-export function contractIncome(input: ContractorInput): number {
+function contractIncome(input: ContractorInput): number {
   return Math.max(input.dayRate, 0) * workingDays(input).billable;
 }
 
@@ -244,15 +248,11 @@ export function salaryAndDividendTax(
 }
 
 function employeeNi(taxYear: TaxYear, pay: number): number {
-  const ni = TAX_YEARS[taxYear].ni;
-  const main = clamp(pay - ni.primaryThreshold, 0, ni.upperEarningsLimit - ni.primaryThreshold);
-  const upper = Math.max(pay - ni.upperEarningsLimit, 0);
-  return main * ni.mainRate + upper * ni.upperRate;
+  return employeeNiOn(TAX_YEARS[taxYear].ni, pay);
 }
 
 function employerNi(taxYear: TaxYear, pay: number): number {
-  const ni = TAX_YEARS[taxYear].ni;
-  return Math.max(pay - ni.secondaryThreshold, 0) * ni.employerRate;
+  return employerNiOn(TAX_YEARS[taxYear].ni, pay);
 }
 
 export function calculateLtd(input: ContractorInput): ScenarioResult {
@@ -585,18 +585,12 @@ function contractLabel(input: ContractorInput): string {
   return `Contract income: ${workingDays(input).billable} days × ${money(Math.max(input.dayRate, 0))}`;
 }
 
-function money(v: number): string {
-  return `£${Math.round(v).toLocaleString("en-GB")}`;
-}
-
+/** Up to `decimals` places, trailing zeros trimmed: "19%" and "8.75%", not "19.0%". */
 function pct(v: number, decimals: number): string {
-  return `${Number((v * 100).toFixed(decimals))}%`;
+  return formatPercent(v, decimals, { trim: true });
 }
 
 function round1(v: number): number {
   return Math.round(v * 10) / 10;
 }
 
-function clamp(v: number, lo: number, hi: number): number {
-  return Math.min(Math.max(v, lo), hi);
-}

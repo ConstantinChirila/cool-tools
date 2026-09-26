@@ -1,30 +1,24 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { ArrowRight, GraduationCap, PiggyBank, SlidersHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Callout } from "@/components/calc/callout";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
+import { PillLink } from "@/components/calc/pill-button";
 import { Section, useSectionState } from "@/components/calc/section";
 import { Segmented } from "@/components/calc/segmented";
 import { SliderField } from "@/components/calc/slider-field";
 import { StudentLoanFields } from "@/components/calc/student-loan-fields";
+import { TaxYearSelect } from "@/components/calc/tax-year-select";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { SwitchField } from "@/components/calc/switch-field";
 import { SplitBar } from "@/components/charts/split-bar";
 import { MONEY_RANGE, PERCENT_RANGE, useUrlState, urlField, type NumberRange } from "@/hooks/use-url-state";
-import { formatMoney } from "@/lib/currency";
+import { formatGbp as money, formatPercent as pct } from "@/lib/currency";
 import {
   BONUS_FREQUENCIES,
   compareSacrifice,
@@ -75,8 +69,6 @@ const PENSION_OPTIONS: { value: PensionType; label: string }[] = [
 /** Shared by the slider and the URL clamp, so a link cannot ask for more than the control allows. */
 const PENSION_PCT_RANGE: NumberRange = { min: 0, max: 40 };
 
-const money = (v: number, decimals = 0) => formatMoney(v, "GBP", { decimals });
-const pct = (v: number, decimals = 0) => `${(v * 100).toFixed(decimals)}%`;
 
 /** One side of the cash-or-pension comparison. */
 function Outcome({
@@ -207,19 +199,7 @@ function BonusInputs({
     <Card className="min-w-0">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">Your bonus</CardTitle>
-        <Select value={input.taxYear} onValueChange={(v) => update("taxYear", v as TaxYear)}>
-          <SelectTrigger size="sm" aria-label="Tax year" className="w-fit font-medium">
-            <span className="text-muted-foreground">Tax year</span>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent align="end">
-            {(Object.keys(TAX_YEARS) as TaxYear[]).map((ty) => (
-              <SelectItem key={ty} value={ty}>
-                {TAX_YEARS[ty].label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <TaxYearSelect value={input.taxYear} onChange={(v) => update("taxYear", v)} />
       </CardHeader>
       <CardContent className="space-y-6">
         <SliderField
@@ -596,13 +576,10 @@ function BonusBreakdown({ input, result }: { input: BonusInput; result: BonusRes
           collects overall. The bonus payslip itself can show more or less tax than this, because a
           cumulative tax code spreads allowances across the year; it evens out by the end of the tax year.
         </p>
-        <Link
-          href={salaryLink}
-          className="inline-flex h-10 items-center gap-1.5 rounded-full border-[2.5px] border-foreground bg-card px-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
-        >
+        <PillLink href={salaryLink}>
           See your full year in the UK Salary Calculator
           <ArrowRight className="size-4" strokeWidth={2.5} />
-        </Link>
+        </PillLink>
       </CardContent>
     </Card>
   );

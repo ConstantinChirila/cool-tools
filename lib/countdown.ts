@@ -7,10 +7,10 @@
  * saving changes are absorbed rather than producing 23 or 25 hour "days".
  */
 
-export const MS_PER_SECOND = 1000;
-export const MS_PER_MINUTE = 60 * MS_PER_SECOND;
-export const MS_PER_HOUR = 60 * MS_PER_MINUTE;
-export const MS_PER_DAY = 24 * MS_PER_HOUR;
+const MS_PER_SECOND = 1000;
+const MS_PER_MINUTE = 60 * MS_PER_SECOND;
+const MS_PER_HOUR = 60 * MS_PER_MINUTE;
+const MS_PER_DAY = 24 * MS_PER_HOUR;
 
 /** Widest date the tool accepts; keeps the weekday walk bounded. */
 export const MIN_YEAR = 1900;
@@ -59,12 +59,12 @@ export interface CountdownResult {
   weekends: number;
 }
 
-export function daysInMonth(year: number, monthIndex: number): number {
+function daysInMonth(year: number, monthIndex: number): number {
   return new Date(year, monthIndex + 1, 0).getDate();
 }
 
 /** Adds months, clamping the day so 31 Jan + 1 month is 28/29 Feb, not 3 Mar. */
-export function addMonthsClamped(date: Date, months: number): Date {
+function addMonthsClamped(date: Date, months: number): Date {
   const result = new Date(date.getTime());
   const day = result.getDate();
   result.setDate(1);
@@ -73,13 +73,13 @@ export function addMonthsClamped(date: Date, months: number): Date {
   return result;
 }
 
-export function addDays(date: Date, days: number): Date {
+function addDays(date: Date, days: number): Date {
   const result = new Date(date.getTime());
   result.setDate(result.getDate() + days);
   return result;
 }
 
-export function startOfDay(date: Date): Date {
+function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
@@ -88,7 +88,7 @@ export function startOfDay(date: Date): Date {
  * `from`). Months are stepped with day clamping, days are stepped through
  * local midnights, and only the sub-day remainder is plain millisecond maths.
  */
-export function calendarBetween(from: Date, to: Date): CalendarBreakdown {
+function calendarBetween(from: Date, to: Date): CalendarBreakdown {
   if (to.getTime() < from.getTime()) {
     throw new RangeError("calendarBetween: `to` must not be earlier than `from`");
   }
@@ -110,7 +110,7 @@ export function calendarBetween(from: Date, to: Date): CalendarBreakdown {
  * what is left over. Daylight saving makes some local days 23 or 25 hours, so
  * days are stepped through midnights rather than divided by 24 hours.
  */
-export function stepDays(from: Date, to: Date): { days: number; remainderMs: number } {
+function stepDays(from: Date, to: Date): { days: number; remainderMs: number } {
   let days = Math.floor((to.getTime() - from.getTime()) / MS_PER_DAY);
   while (days > 0 && addDays(from, days).getTime() > to.getTime()) days -= 1;
   while (addDays(from, days + 1).getTime() <= to.getTime()) days += 1;
@@ -126,7 +126,7 @@ function splitClock(ms: number): { hours: number; minutes: number; seconds: numb
 }
 
 /** Number of local midnights between two instants (0 when on the same date). */
-export function midnightsBetween(from: Date, to: Date): number {
+function midnightsBetween(from: Date, to: Date): number {
   const a = startOfDay(from).getTime();
   const b = startOfDay(to).getTime();
   // Rounded, not floored, so a 23-hour DST day still counts as one day.
@@ -149,7 +149,7 @@ function countWeekday(startDay: number, n: number, weekday: number): number {
  * strictly after `from`'s date up to and including `to`'s date. Arithmetic
  * rather than a day-by-day walk, because it runs on every clock tick.
  */
-export function countDayTypes(from: Date, to: Date): {
+function countDayTypes(from: Date, to: Date): {
   workingDays: number;
   weekendDays: number;
   weekends: number;
@@ -238,7 +238,8 @@ export function toLocalDate(date: string, time: string): Date | null {
   return new Date(Number(y), Number(mo) - 1, Number(day), Number(h), Number(mi), 0, 0);
 }
 
-function pad(n: number): string {
+/** Two-digit zero pad for clock digits. */
+export function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
 

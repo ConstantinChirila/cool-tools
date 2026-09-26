@@ -3,7 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface ChartSeries {
+interface ChartSeries {
   name: string;
   color: string;
   values: number[];

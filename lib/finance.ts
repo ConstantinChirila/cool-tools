@@ -1,7 +1,7 @@
 /** Longest term either schedule will simulate, whatever the caller asks for. */
-export const MAX_TERM_YEARS = 100;
+const MAX_TERM_YEARS = 100;
 
-export interface AmortizationYear {
+interface AmortizationYear {
   year: number;
   interestPaid: number;
   principalPaid: number;
@@ -139,7 +139,7 @@ export function calculateMortgage(
   };
 }
 
-export interface CompoundYear {
+interface CompoundYear {
   year: number;
   contributed: number;
   /** Cumulative interest earned by the end of this year. */

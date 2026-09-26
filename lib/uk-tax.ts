@@ -6,6 +6,8 @@
  * approach); pay-period NI rounding and mid-year code changes are ignored.
  */
 
+import { clamp } from "@/lib/utils";
+
 export type TaxYear = "2025-26" | "2026-27";
 export type PayPeriod = "year" | "month" | "4week" | "2week" | "week" | "day" | "hour";
 export type StudentPlan = "none" | "plan1" | "plan2" | "plan4" | "plan5";
@@ -259,12 +261,6 @@ export const PERIOD_INFO: Record<PayPeriod, { label: string; short: string; noun
   day: { label: "Daily", short: "day", noun: "day" },
   hour: { label: "Hourly", short: "hr", noun: "hour" },
 };
-/** Ordered list for option controls, derived from PERIOD_INFO. */
-export const PERIODS = (Object.keys(PERIOD_INFO) as PayPeriod[]).map((value) => ({
-  value,
-  ...PERIOD_INFO[value],
-}));
-
 const WEEKS = 52;
 
 /** Number of pay periods in a year. */
@@ -287,8 +283,18 @@ export function periodsPerYear(period: PayPeriod, hoursPerWeek: number, daysPerW
   }
 }
 
-function clamp(v: number, lo: number, hi: number) {
-  return Math.min(hi, Math.max(lo, v));
+export type NiConfig = TaxYearConfig["ni"];
+
+/** Employee (Class 1 primary) NI on a year's NI-able pay: main rate to the upper earnings limit, then the upper rate. */
+export function employeeNiOn(ni: NiConfig, pay: number): number {
+  const main = clamp(pay - ni.primaryThreshold, 0, ni.upperEarningsLimit - ni.primaryThreshold);
+  const upper = Math.max(pay - ni.upperEarningsLimit, 0);
+  return main * ni.mainRate + upper * ni.upperRate;
+}
+
+/** Employer (Class 1 secondary) NI: one rate on everything above the secondary threshold. */
+export function employerNiOn(ni: NiConfig, pay: number): number {
+  return Math.max(pay - ni.secondaryThreshold, 0) * ni.employerRate;
 }
 
 interface ParsedCode {
@@ -442,8 +448,7 @@ function compute(input: UkSalaryInput): UkSalaryBase {
   ];
   const nationalInsurance = niBands.reduce((s, b) => s + b.tax, 0);
   const taxableBenefits = Math.max(input.taxableBenefits, 0);
-  const employerNi =
-    Math.max(niable - ni.secondaryThreshold, 0) * ni.employerRate + taxableBenefits * ni.employerRate;
+  const employerNi = employerNiOn(ni, niable) + taxableBenefits * ni.employerRate;
 
   // Income tax
   const preTaxDeduction = Math.max(input.preTaxDeduction, 0) * 12;

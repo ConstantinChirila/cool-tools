@@ -18,6 +18,7 @@ import {
   PERIOD_INFO,
   TAX_YEARS,
   calculateUkSalaryBase,
+  employerNiOn,
   periodsPerYear,
   type BandResult,
   type PayPeriod,
@@ -218,7 +219,7 @@ export function calculateBonus(input: BonusInput, baseline?: UkSalaryBase): Bonu
 
   const loans = studentLoan + postgradLoan;
   // Employer NI only exists above the secondary threshold, so a small salary saves less.
-  const employerNi = (pay: number) => Math.max(pay - cfg.ni.secondaryThreshold, 0) * cfg.ni.employerRate;
+  const employerNi = (pay: number) => employerNiOn(cfg.ni, pay);
   const niSavedVsAnnual = input.director || input.noNi ? 0 : annualBasisNi - nationalInsurance;
 
   return {

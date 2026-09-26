@@ -19,6 +19,7 @@ import {
   calculateCountdown,
   isValidDateString,
   isValidTimeString,
+  pad,
   toDateString,
   toLocalDate,
   toTimeString,
@@ -55,10 +56,6 @@ function formatWeeks({ weeks, days }: { weeks: number; days: number }): string {
   return days === 0 ? plural(weeks, "week") : `${plural(weeks, "week")}, ${plural(days, "day")}`;
 }
 
-function pad(n: number): string {
-  return String(n).padStart(2, "0");
-}
-
 const longDate = new Intl.DateTimeFormat("en-GB", {
   weekday: "long",
   day: "numeric",
@@ -69,7 +66,7 @@ const longDate = new Intl.DateTimeFormat("en-GB", {
 const shortDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
 /** Path of the standalone card page for a given target. */
-export function cardHref({ to, at, name }: { to: string; at: string; name: string }): string {
+function cardHref({ to, at, name }: { to: string; at: string; name: string }): string {
   const params = new URLSearchParams();
   if (to) params.set("to", to);
   if (at && at !== DEFAULT_TIME) params.set("at", at);

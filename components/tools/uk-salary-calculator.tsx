@@ -28,12 +28,13 @@ import { Section, useSectionState } from "@/components/calc/section";
 import { Segmented } from "@/components/calc/segmented";
 import { SliderField } from "@/components/calc/slider-field";
 import { StudentLoanFields } from "@/components/calc/student-loan-fields";
+import { TaxYearSelect } from "@/components/calc/tax-year-select";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { SwitchField } from "@/components/calc/switch-field";
 import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
 import { MONEY_RANGE as MONEY, useUrlState, urlField, type NumberRange, type UrlField } from "@/hooks/use-url-state";
-import { formatMoney } from "@/lib/currency";
+import { formatGbp as money, formatMoney, formatPercent } from "@/lib/currency";
 import {
   calculateUkSalary,
   DEFAULT_TAX_YEAR,
@@ -49,12 +50,9 @@ import {
   type PayPeriod,
   type PensionMethod,
   type PensionType,
-  type TaxYear,
   type UkSalaryInput,
 } from "@/lib/uk-tax";
 import { cn } from "@/lib/utils";
-
-const GBP = "GBP";
 
 type InputPeriod = Extract<PayPeriod, "year" | "month" | "week" | "day" | "hour">;
 
@@ -114,7 +112,7 @@ const DEFAULT_INPUT: UkSalaryInput = {
   postTaxDeduction: 0,
 };
 
-const pct = (v: number, decimals = 1) => `${(v * 100).toFixed(decimals)}%`;
+const pct = (v: number, decimals = 1) => formatPercent(v, decimals);
 
 /* ------------------------------------------------------------------ */
 /* URL state                                                            */
@@ -203,10 +201,6 @@ export function UkSalaryCalculator() {
     return salaryCurve(input, top, 40);
   }, [input, result.salary]);
 
-  const money = React.useCallback(
-    (v: number, decimals = 0) => formatMoney(v, GBP, { decimals }),
-    [],
-  );
   const per = periodsPerYear(view, input.hoursPerWeek, input.daysPerWeek);
   const perLabel = PERIOD_INFO[view];
   const inView = (annual: number) => money(annual / per, view === "year" ? 0 : 2);
@@ -305,19 +299,7 @@ export function UkSalaryCalculator() {
         <Card className="min-w-0">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Your salary</CardTitle>
-            <Select value={input.taxYear} onValueChange={(v) => update("taxYear", v as TaxYear)}>
-              <SelectTrigger size="sm" aria-label="Tax year" className="w-fit font-medium">
-                <span className="text-muted-foreground">Tax year</span>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent align="end">
-                {(Object.keys(TAX_YEARS) as TaxYear[]).map((ty) => (
-                  <SelectItem key={ty} value={ty}>
-                    {TAX_YEARS[ty].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <TaxYearSelect value={input.taxYear} onChange={(v) => update("taxYear", v)} />
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-3">
@@ -906,7 +888,6 @@ export function UkSalaryCalculator() {
                         rate={b.rate}
                         amount={b.amount}
                         tax={b.tax}
-                        money={money}
                       />
                     ))}
                   </tbody>
@@ -929,9 +910,9 @@ export function UkSalaryCalculator() {
                   { name: "Tax, NI and loans", color: "var(--chart-1)", values: curve.deductions },
                 ]}
                 xLabel={(i) => `${money(curve.salaries[i] ?? 0)} salary`}
-                xTick={(i) => formatMoney(curve.salaries[i] ?? 0, GBP, { compact: true })}
+                xTick={(i) => formatMoney(curve.salaries[i] ?? 0, "GBP", { compact: true })}
                 formatValue={(v) => money(v)}
-                formatAxis={(v) => formatMoney(v, GBP, { compact: true })}
+                formatAxis={(v) => formatMoney(v, "GBP", { compact: true })}
                 extraRow={(i) => {
                   const salary = curve.salaries[i] ?? 0;
                   const kept = curve.takeHome[i];
@@ -962,13 +943,11 @@ function NiRow({
   rate,
   amount,
   tax,
-  money,
 }: {
   label: string;
   rate: number;
   amount: number;
   tax: number;
-  money: (v: number, d?: number) => string;
 }) {
   return (
     <tr className={cn("border-b border-foreground/10 last:border-0", amount === 0 && "text-muted-foreground/50")}>

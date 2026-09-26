@@ -34,7 +34,7 @@ const GROUP_RATIO = 0.84;
 const LBS_PER_GROUP = 5;
 
 /** Common commercial spine sizes, stiffest first. */
-export const STANDARD_SPINES = [
+const STANDARD_SPINES = [
   150, 200, 250, 300, 340, 350, 400, 500, 600, 700, 800, 900, 1000, 1100,
   1200, 1300,
 ];

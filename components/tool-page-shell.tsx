@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { PillLink } from "@/components/calc/pill-button";
 import { JsonLd } from "@/components/json-ld";
 import { RecordRecentTool } from "@/components/record-recent-tool";
 import { ShareLink } from "@/components/share-link";
@@ -7,13 +7,18 @@ import { ToolGuide } from "@/components/tool-guide";
 import { toolJsonLd, toolPath } from "@/lib/seo";
 import type { ToolContent } from "@/lib/tool-content";
 import type { Tool } from "@/lib/tools";
+import { cn } from "@/lib/utils";
 
-/** What a page under a tool (one conversion, one codec) shows instead of the tool's own heading. */
-export interface SubPageHead {
+/** What a page under a tool (one conversion, one codec, a shared card) shows instead of the tool's own heading. */
+interface SubPageHead {
   title: string;
   lead: string;
-  /** From `subPageJsonLd`. */
-  jsonLd: object;
+  /** From `subPageJsonLd`. Omit on pages kept out of search (noindex). */
+  jsonLd?: object;
+  /** Where the breadcrumb goes; the tool itself by default. */
+  back?: { href: string; label: string };
+  /** Keep a long, user-supplied title on one line. */
+  truncateTitle?: boolean;
 }
 
 type Props = {
@@ -26,19 +31,17 @@ type Props = {
 );
 
 export function ToolPageShell({ tool, content, subPage, children }: Props) {
-  const back = subPage ? { href: toolPath(tool), label: tool.name } : { href: "/", label: "All tools" };
+  const back = subPage?.back ?? (subPage ? { href: toolPath(tool), label: tool.name } : { href: "/", label: "All tools" });
+  const jsonLd = subPage ? subPage.jsonLd : toolJsonLd(tool, content);
   return (
     <article className="mx-auto w-full max-w-7xl px-4 pb-28 sm:px-6">
-      <JsonLd data={subPage ? subPage.jsonLd : toolJsonLd(tool, content)} />
+      {jsonLd && <JsonLd data={jsonLd} />}
       <RecordRecentTool slug={tool.slug} />
       <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 py-6">
-        <Link
-          href={back.href}
-          className="inline-flex h-10 items-center gap-1.5 rounded-full border-[2.5px] border-foreground bg-card px-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
-        >
+        <PillLink href={back.href}>
           <ArrowLeft className="size-4" strokeWidth={2.5} />
           {back.label}
-        </Link>
+        </PillLink>
         <ShareLink />
       </nav>
 
@@ -50,8 +53,10 @@ export function ToolPageShell({ tool, content, subPage, children }: Props) {
         >
           <tool.icon className="size-8" strokeWidth={2.25} />
         </span>
-        <div>
-          <h1 className="text-3xl font-black tracking-tight sm:text-5xl">{subPage?.title ?? tool.name}</h1>
+        <div className={cn(subPage?.truncateTitle && "min-w-0")}>
+          <h1 className={cn("text-3xl font-black tracking-tight sm:text-5xl", subPage?.truncateTitle && "truncate")}>
+            {subPage?.title ?? tool.name}
+          </h1>
           <p className="mt-1.5 max-w-2xl font-semibold text-muted-foreground sm:text-lg">
             {subPage?.lead ?? tool.description}
           </p>

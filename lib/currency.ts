@@ -30,7 +30,7 @@ export function getCurrency(code: string): Currency {
  */
 const formatters = new Map<string, Intl.NumberFormat>();
 
-function numberFormat(options: Intl.NumberFormatOptions): Intl.NumberFormat {
+export function numberFormat(options: Intl.NumberFormatOptions): Intl.NumberFormat {
   const key = JSON.stringify(options);
   let formatter = formatters.get(key);
   if (!formatter) {
@@ -53,6 +53,18 @@ export function formatMoney(
     minimumFractionDigits: options?.decimals ?? 0,
     maximumFractionDigits: options?.decimals ?? 0,
   }).format(value);
+}
+
+/** Pounds for the UK tax tools, which never switch currency. */
+export function formatGbp(value: number, decimals = 0): string {
+  return formatMoney(value, "GBP", { decimals });
+}
+
+/** A fraction (0.2) as a percentage string ("20%"). Fixed decimals, or up to `decimals` with `trim`. */
+export function formatPercent(fraction: number, decimals = 0, options?: { trim?: boolean }): string {
+  if (!Number.isFinite(fraction)) return "—";
+  const fixed = (fraction * 100).toFixed(decimals);
+  return `${options?.trim ? Number(fixed) : fixed}%`;
 }
 
 export function formatNumber(value: number, decimals = 2): string {
