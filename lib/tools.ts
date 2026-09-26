@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   Binary,
+  Briefcase,
   Dices,
   FileDiff,
   Gift,
@@ -69,6 +70,23 @@ export const tools: Tool[] = [
         "See how much of your UK bonus you keep after income tax, National Insurance and student loan for 2026/27, with Scottish rates, the £100k trap and bonus sacrifice into a pension.",
     },
     updated: "2026-09-19",
+  },
+  {
+    slug: "contractor-calculator",
+    name: "Contractor Calculator",
+    shortName: "Contractor",
+    description:
+      "What a day rate is worth through a limited company, an umbrella or as a sole trader, side by side with a permanent salary, holidays and pension included.",
+    category: "Finance",
+    icon: Briefcase,
+    keywords: ["contractor", "contracting", "day rate", "daily rate", "freelance", "freelancer", "limited company", "ltd", "umbrella", "ir35", "inside ir35", "outside ir35", "sole trader", "self-employed", "dividends", "corporation tax", "perm vs contract", "permanent", "salary vs contract", "take home", "break even"],
+    tint: "var(--sticker-yellow)",
+    seo: {
+      title: "Contractor Calculator UK 2026/27: Day Rate vs Salary",
+      description:
+        "Turn a day rate into take-home pay through a limited company, umbrella or as a sole trader, compare it with a permanent salary and find your break-even day rate.",
+    },
+    updated: "2026-09-26",
   },
   {
     slug: "mortgage-calculator",

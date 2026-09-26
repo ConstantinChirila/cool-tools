@@ -13,7 +13,7 @@ export type PensionType = "auto" | "netpay" | "sacrifice" | "personal";
 export type PensionMethod = "percent" | "amount";
 export type MarriageAllowance = "none" | "receive" | "transfer";
 
-interface Band {
+export interface Band {
   name: string;
   rate: number;
   /** Upper limit of the band in taxable income (after allowances). */
@@ -361,7 +361,7 @@ function parseTaxCode(raw: string, scotlandToggle: boolean, cfg: TaxYearConfig):
   return { ...base, kind: "default", note: `"${raw}" not recognised, using standard allowance` };
 }
 
-function taxOnBands(taxable: number, bands: Band[], extend: number): BandResult[] {
+export function taxOnBands(taxable: number, bands: Band[], extend: number): BandResult[] {
   const out: BandResult[] = [];
   let lower = 0;
   let remaining = taxable;
