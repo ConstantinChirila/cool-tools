@@ -53,6 +53,14 @@ export const content: ToolContent = {
       paragraphs: [
         "When a PCP ends, compare what the car is worth with the balloon. If it is worth more, you have equity: you can sell or part-exchange the car, settle the balloon and keep the difference. In the example above that is £2,500, which is why keeping or handing back cost almost the same.",
         "If the car is worth less than the balloon, the GMFV protects you: hand it back and you owe nothing more, as long as it is within the mileage allowance and in fair condition. Paying the balloon to keep a car worth less than it costs you the difference. With the example car worth 35% at the end, handing back costs £19,536 and keeping it costs £21,046.",
+        "When you choose not to keep it, the calculator takes the cheapest way out: sell or part-exchange when there is equity, hand the car back when there isn't, or pay off a small shortfall and sell if that costs less than the excess mileage charge.",
+      ],
+    },
+    {
+      heading: "Mileage and dealer deposit contributions",
+      paragraphs: [
+        "Every mile over a PCP or lease allowance costs an excess charge when the car goes back. Driving a car you own that far costs you too, just less visibly: it is worth less when you sell it. To keep the comparison fair, the calculator takes the same amount per mile off the value of an owned car. With 14,000 miles a year on a 10,000 allowance at 10p a mile, the example car loses £1,200 of value whether you pay it as a charge or in a lower price.",
+        "Dealers and manufacturers often put money towards the deposit when you take their finance, sometimes thousands of pounds, and often only on PCP. It comes off what you borrow on HP and PCP but not on a bank loan, which can change the answer: a £1,000 contribution in the example takes the HP real cost from £15,698 to £14,545, below the lease and within £40 of the loan. If the offer is only on PCP, try the comparison with it and then without it to see HP fairly.",
       ],
     },
     {
@@ -62,10 +70,9 @@ export const content: ToolContent = {
       ],
       bullets: [
         "Insurance, road tax, servicing and fuel, which cost much the same however you pay",
-        "Dealer deposit contributions and discounts: take them off the price or add them to the deposit",
+        "Cash discounts off the price: take them off the car price",
         "Damage charges when a PCP or lease car goes back, beyond fair wear and tear",
         "Early settlement or voluntary termination part way through the term",
-        "Lower resale value from high mileage on a car you own: enter a lower end value yourself",
         "Maintenance packages bundled into some lease quotes",
       ],
     },
@@ -94,7 +101,7 @@ export const content: ToolContent = {
     {
       question: "What happens if I go over the mileage allowance?",
       answer:
-        "On a PCP or lease you pay an excess charge for every mile over the allowance when the car goes back, often between 5p and 30p a mile. Driving 13,000 miles a year on a 10,000 allowance for three years at 10p a mile adds £900.",
+        "On a PCP or lease you pay an excess charge for every mile over the allowance when the car goes back, often between 5p and 30p a mile. Driving 13,000 miles a year on a 10,000 allowance for three years at 10p a mile adds £900, and a car you own would lose about the same in value.",
     },
     {
       question: "Can I end car finance early?",

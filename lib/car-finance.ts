@@ -41,6 +41,8 @@ export interface CarFinanceInput {
   price: number;
   /** Cash deposit plus any part-exchange. Not used by the lease. */
   deposit: number;
+  /** Deposit contribution from the dealer or manufacturer, on HP and PCP only. */
+  dealerContribution: number;
   termMonths: number;
   /** APR for dealer finance (HP and PCP), in percent. */
   apr: number;
@@ -70,8 +72,10 @@ export interface CarFinanceInput {
 
 export interface FinanceResult {
   kind: FinanceKind;
-  /** Amount of credit: price less deposit. 0 for the lease. */
+  /** Amount of credit: price less deposit (and any dealer contribution). 0 for the lease. */
   borrowed: number;
+  /** Dealer deposit contribution actually used. */
+  contribution: number;
   /** Paid at the start: deposit and admin fee, or the lease's initial rental and fee. */
   upfront: number;
   monthly: number;
@@ -84,6 +88,8 @@ export interface FinanceResult {
   interest: number;
   fees: number;
   excessMileage: number;
+  /** PCP only: balloon less the car's value, paid to settle and sell when that beats the excess charge. */
+  shortfall: number;
   totalPaid: number;
   /** What you are left with: the car's value if you own it, PCP equity if you hand it back. */
   endValue: number;
@@ -96,7 +102,10 @@ export interface FinanceResult {
 export interface FinanceComparison {
   results: Record<FinanceKind, FinanceResult>;
   best: FinanceKind;
+  /** The car's value at the end, after any extra miles. */
   carValue: number;
+  /** Value lost to miles over the allowance, priced at the excess charge. */
+  mileageLoss: number;
   /** True when the balloon was cut down to the amount borrowed (big deposit, high GMFV). */
   balloonCapped: boolean;
 }
@@ -138,8 +147,18 @@ function termOf(input: CarFinanceInput): number {
   return Math.min(MAX_TERM_MONTHS, Math.max(1, Math.round(input.termMonths)));
 }
 
-function carValueAtEnd(input: CarFinanceInput): number {
-  return (input.price * input.resalePct) / 100;
+/**
+ * Miles over the allowance cost a PCP or lease driver the excess charge. An
+ * owned car pays for them too, in a lower value: priced at the same rate per
+ * mile, which is the lender's own price for the extra wear.
+ */
+export function mileageValueLoss(input: CarFinanceInput): number {
+  return Math.min((input.price * input.resalePct) / 100, excessMileageCharge(input));
+}
+
+/** Expected market value at the end of the term, after any extra miles. */
+export function carValueAtEnd(input: CarFinanceInput): number {
+  return Math.max(0, (input.price * input.resalePct) / 100 - excessMileageCharge(input));
 }
 
 function schedule(n: number, upfront: number, monthly: number, final: number, firstMonth = 1): number[] {
@@ -167,22 +186,33 @@ function financeResult(
   };
 }
 
-function borrowedOf(input: CarFinanceInput): number {
-  return Math.max(0, input.price - Math.max(0, input.deposit));
-}
-
 function depositOf(input: CarFinanceInput): number {
   return Math.min(Math.max(0, input.deposit), input.price);
 }
 
+/** The dealer contribution, capped at what the deposit leaves to pay. */
+function contributionOf(input: CarFinanceInput): number {
+  return Math.min(Math.max(0, input.dealerContribution), input.price - depositOf(input));
+}
+
+function loanBorrowed(input: CarFinanceInput): number {
+  return input.price - depositOf(input);
+}
+
+/** HP and PCP: the dealer contribution comes off the amount borrowed. */
+function dealerBorrowed(input: CarFinanceInput): number {
+  return loanBorrowed(input) - contributionOf(input);
+}
+
 export function calculateHp(input: CarFinanceInput): FinanceResult {
   const n = termOf(input);
-  const borrowed = borrowedOf(input);
+  const borrowed = dealerBorrowed(input);
   const monthly = annuityPayment(borrowed, monthlyRate(input.apr), n);
   return financeResult(
     "hp",
     {
       borrowed,
+      contribution: contributionOf(input),
       upfront: depositOf(input) + input.adminFee,
       monthly,
       payments: n,
@@ -191,6 +221,7 @@ export function calculateHp(input: CarFinanceInput): FinanceResult {
       interest: monthly * n - borrowed,
       fees: input.adminFee + input.optionFee,
       excessMileage: 0,
+      shortfall: 0,
       endValue: carValueAtEnd(input),
       owns: true,
     },
@@ -200,29 +231,35 @@ export function calculateHp(input: CarFinanceInput): FinanceResult {
 
 export function calculatePcp(input: CarFinanceInput): FinanceResult {
   const n = termOf(input);
-  const borrowed = borrowedOf(input);
+  const borrowed = dealerBorrowed(input);
   const balloon = Math.min((input.price * input.gmfvPct) / 100, borrowed);
   const monthly = annuityPayment(borrowed, monthlyRate(input.apr), n, balloon);
   const interest = monthly * n + balloon - borrowed;
   const carValue = carValueAtEnd(input);
   const keep = input.pcpEnd === "keep";
-  // Handing back: the lender takes the car against the balloon. Any value
-  // above it is equity (usually rolled into the next deal); below it, the
-  // GMFV means you owe nothing more.
-  const excessMileage = keep ? 0 : excessMileageCharge(input);
+  // Not keeping it, you take the cheapest way out. Worth more than the
+  // balloon: sell or part-exchange and keep the equity (the extra miles are
+  // already in the value). Worth less: hand it back and pay any excess
+  // mileage, or settle the shortfall and sell if that costs less.
+  const gap = balloon - carValue;
+  const excess = excessMileageCharge(input);
+  const shortfall = !keep && gap > 0 && gap < excess ? gap : 0;
+  const excessMileage = !keep && gap > 0 && shortfall === 0 ? excess : 0;
   return financeResult(
     "pcp",
     {
       borrowed,
+      contribution: contributionOf(input),
       upfront: depositOf(input) + input.adminFee,
       monthly,
       payments: n,
       balloon,
-      final: keep ? balloon + input.optionFee : excessMileage,
+      final: keep ? balloon + input.optionFee : excessMileage + shortfall,
       interest,
       fees: input.adminFee + (keep ? input.optionFee : 0),
       excessMileage,
-      endValue: keep ? carValue : Math.max(0, carValue - balloon),
+      shortfall,
+      endValue: keep ? carValue : Math.max(0, -gap),
       owns: keep,
     },
     n,
@@ -231,12 +268,13 @@ export function calculatePcp(input: CarFinanceInput): FinanceResult {
 
 export function calculateLoan(input: CarFinanceInput): FinanceResult {
   const n = termOf(input);
-  const borrowed = borrowedOf(input);
+  const borrowed = loanBorrowed(input);
   const monthly = annuityPayment(borrowed, monthlyRate(input.loanApr), n);
   return financeResult(
     "loan",
     {
       borrowed,
+      contribution: 0,
       upfront: depositOf(input),
       monthly,
       payments: n,
@@ -245,6 +283,7 @@ export function calculateLoan(input: CarFinanceInput): FinanceResult {
       interest: monthly * n - borrowed,
       fees: 0,
       excessMileage: 0,
+      shortfall: 0,
       endValue: carValueAtEnd(input),
       owns: true,
     },
@@ -260,6 +299,7 @@ export function calculateLease(input: CarFinanceInput): FinanceResult {
     "lease",
     {
       borrowed: 0,
+      contribution: 0,
       upfront: input.leaseMonthly * input.leaseInitial + input.leaseFee,
       monthly: input.leaseMonthly,
       payments: n - 1,
@@ -268,6 +308,7 @@ export function calculateLease(input: CarFinanceInput): FinanceResult {
       interest: 0,
       fees: input.leaseFee,
       excessMileage,
+      shortfall: 0,
       endValue: 0,
       owns: false,
     },
@@ -292,7 +333,8 @@ export function compareFinance(input: CarFinanceInput, basis: CompareBasis): Fin
     results,
     best,
     carValue: carValueAtEnd(input),
-    balloonCapped: (input.price * input.gmfvPct) / 100 > borrowedOf(input),
+    mileageLoss: mileageValueLoss(input),
+    balloonCapped: (input.price * input.gmfvPct) / 100 > dealerBorrowed(input),
   };
 }
 
@@ -324,6 +366,7 @@ export function breakdownLines(
   } else {
     push("Deposit or part-exchange", depositOf(input));
     if (result.kind !== "loan") push("Admin fee", input.adminFee);
+    push("Dealer deposit contribution, not paid by you", result.contribution, "note");
   }
   lines.push({ label: "Monthly", value: 0, kind: "heading" });
   push(`${plural(result.payments, "payment")} of ${money(result.monthly, 2)}`, result.monthly * result.payments);
@@ -336,19 +379,27 @@ export function breakdownLines(
     }
     if (result.kind === "hp") push("Option to purchase fee", input.optionFee);
     push("Excess mileage charge", result.excessMileage);
+    push("Shortfall to settle the balloon and sell", result.shortfall);
   }
 
   lines.push({ label: "Total paid", value: result.totalPaid, kind: "subtotal" });
   if (result.interest > 0) lines.push({ label: "of which interest", value: result.interest, kind: "note" });
   if (result.kind === "pcp" && input.pcpEnd === "handBack") {
-    lines.push({ label: "Balloon settled by handing the car back", value: result.balloon, kind: "note" });
+    const sold = result.endValue > 0 || result.shortfall > 0;
+    lines.push({
+      label: sold ? "Balloon settled by selling the car" : "Balloon settled by handing the car back",
+      value: result.balloon,
+      kind: "note",
+    });
   }
   if (result.endValue > 0) {
+    const loss = mileageValueLoss(input);
     lines.push({
       label: result.owns ? `Car's value after ${plural(termOf(input), "month")}` : "Equity above the balloon",
       value: -result.endValue,
       kind: "credit",
     });
+    if (loss > 0) lines.push({ label: "after extra miles took off", value: loss, kind: "note" });
   }
   lines.push({ label: "Real cost", value: result.netCost, kind: "total" });
   return lines;

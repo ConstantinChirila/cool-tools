@@ -21,10 +21,12 @@ import {
   MAX_TERM_MONTHS,
   basisValue,
   breakdownLines,
+  carValueAtEnd,
   compareFinance,
   defaultGmfvPct,
   defaultResalePct,
   excessMileageCharge,
+  mileageValueLoss,
   type CarFinanceInput,
   type CompareBasis,
   type FinanceComparison,
@@ -39,6 +41,7 @@ import { cn } from "@/lib/utils";
 const DEFAULT_INPUT: CarFinanceInput = {
   price: 25_000,
   deposit: 2_500,
+  dealerContribution: 0,
   termMonths: 36,
   apr: 9.9,
   loanApr: 6.5,
@@ -66,7 +69,7 @@ const BASIS_OPTIONS: { value: CompareBasis; label: string }[] = [
   { value: "total", label: "Total paid" },
 ];
 const PCP_END_OPTIONS: { value: PcpEnd; label: string }[] = [
-  { value: "handBack", label: "Hand it back" },
+  { value: "handBack", label: "Hand back or sell" },
   { value: "keep", label: "Pay the balloon" },
 ];
 const VIEW_OPTIONS = FINANCE_KINDS.map((value) => ({ value, label: FINANCE_INFO[value].short }));
@@ -103,6 +106,7 @@ export function CarFinanceCalculator() {
   useUrlState({
     ...num("price", "price", MONEY_RANGE),
     ...num("deposit", "deposit", MONEY_RANGE),
+    ...num("dealerContribution", "contribution", MONEY_RANGE),
     ...num("termMonths", "term", TERM_RANGE),
     ...num("apr", "apr", APR_RANGE),
     ...num("loanApr", "loanApr", APR_RANGE),
@@ -189,8 +193,11 @@ function CarInputs({
   onAutoGmfvChange: (auto: boolean) => void;
 }) {
   const sections = useSectionState([]);
-  const borrowed = Math.max(0, input.price - input.deposit);
-  const carValue = (input.price * input.resalePct) / 100;
+  const loanBorrowed = Math.max(0, input.price - input.deposit);
+  const dealerBorrowed = Math.max(0, loanBorrowed - input.dealerContribution);
+  const baseValue = (input.price * input.resalePct) / 100;
+  const carValue = carValueAtEnd(input);
+  const mileageLoss = mileageValueLoss(input);
   const balloon = (input.price * input.gmfvPct) / 100;
   const excess = excessMileageCharge(input);
 
@@ -265,7 +272,13 @@ function CarInputs({
           decimals={1}
         />
         <p className="rounded-xl bg-secondary px-3.5 py-2.5 text-sm font-semibold">
-          Borrowing <span className="font-bold">{money(borrowed)}</span>
+          Borrowing <span className="font-bold">{money(dealerBorrowed)}</span>
+          {dealerBorrowed !== loanBorrowed && (
+            <>
+              {" "}
+              on HP and PCP, <span className="font-bold">{money(loanBorrowed)}</span> on a loan
+            </>
+          )}
           <span className="text-muted-foreground">
             {" "}
             · worth about {money(carValue)} after {months(input.termMonths)}
@@ -276,14 +289,14 @@ function CarInputs({
           <Section
             icon={CalendarClock}
             title="PCP balloon"
-            summary={`${money(balloon)} (${input.gmfvPct}%) · ${input.pcpEnd === "keep" ? "paid to keep the car" : "hand the car back"}`}
+            summary={`${money(balloon)} (${input.gmfvPct}%) · ${input.pcpEnd === "keep" ? "paid to keep the car" : "hand back or sell"}`}
             active={!autoGmfv || input.pcpEnd === "keep"}
             open={sections.isOpen("pcp")}
             onToggle={() => sections.toggle("pcp")}
           >
             <NumberField
               id="gmfv"
-              label="Optional final payment (GMFV)"
+              label="Optional final payment (GMFV), % of price"
               value={input.gmfvPct}
               onChange={(v) => {
                 // Blur commits even when nothing changed: only a new figure stops the estimate.
@@ -293,7 +306,7 @@ function CarInputs({
               }}
               max={100}
               decimals={1}
-              suffix="% of price"
+              suffix="%"
               hint={autoGmfv ? "Estimated from the term" : `${money(balloon)} on this car`}
             />
             <PillButton onClick={() => onAutoGmfvChange(true)} disabled={autoGmfv}>
@@ -314,14 +327,18 @@ function CarInputs({
           <Section
             icon={TrendingDown}
             title="Car's value at the end"
-            summary={`${money(carValue)} (${input.resalePct}%)${autoResale ? ", estimated" : ""}`}
+            summary={
+              mileageLoss > 0
+                ? `${money(carValue)} after extra miles`
+                : `${money(carValue)} (${input.resalePct}%)${autoResale ? ", estimated" : ""}`
+            }
             active={!autoResale}
             open={sections.isOpen("resale")}
             onToggle={() => sections.toggle("resale")}
           >
             <NumberField
               id="resale"
-              label={`Worth after ${months(input.termMonths)}`}
+              label={`Worth after ${months(input.termMonths)}, % of price`}
               value={input.resalePct}
               onChange={(v) => {
                 if (v === input.resalePct) return;
@@ -330,8 +347,8 @@ function CarInputs({
               }}
               max={100}
               decimals={1}
-              suffix="% of price"
-              hint={autoResale ? "20% off a year, a rule of thumb" : `${money(carValue)} on this car`}
+              suffix="%"
+              hint={autoResale ? "20% off a year, a rule of thumb" : `${money(baseValue)} on this car`}
             />
             <PillButton onClick={() => onAutoResaleChange(true)} disabled={autoResale}>
               Use the estimate
@@ -406,12 +423,26 @@ function CarInputs({
 
           <Section
             icon={Receipt}
-            title="Dealer finance fees"
-            summary={`${money(input.adminFee)} admin · ${money(input.optionFee)} option to purchase`}
-            active={input.adminFee > 0}
+            title="Dealer offers and fees"
+            summary={
+              input.dealerContribution > 0
+                ? `${money(input.dealerContribution)} deposit contribution · ${money(input.adminFee)} admin`
+                : `${money(input.adminFee)} admin · ${money(input.optionFee)} option to purchase`
+            }
+            active={input.adminFee > 0 || input.dealerContribution > 0}
             open={sections.isOpen("fees")}
             onToggle={() => sections.toggle("fees")}
           >
+            <NumberField
+              id="dealer-contribution"
+              label="Dealer deposit contribution"
+              value={input.dealerContribution}
+              onChange={(v) => update("dealerContribution", v)}
+              max={MONEY_RANGE.max}
+              prefix={symbol}
+              grouped
+              hint="Only on the dealer's HP or PCP, often only on PCP"
+            />
             <div className="grid grid-cols-2 gap-3">
               <NumberField
                 id="admin-fee"
@@ -435,7 +466,9 @@ function CarInputs({
               />
             </div>
             <p className="text-xs font-semibold text-muted-foreground">
-              Most quotes already include fees in the APR. Only add them here if yours lists them separately.
+              A deposit contribution is money the dealer or manufacturer puts in, so you borrow less on
+              their finance. If it is only offered on PCP, compare with it and then without it. Most quotes
+              already include fees in the APR: only add them if yours lists them separately.
             </p>
           </Section>
 
@@ -444,7 +477,7 @@ function CarInputs({
             title="Mileage"
             summary={
               excess > 0
-                ? `${money(excess)} excess charge on PCP and lease`
+                ? `${money(excess)} over the allowance`
                 : `${input.milesPerYear.toLocaleString("en-GB")} miles a year, within the allowance`
             }
             active={excess > 0}
@@ -485,7 +518,9 @@ function CarInputs({
             </div>
             <p className="text-xs font-semibold text-muted-foreground">
               The PCP and lease allowance, and the charge for each mile over it when the car goes back.
-              Driving more also lowers what an owned car is worth.
+              Miles over it take the same amount per mile off the value of a car you own
+              {mileageLoss > 0 ? `, ${money(mileageLoss)} here` : ""}, so buying and handing back are
+              compared fairly.
             </p>
           </Section>
         </div>

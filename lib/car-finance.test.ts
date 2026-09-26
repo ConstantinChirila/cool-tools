@@ -6,10 +6,12 @@ import {
   calculateLease,
   calculateLoan,
   calculatePcp,
+  carValueAtEnd,
   compareFinance,
   defaultGmfvPct,
   defaultResalePct,
   excessMileageCharge,
+  mileageValueLoss,
   monthlyRate,
   type CarFinanceInput,
 } from "@/lib/car-finance";
@@ -18,6 +20,7 @@ import {
 const base: CarFinanceInput = {
   price: 25_000,
   deposit: 2_500,
+  dealerContribution: 0,
   termMonths: 36,
   apr: 9.9,
   loanApr: 6.5,
@@ -122,10 +125,36 @@ describe("PCP", () => {
     expect(keep.netCost - back.netCost).toBeCloseTo(10, 6);
   });
 
-  it("charges excess mileage only when handing back", () => {
-    const heavy = { ...base, milesPerYear: 14_000 };
-    expect(calculatePcp(heavy).excessMileage).toBeCloseTo(1_200, 6);
-    expect(calculatePcp({ ...heavy, pcpEnd: "keep" }).excessMileage).toBe(0);
+  // 14,000 miles a year on a 10,000 allowance for 3 years at 10p: £1,200.
+  const heavy = { ...base, milesPerYear: 14_000 };
+
+  it("sells with the equity when the car still beats the balloon after extra miles", () => {
+    const pcp = calculatePcp(heavy);
+    expect(pcp.endValue).toBeCloseTo(12_750 - 1_200 - 10_250, 6);
+    expect(pcp.excessMileage).toBe(0);
+    expect(pcp.final).toBe(0);
+  });
+
+  it("settles a small shortfall and sells when that beats the excess charge", () => {
+    // Worth £11,000 less £1,200 = £9,800 against a £10,250 balloon.
+    const pcp = calculatePcp({ ...heavy, resalePct: 44 });
+    expect(pcp.shortfall).toBeCloseTo(450, 6);
+    expect(pcp.excessMileage).toBe(0);
+    expect(pcp.final).toBeCloseTo(450, 6);
+    expect(pcp.endValue).toBe(0);
+  });
+
+  it("hands back and pays the excess when the shortfall is bigger", () => {
+    const pcp = calculatePcp({ ...heavy, resalePct: 35 });
+    expect(pcp.shortfall).toBe(0);
+    expect(pcp.excessMileage).toBeCloseTo(1_200, 6);
+    expect(pcp.final).toBeCloseTo(1_200, 6);
+  });
+
+  it("charges no excess when keeping the car, but it is worth less", () => {
+    const keep = calculatePcp({ ...heavy, pcpEnd: "keep" });
+    expect(keep.excessMileage).toBe(0);
+    expect(keep.endValue).toBeCloseTo(11_550, 6);
   });
 
   it("caps the balloon at the amount borrowed", () => {
@@ -141,6 +170,44 @@ describe("PCP", () => {
     const hp = calculateHp(base);
     expect(pcp.monthly).toBeLessThan(hp.monthly);
     expect(pcp.interest).toBeGreaterThan(hp.interest);
+  });
+});
+
+describe("dealer deposit contribution", () => {
+  it("cuts the amount borrowed on HP and PCP, not the loan", () => {
+    const input = { ...base, dealerContribution: 1_000 };
+    expect(calculateHp(input).borrowed).toBe(21_500);
+    expect(calculatePcp(input).borrowed).toBe(21_500);
+    expect(calculateLoan(input).borrowed).toBe(22_500);
+    // It is not your money: the up front payment is still just the deposit.
+    expect(calculateHp(input).upfront).toBe(2_500);
+    expect(calculateHp(input).netCost).toBeLessThan(calculateHp(base).netCost);
+  });
+
+  it("is capped at what the deposit leaves to pay", () => {
+    const hp = calculateHp({ ...base, deposit: 24_000, dealerContribution: 3_000 });
+    expect(hp.contribution).toBe(1_000);
+    expect(hp.borrowed).toBe(0);
+  });
+});
+
+describe("mileage and the car's value", () => {
+  it("takes extra miles off an owned car at the excess rate", () => {
+    const input = { ...base, milesPerYear: 14_000 };
+    expect(mileageValueLoss(input)).toBeCloseTo(1_200, 6);
+    expect(carValueAtEnd(input)).toBeCloseTo(11_550, 6);
+    expect(calculateHp(input).endValue).toBeCloseTo(11_550, 6);
+    expect(calculateLoan(input).endValue).toBeCloseTo(11_550, 6);
+  });
+
+  it("never takes the value below zero", () => {
+    const input = { ...base, milesPerYear: 100_000, resalePct: 5 };
+    expect(carValueAtEnd(input)).toBe(0);
+    expect(mileageValueLoss(input)).toBe(1_250);
+  });
+
+  it("leaves the value alone within the allowance", () => {
+    expect(mileageValueLoss({ ...base, milesPerYear: 6_000 })).toBe(0);
   });
 });
 

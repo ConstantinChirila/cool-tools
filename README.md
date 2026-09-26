@@ -5,7 +5,7 @@ Odd little tools that just work. A growing library of free online calculators bu
 ## Current tools
 
 - **UK Salary Calculator**: take-home pay for 2025/26 and 2026/27 with Scottish rates, tax codes, pension types, student loan plans, bonus, overtime, benefits, salary sacrifice, allowances and a salary curve (engine in `lib/uk-tax.ts`)
-- **Car Finance Calculator**: PCP, hire purchase, personal loan and lease (PCH) compared on one car, by total paid or real cost after the car's value at the end (engine in `lib/car-finance.ts`; APRs are annual effective rates; car value and GMFV default to a 20%-a-year rule of thumb until edited)
+- **Car Finance Calculator**: PCP, hire purchase, personal loan and lease (PCH) compared on one car, by total paid or real cost after the car's value at the end (engine in `lib/car-finance.ts`; APRs are annual effective rates; car value and GMFV default to a 20%-a-year rule of thumb until edited; dealer deposit contributions cut HP/PCP borrowing only; miles over the allowance come off an owned car's value at the excess rate)
 - **Mortgage Calculator**: monthly repayment, total interest, amortization chart and yearly table, with a repayment vs interest-only toggle
 - **Mortgage Overpayment Calculator**: interest and time saved by overpaying monthly or with a lump sum, with a with/without overpayment comparison chart and yearly table
 - **Compound Interest Calculator**: growth projection with contributions, compounding frequency, chart and yearly table
