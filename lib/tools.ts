@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   Binary,
   Briefcase,
+  Car,
   Dices,
   FileDiff,
   Gift,
@@ -85,6 +86,23 @@ export const tools: Tool[] = [
       title: "Contractor Calculator UK 2026/27: Day Rate vs Salary",
       description:
         "Turn a day rate into take-home pay through a limited company, umbrella or as a sole trader, compare it with a permanent salary and find your break-even day rate.",
+    },
+    updated: "2026-09-26",
+  },
+  {
+    slug: "car-finance-calculator",
+    name: "Car Finance Calculator",
+    shortName: "Car Finance",
+    description:
+      "Compare PCP, hire purchase, a personal loan and leasing on the same car: monthly payments, total paid and the real cost once the car's value is counted.",
+    category: "Finance",
+    icon: Car,
+    keywords: ["car", "car finance", "car loan", "pcp", "hp", "hire purchase", "personal contract purchase", "lease", "leasing", "pch", "contract hire", "balloon", "gmfv", "apr", "monthly payment", "deposit", "part exchange", "vehicle", "auto loan"],
+    tint: "var(--sticker-pink)",
+    seo: {
+      title: "Car Finance Calculator: PCP vs HP vs Lease",
+      description:
+        "Compare PCP, HP, a personal loan and a lease on the same car. Monthly payments, balloon, interest, total paid and the real cost after the car's value at the end.",
     },
     updated: "2026-09-26",
   },
