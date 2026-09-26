@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   annuityPayment,
+  baseValueAtEnd,
   basisValue,
+  breakdownLines,
   calculateHp,
   calculateLease,
   calculateLoan,
@@ -14,6 +16,8 @@ import {
   mileageValueLoss,
   monthlyRate,
   type CarFinanceInput,
+  type FinanceResult,
+  type Line,
 } from "@/lib/car-finance";
 
 /** £25,000 car, £2,500 down, 36 months: each case overrides what it is about. */
@@ -113,6 +117,9 @@ describe("PCP", () => {
   it("walks away owing nothing when the car is worth less than the balloon", () => {
     const pcp = calculatePcp({ ...base, resalePct: 30 });
     expect(pcp.endValue).toBe(0);
+    // The GMFV covers the gap: no shortfall, nothing due at the end.
+    expect(pcp.shortfall).toBe(0);
+    expect(pcp.final).toBe(0);
   });
 
   it("pays the balloon and option fee to keep the car", () => {
@@ -184,6 +191,14 @@ describe("dealer deposit contribution", () => {
     expect(calculateHp(input).netCost).toBeLessThan(calculateHp(base).netCost);
   });
 
+  it("can push the amount borrowed under the GMFV and cap the balloon", () => {
+    // £25,000 − £12,000 − £3,000 = £10,000 borrowed against a £10,250 GMFV.
+    const input = { ...base, deposit: 12_000, dealerContribution: 3_000 };
+    expect(calculatePcp(input).balloon).toBe(10_000);
+    expect(compareFinance(input, "net").balloonCapped).toBe(true);
+    expect(compareFinance({ ...input, dealerContribution: 0 }, "net").balloonCapped).toBe(false);
+  });
+
   it("is capped at what the deposit leaves to pay", () => {
     const hp = calculateHp({ ...base, deposit: 24_000, dealerContribution: 3_000 });
     expect(hp.contribution).toBe(1_000);
@@ -195,6 +210,7 @@ describe("mileage and the car's value", () => {
   it("takes extra miles off an owned car at the excess rate", () => {
     const input = { ...base, milesPerYear: 14_000 };
     expect(mileageValueLoss(input)).toBeCloseTo(1_200, 6);
+    expect(baseValueAtEnd(input)).toBe(12_750);
     expect(carValueAtEnd(input)).toBeCloseTo(11_550, 6);
     expect(calculateHp(input).endValue).toBeCloseTo(11_550, 6);
     expect(calculateLoan(input).endValue).toBeCloseTo(11_550, 6);
@@ -247,5 +263,70 @@ describe("comparison", () => {
     // Paying the least out of pocket is not the same as the lowest real cost.
     const total = compareFinance(base, "total");
     expect(total.best).not.toBe("hp");
+  });
+});
+
+describe("breakdownLines", () => {
+  const money = (v: number) => String(v);
+  const linesFor = (result: FinanceResult, input: CarFinanceInput) => breakdownLines(result, input, money);
+  const find = (lines: Line[], label: string) => lines.find((l) => l.label === label);
+  const balloonNote = (lines: Line[]) => lines.find((l) => l.label.startsWith("Balloon settled"));
+
+  /** The rows the user reads must add up to the total they are shown. */
+  function expectCostsToSum(lines: Line[], result: FinanceResult) {
+    const costs = lines.filter((l) => l.kind === "cost").reduce((sum, l) => sum + l.value, 0);
+    expect(costs).toBeCloseTo(result.totalPaid, 6);
+    expect(lines.find((l) => l.kind === "subtotal")?.value).toBeCloseTo(result.totalPaid, 6);
+    expect(lines.at(-1)).toMatchObject({ kind: "total", value: result.netCost });
+  }
+
+  it("shows the shortfall paid to settle and sell", () => {
+    const input = { ...base, milesPerYear: 14_000, resalePct: 44 };
+    const pcp = calculatePcp(input);
+    const lines = linesFor(pcp, input);
+    expect(find(lines, "Shortfall to settle the balloon and sell")?.value).toBeCloseTo(450, 6);
+    expect(balloonNote(lines)?.label).toBe("Balloon settled by selling the car");
+    expectCostsToSum(lines, pcp);
+  });
+
+  it("says the car went back when the excess charge is the cheaper way out", () => {
+    const input = { ...base, milesPerYear: 14_000, resalePct: 35 };
+    const pcp = calculatePcp(input);
+    const lines = linesFor(pcp, input);
+    expect(find(lines, "Shortfall to settle the balloon and sell")).toBeUndefined();
+    expect(find(lines, "Excess mileage charge")?.value).toBeCloseTo(1_200, 6);
+    expect(balloonNote(lines)?.label).toBe("Balloon settled by handing the car back");
+    expectCostsToSum(lines, pcp);
+  });
+
+  it("says the car was sold when there is equity", () => {
+    const pcp = calculatePcp(base);
+    const lines = linesFor(pcp, base);
+    expect(balloonNote(lines)?.label).toBe("Balloon settled by selling the car");
+    expect(find(lines, "Equity above the balloon")?.value).toBe(-2_500);
+  });
+
+  it("lists the dealer contribution as a note, outside what you pay", () => {
+    const input = { ...base, dealerContribution: 1_000, adminFee: 99 };
+    const hp = calculateHp(input);
+    const lines = linesFor(hp, input);
+    const note = lines.find((l) => l.label.includes("not paid by you"));
+    expect(note).toMatchObject({ kind: "note", value: 1_000 });
+    expectCostsToSum(lines, hp);
+  });
+
+  it("notes the value lost to extra miles under an owned car's value", () => {
+    const input = { ...base, milesPerYear: 14_000 };
+    const loan = calculateLoan(input);
+    const lines = linesFor(loan, input);
+    expect(find(lines, "after extra miles took off")).toMatchObject({ kind: "note", value: 1_200 });
+    expectCostsToSum(lines, loan);
+  });
+
+  it("adds up for the lease and a kept PCP", () => {
+    const heavy = { ...base, milesPerYear: 12_000 };
+    expectCostsToSum(linesFor(calculateLease(heavy), heavy), calculateLease(heavy));
+    const keep = { ...base, pcpEnd: "keep" as const };
+    expectCostsToSum(linesFor(calculatePcp(keep), keep), calculatePcp(keep));
   });
 });

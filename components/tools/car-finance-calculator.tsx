@@ -21,12 +21,10 @@ import {
   MAX_TERM_MONTHS,
   basisValue,
   breakdownLines,
-  carValueAtEnd,
   compareFinance,
   defaultGmfvPct,
   defaultResalePct,
   excessMileageCharge,
-  mileageValueLoss,
   type CarFinanceInput,
   type CompareBasis,
   type FinanceComparison,
@@ -142,6 +140,7 @@ export function CarFinanceCalculator() {
         <CarInputs
           input={effective}
           update={update}
+          comparison={comparison}
           money={money}
           symbol={currency.symbol}
           code={code}
@@ -172,6 +171,7 @@ export function CarFinanceCalculator() {
 function CarInputs({
   input,
   update,
+  comparison: { results, baseValue, carValue, mileageLoss },
   money,
   symbol,
   code,
@@ -183,6 +183,7 @@ function CarInputs({
 }: {
   input: CarFinanceInput;
   update: Update;
+  comparison: FinanceComparison;
   money: Money;
   symbol: string;
   code: string;
@@ -193,11 +194,8 @@ function CarInputs({
   onAutoGmfvChange: (auto: boolean) => void;
 }) {
   const sections = useSectionState([]);
-  const loanBorrowed = Math.max(0, input.price - input.deposit);
-  const dealerBorrowed = Math.max(0, loanBorrowed - input.dealerContribution);
-  const baseValue = (input.price * input.resalePct) / 100;
-  const carValue = carValueAtEnd(input);
-  const mileageLoss = mileageValueLoss(input);
+  const dealerBorrowed = results.hp.borrowed;
+  const loanBorrowed = results.loan.borrowed;
   const balloon = (input.price * input.gmfvPct) / 100;
   const excess = excessMileageCharge(input);
 
@@ -543,6 +541,13 @@ function CarResults({
   money: Money;
 }) {
   const bestResult = results[best];
+  const contribution = results.pcp.contribution > 0;
+  const cappedBy =
+    contribution && input.deposit > 0
+      ? "Your deposit and the dealer contribution leave"
+      : contribution
+        ? "The dealer contribution leaves"
+        : "Your deposit leaves";
   const ownerLooksDear = basis === "total" && !bestResult.owns && carValue > 0;
 
   return (
@@ -582,8 +587,8 @@ function CarResults({
           )}
           {balloonCapped && (
             <Callout tone="warn">
-              Your deposit leaves less to borrow than the GMFV, so the balloon is cut to{" "}
-              {money(results.pcp.balloon)}. A lender would usually lower the deposit instead.
+              {cappedBy} less to borrow than the GMFV, so the balloon is cut to {money(results.pcp.balloon)}. A
+              real quote would lower the GMFV{input.deposit > 0 ? " or the deposit" : ""} instead.
             </Callout>
           )}
         </CardContent>

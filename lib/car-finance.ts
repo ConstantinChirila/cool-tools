@@ -102,6 +102,8 @@ export interface FinanceResult {
 export interface FinanceComparison {
   results: Record<FinanceKind, FinanceResult>;
   best: FinanceKind;
+  /** The car's value at the end before any extra miles, from the resale %. */
+  baseValue: number;
   /** The car's value at the end, after any extra miles. */
   carValue: number;
   /** Value lost to miles over the allowance, priced at the excess charge. */
@@ -153,12 +155,17 @@ function termOf(input: CarFinanceInput): number {
  * mile, which is the lender's own price for the extra wear.
  */
 export function mileageValueLoss(input: CarFinanceInput): number {
-  return Math.min((input.price * input.resalePct) / 100, excessMileageCharge(input));
+  return Math.min(baseValueAtEnd(input), excessMileageCharge(input));
+}
+
+/** Expected market value at the end of the term at normal mileage: the resale % of the price. */
+export function baseValueAtEnd(input: CarFinanceInput): number {
+  return (input.price * input.resalePct) / 100;
 }
 
 /** Expected market value at the end of the term, after any extra miles. */
 export function carValueAtEnd(input: CarFinanceInput): number {
-  return Math.max(0, (input.price * input.resalePct) / 100 - excessMileageCharge(input));
+  return Math.max(0, baseValueAtEnd(input) - excessMileageCharge(input));
 }
 
 function schedule(n: number, upfront: number, monthly: number, final: number, firstMonth = 1): number[] {
@@ -332,6 +339,7 @@ export function compareFinance(input: CarFinanceInput, basis: CompareBasis): Fin
   return {
     results,
     best,
+    baseValue: baseValueAtEnd(input),
     carValue: carValueAtEnd(input),
     mileageLoss: mileageValueLoss(input),
     balloonCapped: (input.price * input.gmfvPct) / 100 > dealerBorrowed(input),
