@@ -11,6 +11,7 @@ import {
   KeyRound,
   Percent,
   PiggyBank,
+  Stamp,
   Target,
   TrainFront,
   TrendingUp,
@@ -105,6 +106,23 @@ export const tools: Tool[] = [
         "Compare PCP, HP, a personal loan and a lease on the same car. Monthly payments, balloon, interest, total paid and the real cost after the car's value at the end.",
     },
     updated: "2026-09-26",
+  },
+  {
+    slug: "stamp-duty-calculator",
+    name: "Stamp Duty Calculator",
+    shortName: "Stamp Duty",
+    description:
+      "Stamp duty on a home in England, Scotland or Wales for movers, first-time buyers and second homes, band by band, with the total cash you need to buy.",
+    category: "Finance",
+    icon: Stamp,
+    keywords: ["stamp duty", "sdlt", "stamp duty land tax", "lbtt", "land and buildings transaction tax", "ltt", "land transaction tax", "first-time buyer", "first time buyer", "ftb relief", "second home", "buy to let", "buy-to-let", "additional property", "higher rates", "ads", "additional dwelling supplement", "surcharge", "non-resident", "house", "home", "property", "buying", "moving", "conveyancing", "scotland", "wales", "hmrc"],
+    tint: "var(--sticker-sky)",
+    seo: {
+      title: "Stamp Duty Calculator 2026: England, Scotland, Wales",
+      description:
+        "Work out stamp duty (SDLT), LBTT or LTT on a home for first-time buyers, movers and second homes, with a band-by-band breakdown and the total cash needed to buy.",
+    },
+    updated: "2026-09-27",
   },
   {
     slug: "mortgage-calculator",

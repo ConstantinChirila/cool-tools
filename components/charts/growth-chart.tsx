@@ -22,6 +22,8 @@ interface GrowthChartProps {
   formatAxis: (value: number) => string;
   /** Optional extra tooltip row derived from the hovered index. */
   extraRow?: (index: number) => { name: string; value: string } | null;
+  /** A dashed vertical line at a (possibly fractional) x index, labelled at the top: "you are here". */
+  marker?: { index: number; label: string };
   className?: string;
 }
 
@@ -50,6 +52,7 @@ export function GrowthChart({
   formatValue,
   formatAxis,
   extraRow,
+  marker,
   className,
 }: GrowthChartProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -177,6 +180,32 @@ export function GrowthChart({
                   opacity={0.1}
                 />
               ),
+          )}
+
+          {/* marker */}
+          {marker && marker.index >= 0 && marker.index <= n - 1 && (
+            <g>
+              <line
+                x1={x(marker.index)}
+                x2={x(marker.index)}
+                y1={M.top}
+                y2={M.top + plotH}
+                stroke="var(--foreground)"
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+              />
+              <text
+                x={x(marker.index)}
+                y={M.top}
+                dx={x(marker.index) > left + plotW - 60 ? -6 : 6}
+                dy="0.8em"
+                textAnchor={x(marker.index) > left + plotW - 60 ? "end" : "start"}
+                className="fill-foreground font-bold"
+                fontSize={11}
+              >
+                {marker.label}
+              </text>
+            </g>
           )}
 
           {/* crosshair */}
