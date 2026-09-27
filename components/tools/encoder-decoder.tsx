@@ -176,6 +176,7 @@ export function EncoderDecoder({
                 id="codec-input"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onReplaceSample={typed === null ? setInput : undefined}
                 placeholder={direction === "encode" ? "Type or paste text to encode" : `Paste ${codec.encodedLabel.toLowerCase()} to decode`}
                 className="h-44 break-all"
               />

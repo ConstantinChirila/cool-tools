@@ -245,6 +245,7 @@ export function JwtDecoder() {
             id="jwt-token"
             value={token}
             onChange={(e) => setToken(e.target.value)}
+            onReplaceSample={token === SAMPLE_TOKEN ? setToken : undefined}
             placeholder="Paste a JWT: eyJhbGciOi…"
             className="h-32 break-all"
           />

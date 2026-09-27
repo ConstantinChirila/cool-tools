@@ -191,12 +191,15 @@ const TextPane = React.memo(function TextPane({
   label,
   value,
   onChange,
+  onReplaceSample,
   placeholder,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
+  /** Set while the pane shows its sample: a paste replaces it. */
+  onReplaceSample?: (text: string) => void;
   placeholder: string;
 }) {
   const lines = React.useMemo(() => countLines(value), [value]);
@@ -214,6 +217,7 @@ const TextPane = React.memo(function TextPane({
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onReplaceSample={onReplaceSample}
         placeholder={placeholder}
         className="h-80"
       />
@@ -459,6 +463,15 @@ export function TextDiff() {
               label="Original"
               value={oldText}
               onChange={setOldText}
+              onReplaceSample={
+                oldText === SAMPLE_OLD
+                  ? (text) => {
+                      setOldText(text);
+                      // Diffing a real text against the other sample is noise.
+                      if (newText === SAMPLE_NEW) setNewText("");
+                    }
+                  : undefined
+              }
               placeholder="Paste the original text here"
             />
             <TextPane
@@ -466,6 +479,14 @@ export function TextDiff() {
               label="Changed"
               value={newText}
               onChange={setNewText}
+              onReplaceSample={
+                newText === SAMPLE_NEW
+                  ? (text) => {
+                      setNewText(text);
+                      if (oldText === SAMPLE_OLD) setOldText("");
+                    }
+                  : undefined
+              }
               placeholder="Paste the changed text here"
             />
           </div>
