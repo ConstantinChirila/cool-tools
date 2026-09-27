@@ -16,8 +16,9 @@ import {
   RESOLUTIONS,
   RESOLUTION_INFO,
   SWEET_SPOT,
-  ZONES,
-  acuityDistance,
+  TOO_CLOSE_ANGLE,
+  TOO_FAR_ANGLE,
+  detailDistance,
   detailVerdict,
   distanceForAngle,
   screenSize,
@@ -498,8 +499,6 @@ function Results({
   const pick = COMMON_SIZES.reduce((best, s) => (Math.abs(s - idealSize) < Math.abs(best - idealSize) ? s : best));
   const detail = detailVerdict(size, distance, resolution);
   const inSweetSpot = zone.id === "sweetSpot";
-  const detailLabel =
-    resolution === "hd" ? "Pixels show within" : resolution === "4k" ? "4K beats Full HD within" : "8K beats 4K within";
 
   return (
     <div className="min-w-0 lg:sticky lg:top-20">
@@ -520,7 +519,7 @@ function Results({
               hint={fits.length ? `Common sizes: ${fits.join(", ")} in` : minSize > 100 ? "Projector territory" : `Nearest: ${pick} in`}
             />
             <Stat label="Viewing angle" value={degrees(angle)} hint="SMPTE 30° minimum, THX 40° ideal" />
-            <Stat label={detailLabel} value={length(detail.distance, unit)} hint={`${RESOLUTION_INFO[resolution].label} on ${size} in, 20/20 vision`} />
+            <Stat label={RESOLUTION_INFO[resolution].detailLabel} value={length(detail.distance, unit)} hint={`${RESOLUTION_INFO[resolution].label} on ${size} in, 20/20 vision`} />
           </div>
 
           <Callout tone={detail.within === (resolution === "hd") ? "warn" : "info"}>{detail.message}</Callout>
@@ -540,11 +539,8 @@ function Results({
 /* ---------------------------------------------------------- Size guide -- */
 
 function SizeGuide({ size, distance, resolution, unit, onSize }: ViewProps & { onSize: (v: number) => void }) {
-  const rows = COMMON_SIZES.includes(size as (typeof COMMON_SIZES)[number])
-    ? [...COMMON_SIZES]
-    : [...COMMON_SIZES, size].sort((a, b) => a - b);
-  const rowsForDetail = resolution === "8k" ? 2160 : 1080;
-  const detailHead = resolution === "hd" ? "Pixels show within" : resolution === "4k" ? "4K beats HD within" : "8K beats 4K within";
+  const sizes: readonly number[] = COMMON_SIZES;
+  const rows = sizes.includes(size) ? [...sizes] : [...sizes, size].sort((a, b) => a - b);
 
   return (
     <Card className="mt-6 min-w-0">
@@ -558,7 +554,7 @@ function SizeGuide({ size, distance, resolution, unit, onSize }: ViewProps & { o
               <tr className="border-b border-foreground/15 text-left font-sans text-xs text-muted-foreground">
                 <th className="px-4 py-2.5 font-bold">TV size</th>
                 <th className="px-4 py-2.5 text-right font-bold">Sweet spot (30–40°)</th>
-                <th className="px-4 py-2.5 text-right font-bold">{detailHead}</th>
+                <th className="px-4 py-2.5 text-right font-bold">{RESOLUTION_INFO[resolution].detailLabel}</th>
                 <th className="px-4 py-2.5 text-right font-bold">From your seat</th>
               </tr>
             </thead>
@@ -582,7 +578,7 @@ function SizeGuide({ size, distance, resolution, unit, onSize }: ViewProps & { o
                     <td className="px-4 py-1.5 text-right">
                       {lengthRange(distanceForAngle(s, SWEET_SPOT.max), distanceForAngle(s, SWEET_SPOT.min), unit)}
                     </td>
-                    <td className="px-4 py-1.5 text-right">{length(acuityDistance(s, rowsForDetail), unit)}</td>
+                    <td className="px-4 py-1.5 text-right">{length(detailDistance(s, resolution), unit)}</td>
                     <td className="px-4 py-1.5 text-right">
                       <span className="inline-flex items-center gap-1.5">
                         <span className="size-2.5 rounded-full border border-foreground" style={{ background: ZONE_FILL[zone.id] }} aria-hidden />
@@ -597,7 +593,7 @@ function SizeGuide({ size, distance, resolution, unit, onSize }: ViewProps & { o
         </div>
         <p className="text-xs font-semibold leading-relaxed text-muted-foreground">
           Distances assume a flat 16:9 screen, measured from your eyes. The sweet spot runs from THX&apos;s 40° to
-          SMPTE&apos;s 30°; the {ZONES[0]!.minAngle}° and {ZONES.at(-1)!.maxAngle}° edges of the other zones are a rule of
+          SMPTE&apos;s 30°; the {TOO_CLOSE_ANGLE}° and {TOO_FAR_ANGLE}° edges of the other zones are a rule of
           thumb. Detail distances use 20/20 vision (one arcminute); sharper eyes see detail from a little further back.
         </p>
       </CardContent>

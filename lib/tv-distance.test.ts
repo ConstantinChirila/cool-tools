@@ -3,6 +3,7 @@ import {
   FOOT,
   INCH,
   acuityDistance,
+  detailDistance,
   detailVerdict,
   distanceForAngle,
   screenSize,
@@ -50,6 +51,11 @@ describe("resolution", () => {
     expect(detailVerdict(65, hd - 0.1, "4k").within).toBe(true);
     expect(detailVerdict(65, hd - 0.1, "4k").message).toMatch(/some/);
     expect(detailVerdict(65, hd / 2, "4k").message).toMatch(/every/);
+  });
+
+  it("uses one detail distance for the verdict and the size guide", () => {
+    for (const r of ["hd", "4k", "8k"] as const) expect(detailVerdict(55, 2, r).distance).toBe(detailDistance(55, r));
+    expect(detailDistance(65, "hd")).toBe(detailDistance(65, "4k"));
   });
 
   it("judges 8K against 4K", () => {

@@ -44,11 +44,28 @@ export type Resolution = "hd" | "4k" | "8k";
 
 export const RESOLUTIONS: readonly Resolution[] = ["hd", "4k", "8k"];
 
-export const RESOLUTION_INFO: Record<Resolution, { label: string; rows: number }> = {
-  hd: { label: "Full HD", rows: 1080 },
-  "4k": { label: "4K", rows: 2160 },
-  "8k": { label: "8K", rows: 4320 },
+export interface ResolutionInfo {
+  label: string;
+  rows: number;
+  /**
+   * Rows the detail distance is judged at: Full HD on whether its own pixels
+   * show, 4K and 8K on whether they look sharper than the step below.
+   */
+  compareRows: number;
+  /** Heading for that distance. */
+  detailLabel: string;
+}
+
+export const RESOLUTION_INFO: Record<Resolution, ResolutionInfo> = {
+  hd: { label: "Full HD", rows: 1080, compareRows: 1080, detailLabel: "Pixels show within" },
+  "4k": { label: "4K", rows: 2160, compareRows: 1080, detailLabel: "4K beats Full HD within" },
+  "8k": { label: "8K", rows: 4320, compareRows: 2160, detailLabel: "8K beats 4K within" },
 };
+
+/** Where the resolution's detail distance falls for this screen size. */
+export function detailDistance(diagonalIn: number, resolution: Resolution): number {
+  return acuityDistance(diagonalIn, RESOLUTION_INFO[resolution].compareRows);
+}
 
 /**
  * Furthest distance at which 20/20 eyes can still pick out single rows of
@@ -69,15 +86,19 @@ export interface Zone {
   blurb: string;
 }
 
+/** Outer zone edges: a rule of thumb, not a standard (unlike the 30° and 40° lines). */
+export const TOO_CLOSE_ANGLE = 50;
+export const TOO_FAR_ANGLE = 20;
+
 /**
  * Zones by viewing angle, nearest first. 30° is SMPTE's minimum and 40° the
- * THX ideal; the 50° and 20° edges are a rule of thumb, not a standard.
+ * THX ideal.
  */
-export const ZONES: readonly Zone[] = [
+export const ZONES = [
   {
     id: "tooClose",
     label: "Too close",
-    minAngle: 50,
+    minAngle: TOO_CLOSE_ANGLE,
     maxAngle: 180,
     blurb: "The screen spills past your view, so you'll turn your head to follow the action.",
   },
@@ -85,7 +106,7 @@ export const ZONES: readonly Zone[] = [
     id: "immersive",
     label: "Immersive",
     minAngle: 40,
-    maxAngle: 50,
+    maxAngle: TOO_CLOSE_ANGLE,
     blurb: "Like the front half of a cinema: great for films and games, a lot for the news.",
   },
   {
@@ -98,7 +119,7 @@ export const ZONES: readonly Zone[] = [
   {
     id: "bitFar",
     label: "Bit far",
-    minAngle: 20,
+    minAngle: TOO_FAR_ANGLE,
     maxAngle: 30,
     blurb: "Comfortable for everyday TV, but films lose some of their punch.",
   },
@@ -106,15 +127,15 @@ export const ZONES: readonly Zone[] = [
     id: "tooFar",
     label: "Too far",
     minAngle: 0,
-    maxAngle: 20,
+    maxAngle: TOO_FAR_ANGLE,
     blurb: "The screen is a small window from here: a bigger TV or a closer seat would help.",
   },
-];
+] as const satisfies readonly Zone[];
 
 export const SWEET_SPOT = { min: 30, max: 40, ideal: 35 } as const;
 
 export function zoneFor(angle: number): Zone {
-  return ZONES.find((z) => angle >= z.minAngle) ?? ZONES[ZONES.length - 1]!;
+  return ZONES.find((z) => angle >= z.minAngle) ?? ZONES[4];
 }
 
 /** Where each zone starts and ends on the floor, from the screen outwards. */
@@ -141,12 +162,11 @@ export interface DetailVerdict {
  * below them.
  */
 export function detailVerdict(diagonalIn: number, distance: number, resolution: Resolution): DetailVerdict {
-  const hd = acuityDistance(diagonalIn, 1080);
-  const uhd = acuityDistance(diagonalIn, 2160);
+  const edge = detailDistance(diagonalIn, resolution);
+  const within = distance < edge;
   if (resolution === "hd") {
-    const within = distance < hd;
     return {
-      distance: hd,
+      distance: edge,
       within,
       message: within
         ? "Close enough to pick out pixels on Full HD: a 4K set would look sharper."
@@ -154,20 +174,18 @@ export function detailVerdict(diagonalIn: number, distance: number, resolution: 
     };
   }
   if (resolution === "4k") {
-    const within = distance < hd;
     return {
-      distance: hd,
+      distance: edge,
       within,
       message: within
-        ? distance <= uhd
+        ? distance <= acuityDistance(diagonalIn, RESOLUTION_INFO["4k"].rows)
           ? "You can see every bit of 4K detail from here."
           : "You can see some of the extra 4K detail over Full HD."
         : "Too far to tell 4K from Full HD on this size: move closer or go bigger.",
     };
   }
-  const within = distance < uhd;
   return {
-    distance: uhd,
+    distance: edge,
     within,
     message: within
       ? "Close enough for 8K to look sharper than 4K."

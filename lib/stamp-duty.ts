@@ -163,13 +163,26 @@ export interface StampDutyResult {
   higherRates: boolean;
   /** Whether the non-resident surcharge was charged. */
   nonResident: boolean;
+  /** The part of the tax that is the non-resident surcharge (before rounding). */
+  nonResidentTax: number;
   /** Tax as a share of the price. */
   effectiveRate: number;
-  /** Tax on the next pound of price. */
-  marginalRate: number;
+  /**
+   * Extra tax if the price were £1,000 higher. Worked out by pricing it again
+   * rather than from the band rate, so the first-time buyer cap and the
+   * additional-property minimum show up as the jumps they are.
+   */
+  nextThousand: number;
 }
 
+const BUMP = 1_000;
+
 export function calculateStampDuty(input: StampDutyInput): StampDutyResult {
+  const base = compute(input);
+  return { ...base, nextThousand: compute({ ...input, price: base.input.price + BUMP }).tax - base.tax };
+}
+
+function compute(input: StampDutyInput): Omit<StampDutyResult, "nextThousand"> {
   const rules = RULES[input.nation];
   const price = Math.max(0, input.price);
 
@@ -207,7 +220,7 @@ export function calculateStampDuty(input: StampDutyInput): StampDutyResult {
   const exact = lines.reduce((sum, l) => sum + l.tax, 0) + flatTax;
   // Guard against 0.1 + 0.2 style dust before rounding down.
   const tax = Math.floor(exact + 1e-6);
-  const top = lines.find((l) => price < l.to) ?? lines[lines.length - 1];
+  const nonResidentRate = nonResident ? (rules.nonResident ?? 0) : 0;
 
   return {
     input: { ...input, price },
@@ -217,8 +230,8 @@ export function calculateStampDuty(input: StampDutyInput): StampDutyResult {
     relief,
     higherRates,
     nonResident,
+    nonResidentTax: lines.reduce((sum, l) => sum + l.taxable * nonResidentRate, 0),
     effectiveRate: price > 0 ? tax / price : 0,
-    marginalRate: (top ? top.rate + top.surcharge : 0) + flat,
   };
 }
 
@@ -246,11 +259,14 @@ export interface Nudge {
   reason: "band" | "firstTimeCap" | "additionalMin";
 }
 
+/** Only price cuts up to this share of the price are worth suggesting. */
+export const MAX_NUDGE_SHARE = 0.05;
+
 /**
  * The nearest lower price where the tax steps down: the start of the band the
  * price sits in, or a cliff (the first-time buyer cap, the £40,000 minimum for
- * additional-property rates) where the tax drops by more than the price does.
- * Null below the first taxed band.
+ * additional-property rates). Only steps within `MAX_NUDGE_SHARE` of the price
+ * count, as anything further is not a realistic negotiation. Null when there is none.
  */
 export function nearestSaving(input: StampDutyInput): Nudge | null {
   const rules = RULES[input.nation];
@@ -269,8 +285,9 @@ export function nearestSaving(input: StampDutyInput): Nudge | null {
   let best: Nudge | null = null;
   for (const c of candidates) {
     const saving = result.tax - stampDuty({ ...input, price: c.target });
-    if (saving <= 0) continue;
-    if (!best || c.target > best.target) best = { target: c.target, cut: price - c.target, saving, reason: c.reason };
+    const cut = price - c.target;
+    if (saving <= 0 || cut > price * MAX_NUDGE_SHARE) continue;
+    if (!best || c.target > best.target) best = { target: c.target, cut, saving, reason: c.reason };
   }
   return best;
 }
@@ -299,7 +316,33 @@ export interface UpfrontCosts {
   other: number;
 }
 
+/** Every cost of buying apart from the deposit and the tax. */
+export function upfrontFees(costs: UpfrontCosts): number {
+  return costs.legal + costs.survey + costs.mortgageFees + costs.other;
+}
+
 /** Cash needed on completion day: deposit, the tax and the costs around buying. */
 export function cashToBuy(tax: number, costs: UpfrontCosts): number {
-  return costs.deposit + tax + costs.legal + costs.survey + costs.mortgageFees + costs.other;
+  return costs.deposit + tax + upfrontFees(costs);
+}
+
+export interface Completion {
+  fees: number;
+  cash: number;
+  /** What's left to borrow; 0 for a cash buyer. */
+  mortgage: number;
+  /** Mortgage as a share of the price (loan to value). */
+  ltv: number;
+}
+
+/** The money on completion day for a priced purchase. */
+export function completion(result: StampDutyResult, costs: UpfrontCosts): Completion {
+  const { price } = result.input;
+  const mortgage = Math.max(0, price - costs.deposit);
+  return {
+    fees: upfrontFees(costs),
+    cash: cashToBuy(result.tax, costs),
+    mortgage,
+    ltv: price > 0 ? mortgage / price : 0,
+  };
 }

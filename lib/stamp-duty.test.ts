@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateStampDuty,
+  BUYERS,
   cashToBuy,
   compareBuyers,
+  completion,
   nearestSaving,
   stampDuty,
   taxCurve,
@@ -70,7 +72,7 @@ describe("Scotland (LBTT)", () => {
     const r = calculateStampDuty({ nation: "scotland", buyer: "additional", price: 300_000, nonResident: false });
     expect(r.flatSupplement).toEqual({ rate: 0.08, tax: 24_000 });
     expect(r.tax).toBe(28_600);
-    expect(r.marginalRate).toBeCloseTo(0.13);
+    expect(r.nextThousand).toBe(130);
   });
 
   it("has no non-resident surcharge", () => {
@@ -132,8 +134,20 @@ describe("nearestSaving", () => {
   });
 
   it("finds the £40,000 additional-property minimum", () => {
-    const n = nearestSaving({ nation: "england", buyer: "additional", price: 45_000, nonResident: false });
-    expect(n).toMatchObject({ target: 39_999, saving: 2_250, reason: "additionalMin" });
+    const n = nearestSaving({ nation: "england", buyer: "additional", price: 41_000, nonResident: false });
+    expect(n).toMatchObject({ target: 39_999, cut: 1_001, saving: 2_050, reason: "additionalMin" });
+  });
+
+  it("skips cliffs too far below the price to be worth negotiating for", () => {
+    // £700,000 off to get back under the first-time buyer cap, £80,001 off to dodge the surcharge.
+    expect(nearestSaving({ nation: "england", buyer: "firstTime", price: 1_200_000, nonResident: false })).toBeNull();
+    expect(nearestSaving({ nation: "england", buyer: "additional", price: 120_000, nonResident: false })).toBeNull();
+  });
+
+  it("allows a cut of up to 5% of the price", () => {
+    const n = nearestSaving({ nation: "england", buyer: "firstTime", price: 525_000, nonResident: false });
+    expect(n).toMatchObject({ target: 500_000, cut: 25_000, reason: "firstTimeCap" });
+    expect(nearestSaving({ nation: "england", buyer: "firstTime", price: 527_000, nonResident: false })).toBeNull();
   });
 
   it("returns null when no tax is due", () => {
@@ -147,6 +161,53 @@ describe("taxCurve", () => {
     expect(c.prices).toHaveLength(11);
     expect(c.main[3]).toBe(tax("england", "main", 300_000));
     expect(c.firstTime[6]).toBe(tax("england", "main", 600_000));
+  });
+});
+
+describe("nextThousand", () => {
+  it("follows the band rate between cliffs", () => {
+    expect(calculateStampDuty({ nation: "england", buyer: "main", price: 300_000, nonResident: false }).nextThousand).toBe(50);
+  });
+
+  it("includes the first-time buyer cliff", () => {
+    // £500,000 costs £10,000 with relief; £501,000 loses it and costs £15,050.
+    expect(calculateStampDuty({ nation: "england", buyer: "firstTime", price: 500_000, nonResident: false }).nextThousand).toBe(5_050);
+  });
+
+  it("includes the additional-property minimum", () => {
+    // £40,500 pays the 5% surcharge on the whole price.
+    expect(calculateStampDuty({ nation: "england", buyer: "additional", price: 39_500, nonResident: false }).nextThousand).toBe(2_025);
+  });
+});
+
+describe("nonResidentTax", () => {
+  it("is the difference the surcharge makes", () => {
+    for (const buyer of BUYERS) {
+      const input = { nation: "england", buyer, price: 640_000, nonResident: true } as const;
+      const r = calculateStampDuty(input);
+      expect(r.nonResidentTax).toBe(r.tax - tax("england", buyer, 640_000));
+    }
+  });
+
+  it("is zero where no surcharge applies", () => {
+    expect(calculateStampDuty({ nation: "scotland", buyer: "main", price: 300_000, nonResident: true }).nonResidentTax).toBe(0);
+  });
+});
+
+describe("completion", () => {
+  const costs = { deposit: 30_000, legal: 1_800, survey: 500, mortgageFees: 999, other: 0 };
+  const priced = (price: number) => calculateStampDuty({ nation: "england", buyer: "main", price, nonResident: false });
+
+  it("borrows the rest of the price", () => {
+    expect(completion(priced(300_000), costs)).toEqual({ fees: 3_299, cash: 38_299, mortgage: 270_000, ltv: 0.9 });
+  });
+
+  it("borrows nothing for a cash buyer", () => {
+    expect(completion(priced(300_000), { ...costs, deposit: 350_000 })).toMatchObject({ mortgage: 0, ltv: 0 });
+  });
+
+  it("copes with a zero price", () => {
+    expect(completion(priced(0), costs).ltv).toBe(0);
   });
 });
 

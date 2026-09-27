@@ -22,6 +22,7 @@ import {
   calculateStampDuty,
   cashToBuy,
   compareBuyers,
+  completion,
   nearestSaving,
   taxCurve,
   type BandLine,
@@ -30,6 +31,7 @@ import {
   type Nudge,
   type StampDutyResult,
   type UpfrontCosts,
+  upfrontFees,
 } from "@/lib/stamp-duty";
 import { cn } from "@/lib/utils";
 
@@ -124,7 +126,7 @@ export function StampDutyCalculator() {
               <SwitchField
                 id="sd-nonres"
                 label="Buying from outside the UK"
-                hint="Under 183 days in the UK in the year before: 2% more on every band"
+                hint={`Under 183 days in the UK in the year before: ${pct(rules.nonResident)} more on every band`}
                 checked={nonResident}
                 onCheckedChange={setNonResident}
               />
@@ -165,7 +167,7 @@ function CostsSection({
 }) {
   const sections = useSectionState([]);
   const set = (key: keyof UpfrontCosts) => (v: number) => onChange((c) => ({ ...c, [key]: v }));
-  const fees = costs.legal + costs.survey + costs.mortgageFees + costs.other;
+  const fees = upfrontFees(costs);
   const depositPct = price > 0 ? costs.deposit / price : 0;
 
   return (
@@ -255,10 +257,8 @@ function Results({
   const rules = RULES[input.nation];
   const byBuyer = compareBuyers(input);
   const nudge = nearestSaving(input);
-  const showNudge = nudge && (nudge.reason !== "band" || nudge.cut <= input.price * 0.05);
   const visibleBuyers = BUYERS.filter((b) => b !== "firstTime" || rules.firstTime);
-  const mortgage = Math.max(0, input.price - costs.deposit);
-  const total = cashToBuy(tax, costs);
+  const { fees, cash, mortgage, ltv } = completion(result, costs);
 
   return (
     <div className="order-first min-w-0 space-y-6 lg:order-none lg:sticky lg:top-20">
@@ -269,7 +269,7 @@ function Results({
             value={money(tax)}
             hint={
               input.price > 0
-                ? `${pct(result.effectiveRate)} of the price · each extra £1,000 adds ${money(result.marginalRate * 1_000)}`
+                ? `${pct(result.effectiveRate)} of the price · each extra £1,000 adds ${money(result.nextThousand)}`
                 : undefined
             }
           />
@@ -287,7 +287,7 @@ function Results({
             ))}
           </div>
 
-          {showNudge && <NudgeCallout nudge={nudge} />}
+          {nudge && <NudgeCallout nudge={nudge} />}
           {result.relief === "unavailable" && (
             <Callout>Wales has no first-time buyer relief: {rules.short} is the same as for anyone moving home.</Callout>
           )}
@@ -299,7 +299,7 @@ function Results({
           )}
           {result.nonResident && (
             <Callout>
-              The 2% non-resident surcharge adds {money(input.price * 0.02)}. If you then spend 183 days in the UK
+              The {pct(rules.nonResident ?? 0)} non-resident surcharge adds {money(result.nonResidentTax)}. If you then spend 183 days in the UK
               in any 365-day stretch within a year of buying, you can claim it back.
             </Callout>
           )}
@@ -307,21 +307,18 @@ function Results({
           <div className="rounded-2xl border-[2.5px] border-foreground bg-card px-4 py-3.5">
             <p className="flex items-baseline justify-between gap-3 text-[15px] font-bold">
               Cash to buy
-              <span className="font-heading text-2xl font-extrabold tracking-tight text-numeric">{money(total)}</span>
+              <span className="font-heading text-2xl font-extrabold tracking-tight text-numeric">{money(cash)}</span>
             </p>
             <dl className="mt-2 space-y-1 text-sm font-semibold">
               <CashRow label="Deposit" value={money(costs.deposit)} />
               <CashRow label={rules.short} value={money(tax)} />
-              <CashRow
-                label="Fees and other costs"
-                value={money(costs.legal + costs.survey + costs.mortgageFees + costs.other)}
-              />
+              <CashRow label="Fees and other costs" value={money(fees)} />
               <CashRow
                 label="Mortgage"
                 muted
                 value={
                   mortgage > 0
-                    ? `${money(mortgage)} (${formatPercent(mortgage / input.price, 0)} LTV)`
+                    ? `${money(mortgage)} (${formatPercent(ltv, 0)} LTV)`
                     : "none, cash purchase"
                 }
               />
@@ -449,7 +446,7 @@ function BandTable({ result }: { result: StampDutyResult }) {
               {lines.map((line) => (
                 <tr
                   key={line.from}
-                  className={cn("border-b border-foreground/10", line.taxable === 0 && "text-muted-foreground/50")}
+                  className={cn("border-b border-foreground/10", line.taxable === 0 && "text-muted-foreground")}
                 >
                   <td className="px-4 py-2.5 font-sans font-semibold">{bandLabel(line)}</td>
                   <td className="px-4 py-2.5 text-right whitespace-nowrap">
