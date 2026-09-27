@@ -30,10 +30,14 @@ export interface NumericInputProps {
   inputClassName?: string;
 }
 
+/** How long typing pauses before the value is sent, so results follow along without churning. */
+const LIVE_DELAY_MS = 300;
+
 /**
  * The bordered text box shared by SliderField and NumberField. Keeps its own
- * text while focused, commits on blur or Enter, clamps to min/max and rounds
- * to `decimals`. A minus sign is accepted only when `min` is negative.
+ * text while focused and sends the value shortly after typing pauses; blur or
+ * Enter commit at once, clamp to min/max, round to `decimals` and tidy the
+ * text. A minus sign is accepted only when `min` is negative.
  */
 export function NumericInput({
   id,
@@ -65,7 +69,25 @@ export function NumericInput({
     if (!focused) setText(fmt(value));
   }
 
+  const liveTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  React.useEffect(() => () => clearTimeout(liveTimer.current), []);
+
+  // While typing, leave the text alone and skip values below `min`: they are
+  // usually the first digits of a bigger number, and blur clamps them anyway.
+  const sendLive = (raw: string) => {
+    const clean = raw.replace(/,/g, "");
+    if (clean === "") {
+      if (blankZero) onChange(0);
+      return;
+    }
+    const parsed = Number.parseFloat(clean);
+    if (Number.isNaN(parsed) || parsed < min) return;
+    const rounded = Number(Math.min(parsed, max).toFixed(decimals));
+    if (rounded !== value) onChange(rounded);
+  };
+
   const commit = (raw: string) => {
+    clearTimeout(liveTimer.current);
     const parsed = Number.parseFloat(raw.replace(/,/g, ""));
     if (Number.isNaN(parsed)) {
       if (blankZero) {
@@ -95,12 +117,15 @@ export function NumericInput({
         id={id}
         type="text"
         inputMode="decimal"
+        enterKeyHint="done"
         autoComplete="off"
         placeholder={placeholder}
         value={text}
         onChange={(e) => {
           const raw = e.target.value.replace(allowed, "");
           setText(grouped ? group(raw.replace(/,/g, "")) : raw);
+          clearTimeout(liveTimer.current);
+          liveTimer.current = setTimeout(() => sendLive(raw), LIVE_DELAY_MS);
         }}
         onFocus={() => setFocused(true)}
         onBlur={(e) => {
