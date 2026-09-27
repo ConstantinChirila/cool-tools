@@ -453,7 +453,7 @@ export function UnitConverter({ initial }: { initial?: UnitConverterInitial }) {
             value={listFilter}
             onChange={(e) => setListFilter(e.target.value)}
             placeholder="Filter units"
-            className="h-10 w-48 max-w-full rounded-full border-[2.5px] border-foreground bg-card px-4 text-sm font-bold outline-none focus:ring-[3px] focus:ring-ring/60"
+            className="h-10 w-48 max-w-full rounded-full border-[2.5px] border-foreground bg-card px-4 text-base font-bold outline-none pointer-fine:text-sm focus:ring-[3px] focus:ring-ring/60"
           />
         </div>
         <ol className="sticker divide-y-2 divide-foreground/15 overflow-hidden rounded-[22px] bg-card">

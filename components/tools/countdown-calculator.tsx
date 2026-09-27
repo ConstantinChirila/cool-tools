@@ -128,7 +128,7 @@ const CountdownInputs = React.memo(function CountdownInputs({
               min={`${MIN_YEAR}-01-01`}
               max={`${MAX_YEAR}-12-31`}
               onChange={(e) => onDate(e.target.value)}
-              className="h-10 rounded-xl border-foreground font-mono text-sm font-bold text-numeric"
+              className="h-10 rounded-xl border-foreground font-mono text-base font-bold text-numeric pointer-fine:text-sm"
             />
           </div>
           <div className="space-y-1.5">
@@ -140,7 +140,7 @@ const CountdownInputs = React.memo(function CountdownInputs({
               type="time"
               value={time}
               onChange={(e) => onTime(e.target.value)}
-              className="h-10 rounded-xl border-foreground font-mono text-sm font-bold text-numeric sm:w-32"
+              className="h-10 rounded-xl border-foreground font-mono text-base font-bold text-numeric pointer-fine:text-sm sm:w-32"
             />
           </div>
         </div>
@@ -157,7 +157,7 @@ const CountdownInputs = React.memo(function CountdownInputs({
             placeholder="Holiday, wedding, exam results, launch day"
             autoComplete="off"
             onChange={(e) => onName(e.target.value)}
-            className="h-10 rounded-xl border-foreground text-sm font-bold"
+            className="h-10 rounded-xl border-foreground text-base font-bold pointer-fine:text-sm"
           />
           <p className="text-xs font-semibold text-muted-foreground">
             Optional. It goes in the heading and in the link when you share it.

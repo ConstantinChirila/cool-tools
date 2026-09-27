@@ -13,7 +13,7 @@ export function CodeTextarea({ className, ...props }: React.ComponentProps<typeo
       autoComplete="off"
       autoCapitalize="off"
       className={cn(
-        "resize-y field-sizing-fixed rounded-2xl border-[2.5px] border-foreground bg-card px-3.5 py-3 font-mono text-base leading-6 focus-visible:border-foreground focus-visible:ring-[3px] focus-visible:ring-ring/60 md:text-[13px]",
+        "resize-y field-sizing-fixed rounded-2xl border-[2.5px] border-foreground bg-card px-3.5 py-3 font-mono text-base leading-6 focus-visible:border-foreground focus-visible:ring-[3px] focus-visible:ring-ring/60 md:pointer-fine:text-[13px]",
         className,
       )}
       {...props}

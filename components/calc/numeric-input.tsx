@@ -90,7 +90,7 @@ export function NumericInput({
         className,
       )}
     >
-      {prefix && <span className="pr-1 text-sm text-muted-foreground">{prefix}</span>}
+      {prefix && <span className="pr-1 text-base text-muted-foreground pointer-fine:text-sm">{prefix}</span>}
       <input
         id={id}
         type="text"
@@ -111,11 +111,11 @@ export function NumericInput({
           if (e.key === "Enter") commit((e.target as HTMLInputElement).value);
         }}
         className={cn(
-          "min-w-0 bg-transparent font-mono text-sm font-bold text-numeric outline-none placeholder:text-muted-foreground/50",
+          "min-w-0 bg-transparent font-mono text-base font-bold text-numeric outline-none pointer-fine:text-sm placeholder:text-muted-foreground/50",
           inputClassName,
         )}
       />
-      {suffix && <span className="pl-1 text-sm text-muted-foreground">{suffix}</span>}
+      {suffix && <span className="pl-1 text-base text-muted-foreground pointer-fine:text-sm">{suffix}</span>}
     </div>
   );
 }
