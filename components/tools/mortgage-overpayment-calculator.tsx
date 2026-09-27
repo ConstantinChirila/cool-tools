@@ -15,7 +15,7 @@ import { SplitBar } from "@/components/charts/split-bar";
 import { YearlyTable } from "@/components/charts/yearly-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrency } from "@/hooks/use-currency";
-import { useUrlState, urlField } from "@/hooks/use-url-state";
+import { MONEY_RANGE, useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateMortgage } from "@/lib/finance";
 import { DEFAULT_CURRENCY, currencies } from "@/lib/currency";
 
@@ -47,8 +47,8 @@ export function MortgageOverpaymentCalculator() {
     amount: urlField(amount, setAmount, LOAN_DEFAULTS.amount, undefined, LOAN_RANGES.amount),
     rate: urlField(rate, setRate, LOAN_DEFAULTS.rate, undefined, LOAN_RANGES.rate),
     term: urlField(term, setTerm, LOAN_DEFAULTS.term, undefined, LOAN_RANGES.term),
-    overpay: urlField(monthlyOverpayment, setMonthlyOverpayment, 200, undefined, { min: 0, max: 3000 }),
-    lump: urlField(lumpSum, setLumpSum, 0, undefined, { min: 0, max: 10_000_000 }),
+    overpay: urlField(monthlyOverpayment, setMonthlyOverpayment, 200, undefined, MONEY_RANGE),
+    lump: urlField(lumpSum, setLumpSum, 0, undefined, MONEY_RANGE),
     currency: urlField(
       code,
       setCurrency,
@@ -125,6 +125,7 @@ export function MortgageOverpaymentCalculator() {
                 onChange={setMonthlyOverpayment}
                 min={0}
                 max={3000}
+                inputMax={MONEY_RANGE.max}
                 step={10}
                 sliderStep={25}
                 prefix={currency.symbol}

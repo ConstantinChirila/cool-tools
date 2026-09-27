@@ -311,6 +311,7 @@ export function UkSalaryCalculator() {
                 onChange={(v) => update("salary", v)}
                 min={0}
                 max={range.max}
+                inputMax={MONEY.max}
                 step={range.step}
                 sliderStep={range.sliderStep}
                 prefix="£"

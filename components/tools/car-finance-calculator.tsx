@@ -213,6 +213,7 @@ function CarInputs({
           onChange={(v) => update("price", v)}
           min={0}
           max={100_000}
+          inputMax={MONEY_RANGE.max}
           step={100}
           sliderStep={500}
           prefix={symbol}
@@ -264,6 +265,7 @@ function CarInputs({
           onChange={(v) => update("apr", v)}
           min={0}
           max={25}
+          inputMax={APR_RANGE.max}
           step={0.1}
           sliderStep={0.1}
           suffix="%"

@@ -209,6 +209,7 @@ function BonusInputs({
           onChange={(v) => update("bonus", v)}
           min={0}
           max={50_000}
+          inputMax={MONEY_RANGE.max}
           step={100}
           sliderStep={250}
           prefix="£"
@@ -221,6 +222,7 @@ function BonusInputs({
           onChange={(v) => update("salary", v)}
           min={0}
           max={200_000}
+          inputMax={MONEY_RANGE.max}
           step={500}
           sliderStep={1000}
           prefix="£"

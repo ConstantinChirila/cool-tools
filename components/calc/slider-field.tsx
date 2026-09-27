@@ -13,6 +13,8 @@ interface SliderFieldProps
   step?: number;
   /** Step used by the slider when coarser than the input's precision. */
   sliderStep?: number;
+  /** Highest value that can be typed, when above the slider's `max`. The slider then sits at its end. */
+  inputMax?: number;
   className?: string;
 }
 
@@ -25,6 +27,7 @@ export function SliderField({
   max,
   step = 1,
   sliderStep,
+  inputMax,
   className,
   ...input
 }: SliderFieldProps) {
@@ -39,13 +42,13 @@ export function SliderField({
           value={value}
           onChange={onChange}
           min={min}
-          max={max}
+          max={inputMax ?? max}
           inputClassName="w-24 text-right sm:w-28"
           {...input}
         />
       </div>
       <Slider
-        value={[value]}
+        value={[Math.min(value, max)]}
         onValueChange={([v]) => {
           if (v !== undefined) onChange(v);
         }}

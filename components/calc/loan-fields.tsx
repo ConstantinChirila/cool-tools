@@ -4,14 +4,17 @@ import { TogglePill } from "@/components/calc/pill-button";
 import { SliderField } from "@/components/calc/slider-field";
 import type { NumberRange } from "@/hooks/use-url-state";
 
-/** Bounds shared by the mortgage tools' sliders and their URL fields. */
+/** Bounds shared by the mortgage tools' inputs and their URL fields. */
 export const LOAN_RANGES = {
-  amount: { min: 10_000, max: 1_500_000 },
+  amount: { min: 10_000, max: 10_000_000 },
   rate: { min: 0.1, max: 15 },
   term: { min: 1, max: 40 },
 } satisfies Record<string, NumberRange>;
 
 export const LOAN_DEFAULTS = { amount: 250_000, rate: 4.5, term: 25 };
+
+/** The amount slider covers typical loans; bigger ones are typed. */
+const AMOUNT_SLIDER_MAX = 1_500_000;
 
 const TERM_PRESETS = [15, 20, 25, 30];
 
@@ -37,7 +40,8 @@ export function LoanFields({ idPrefix, amount, rate, term, onAmount, onRate, onT
         value={amount}
         onChange={onAmount}
         min={LOAN_RANGES.amount.min}
-        max={LOAN_RANGES.amount.max}
+        max={AMOUNT_SLIDER_MAX}
+        inputMax={LOAN_RANGES.amount.max}
         step={1000}
         sliderStep={5000}
         prefix={currencySymbol}

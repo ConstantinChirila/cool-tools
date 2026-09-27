@@ -19,7 +19,7 @@ import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
 import { YearlyTable } from "@/components/charts/yearly-table";
 import { useCurrency } from "@/hooks/use-currency";
-import { useUrlState, urlField } from "@/hooks/use-url-state";
+import { MONEY_RANGE, useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateCompound } from "@/lib/finance";
 import { DEFAULT_CURRENCY, currencies } from "@/lib/currency";
 
@@ -39,8 +39,8 @@ export function CompoundInterestCalculator() {
   const [years, setYears] = React.useState(20);
 
   useUrlState({
-    initial: urlField(initial, setInitial, 10_000, undefined, { min: 0, max: 500_000 }),
-    monthly: urlField(monthly, setMonthly, 250, undefined, { min: 0, max: 5000 }),
+    initial: urlField(initial, setInitial, 10_000, undefined, MONEY_RANGE),
+    monthly: urlField(monthly, setMonthly, 250, undefined, MONEY_RANGE),
     rate: urlField(rate, setRate, 7, undefined, { min: 0, max: 20 }),
     freq: urlField(
       frequency,
@@ -81,6 +81,7 @@ export function CompoundInterestCalculator() {
               onChange={setInitial}
               min={0}
               max={500_000}
+              inputMax={MONEY_RANGE.max}
               step={100}
               sliderStep={1000}
               prefix={currency.symbol}
@@ -94,6 +95,7 @@ export function CompoundInterestCalculator() {
               onChange={setMonthly}
               min={0}
               max={5000}
+              inputMax={MONEY_RANGE.max}
               step={10}
               sliderStep={25}
               prefix={currency.symbol}

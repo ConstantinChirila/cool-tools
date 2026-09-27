@@ -196,6 +196,7 @@ function ContractorInputs({
           onChange={(v) => update("dayRate", v)}
           min={0}
           max={1_500}
+          inputMax={DAY_RATE_RANGE.max}
           step={5}
           sliderStep={25}
           prefix="£"
@@ -261,6 +262,7 @@ function ContractorInputs({
           onChange={(v) => update("permSalary", v)}
           min={0}
           max={250_000}
+          inputMax={MONEY_RANGE.max}
           step={500}
           sliderStep={1_000}
           prefix="£"
