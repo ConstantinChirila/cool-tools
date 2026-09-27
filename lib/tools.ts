@@ -15,6 +15,7 @@ import {
   Target,
   TrainFront,
   TrendingUp,
+  Tv,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -242,6 +243,23 @@ export const tools: Tool[] = [
         "Count down the days, hours, minutes and seconds to any date and time, live, with the weeks, sleeps, weekends and working days to go. Name it and share the link.",
     },
     updated: "2026-09-18",
+  },
+  {
+    slug: "tv-distance-calculator",
+    name: "TV Viewing Distance Calculator",
+    shortName: "TV Distance",
+    description:
+      "How far to sit from your TV, or how big a TV to buy for your room. Drag the sofa on a floor plan and see when 4K detail is worth it.",
+    category: "Everyday",
+    icon: Tv,
+    keywords: ["tv", "television", "viewing distance", "screen size", "how far", "sofa", "couch", "seating distance", "4k", "8k", "1080p", "full hd", "oled", "thx", "smpte", "viewing angle", "home cinema", "home theater", "projector", "55 inch", "65 inch", "75 inch", "what size tv"],
+    tint: "var(--sticker-lilac)",
+    seo: {
+      title: "TV Viewing Distance Calculator: Size vs Distance",
+      description:
+        "Find the best distance to sit from your TV, or the right TV size for your room, using SMPTE and THX viewing angles. See when 4K and 8K detail is visible.",
+    },
+    updated: "2026-09-27",
   },
   {
     slug: "unit-converter",
