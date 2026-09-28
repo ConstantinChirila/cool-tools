@@ -16,6 +16,11 @@ export function PillLink({ className, ...props }: React.ComponentProps<typeof Li
   return <Link className={cn(PILL, "h-10 px-4 whitespace-normal bg-card hover:bg-secondary", className)} {...props} />;
 }
 
+/** The pill's classes, inked in when on: for pill rows that need their own role, like a radio group. */
+export function togglePillClass(on: boolean, className?: string): string {
+  return cn(PILL, on ? "bg-foreground text-background" : "bg-card hover:bg-secondary", className);
+}
+
 /** An on/off option in the same shape: inked in when on. */
 export function TogglePill({
   pressed,
@@ -33,7 +38,7 @@ export function TogglePill({
       type="button"
       aria-pressed={pressed}
       onClick={() => onPressedChange(!pressed)}
-      className={cn(PILL, pressed ? "bg-foreground text-background" : "bg-card hover:bg-secondary", className)}
+      className={togglePillClass(pressed, className)}
     >
       {children}
     </button>

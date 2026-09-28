@@ -8,7 +8,7 @@ import { CurrencySelect } from "@/components/calc/currency-select";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { NumberField } from "@/components/calc/number-field";
 import { NumericInput } from "@/components/calc/numeric-input";
-import { PillButton } from "@/components/calc/pill-button";
+import { PillButton, togglePillClass } from "@/components/calc/pill-button";
 import { Section, useSectionState } from "@/components/calc/section";
 import { Segmented } from "@/components/calc/segmented";
 import { SliderField } from "@/components/calc/slider-field";
@@ -18,6 +18,8 @@ import { useCurrency } from "@/hooks/use-currency";
 import { MONEY_RANGE, useUrlState, urlField, type NumberRange } from "@/hooks/use-url-state";
 import { formatNumber } from "@/lib/currency";
 import {
+  BARROW,
+  LIMITS,
   MATERIALS,
   MATERIAL_INFO,
   MAX_AREAS,
@@ -27,9 +29,12 @@ import {
   encodeAreas,
   jobFor,
   parseAreas,
+  reshape,
   unitVolume,
   type Area,
+  type BagUnit,
   type GardenResult,
+  type Job,
   type Material,
   type Plan,
   type Settings,
@@ -54,7 +59,7 @@ type Row = Area & { id: number };
 const withIds = (areas: Area[]): Row[] => areas.map((area, id) => ({ ...area, id }));
 const nextId = (rows: Row[]) => rows.reduce((max, r) => Math.max(max, r.id), -1) + 1;
 
-const DEFAULT_AREAS: Area[] = [{ shape: "rect", a: 4, b: 1.5, cut: false }];
+const DEFAULT_AREAS: Area[] = [{ shape: "rect", length: 4, width: 1.5, cut: false }];
 const DEFAULT_AREAS_CODE = encodeAreas(DEFAULT_AREAS);
 
 const DEFAULT_SETTINGS = Object.fromEntries(MATERIALS.map((m) => [m, MATERIAL_INFO[m].defaults])) as Record<Material, Settings>;
@@ -67,14 +72,14 @@ const SHAPE_OPTIONS: { value: Shape; label: string }[] = [
 
 /** Numeric settings mirrored into the URL per material, e.g. `bark-depth=10`. */
 const NUMBER_FIELDS: [keyof Omit<Settings, "job">, string, NumberRange][] = [
-  ["depth", "depth", { min: 0.1, max: 150 }],
-  ["bag", "bag", { min: 1, max: 5000 }],
+  ["depth", "depth", LIMITS.depth],
+  ["bag", "bag", LIMITS.size],
   ["bagPrice", "bagprice", MONEY_RANGE],
-  ["bulk", "bulk", { min: 1, max: 5000 }],
+  ["bulk", "bulk", LIMITS.size],
   ["bulkPrice", "bulkprice", MONEY_RANGE],
   ["delivery", "delivery", MONEY_RANGE],
-  ["extra", "extra", { min: 0, max: 100 }],
-  ["density", "density", { min: 0.05, max: 3 }],
+  ["extra", "extra", LIMITS.extra],
+  ["density", "density", LIMITS.density],
 ];
 
 export function GardenMaterialsCalculator() {
@@ -155,6 +160,11 @@ function cubic(m3: number): string {
   return formatNumber(m3 + 1e-9, m3 < 10 ? 2 : 1);
 }
 
+/** Tonnes from one up, kilograms below. */
+function weightText(t: number): string {
+  return t >= 1 ? `${formatNumber(t, 2)} t` : `${formatNumber(t * 1000, 0)} kg`;
+}
+
 /** Pence while it matters, whole pounds once it doesn't. */
 function price(v: number, money: Money): string {
   return money(v, v < 100 && !Number.isInteger(v) ? 2 : 0);
@@ -201,8 +211,11 @@ function formatArea(m2: number, units: Units): string {
 }
 
 function Areas({ rows, onChange, material, units }: { rows: Row[]; onChange: (rows: Row[]) => void; material: Material; units: Units }) {
-  const set = (id: number, patch: Partial<Area>) => onChange(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-  const add = (cut: boolean) => onChange([...rows, { shape: "rect", a: cut ? 1 : 2, b: cut ? 1 : 2, cut, id: nextId(rows) }]);
+  const set = (id: number, area: Area) => onChange(rows.map((r) => (r.id === id ? { ...area, id } : r)));
+  const add = (cut: boolean) => {
+    const side = cut ? 1 : 2;
+    onChange([...rows, { shape: "rect", length: side, width: side, cut, id: nextId(rows) }]);
+  };
   const full = rows.length >= MAX_AREAS;
   let areaNo = 0;
   let cutNo = 0;
@@ -220,7 +233,7 @@ function Areas({ rows, onChange, material, units }: { rows: Row[]; onChange: (ro
             name={row.cut ? `Cut-out ${++cutNo}` : `Area ${++areaNo}`}
             material={material}
             units={units}
-            onChange={(patch) => set(row.id, patch)}
+            onChange={(area) => set(row.id, area)}
             onRemove={rows.length > 1 ? () => onChange(rows.filter((r) => r.id !== row.id)) : undefined}
           />
         ))}
@@ -249,17 +262,17 @@ function AreaRow({
   name: string;
   material: Material;
   units: Units;
-  onChange: (patch: Partial<Area>) => void;
+  onChange: (area: Area) => void;
   onRemove?: () => void;
 }) {
   const { factor, suffix, area } = lengthIn(units);
   const id = `gm-area-${row.id}`;
-  const length = (key: "a" | "b", label: string) => (
+  const metres = (key: string, label: string, value: number, set: (m: number) => void) => (
     <NumberField
       id={`${id}-${key}`}
       label={label}
-      value={Number((row[key] / factor).toFixed(2))}
-      onChange={(v) => onChange({ [key]: v * factor })}
+      value={Number((value / factor).toFixed(2))}
+      onChange={(v) => set(v * factor)}
       max={MAX_DIMENSION / factor}
       suffix={suffix}
       decimals={2}
@@ -292,23 +305,23 @@ function AreaRow({
         label={`${name} shape`}
         size="sm"
         value={row.shape}
-        onChange={(shape) => onChange(switchShape(row, shape))}
+        onChange={(shape) => onChange(reshape(row, shape))}
         options={SHAPE_OPTIONS}
       />
       <div className="grid grid-cols-2 gap-3">
         {row.shape === "rect" && (
           <>
-            {length("a", "Length")}
-            {length("b", "Width")}
+            {metres("length", "Length", row.length, (length) => onChange({ ...row, length }))}
+            {metres("width", "Width", row.width, (width) => onChange({ ...row, width }))}
           </>
         )}
-        {row.shape === "circle" && length("a", "Across (diameter)")}
+        {row.shape === "circle" && metres("diameter", "Across (diameter)", row.diameter, (diameter) => onChange({ ...row, diameter }))}
         {row.shape === "known" && (
           <NumberField
-            id={`${id}-k`}
+            id={`${id}-m2`}
             label="Area"
-            value={Number((row.b / (factor * factor)).toFixed(2))}
-            onChange={(v) => onChange({ b: v * factor * factor })}
+            value={Number((row.m2 / (factor * factor)).toFixed(2))}
+            onChange={(v) => onChange({ ...row, m2: v * factor * factor })}
             max={MAX_DIMENSION / (factor * factor)}
             suffix={area}
             decimals={2}
@@ -319,19 +332,17 @@ function AreaRow({
   );
 }
 
-/** Keep the size roughly the same when the shape changes, so the total doesn't jump to zero. */
-function switchShape(row: Area, shape: Shape): Partial<Area> {
-  const m2 = areaOf(row);
-  if (shape === "known") return { shape, a: 0, b: Number(m2.toFixed(2)) };
-  if (shape === "circle") return { shape, a: Number((2 * Math.sqrt(m2 / Math.PI)).toFixed(2)), b: 0 };
-  const side = Number(Math.sqrt(m2).toFixed(2));
-  return { shape, a: side, b: side };
-}
-
 /* --------------------------------------------------------------- Depth -- */
 
 function depthText(cm: number, units: Units): string {
   return units === "imperial" ? `${formatNumber(cm / CM_PER_INCH, 1)} in` : `${formatNumber(cm, 1)} cm`;
+}
+
+/** A job's usual depth: "7.5 cm", or "20–30 cm" for a range. */
+function depthRange({ min, max }: Job, units: Units): string {
+  if (min === max) return depthText(min, units);
+  const [low] = depthText(min, units).split(" ");
+  return `${low}–${depthText(max, units)}`;
 }
 
 function Depth({ material, settings, units, onChange }: { material: Material; settings: Settings; units: Units; onChange: (p: Partial<Settings>) => void }) {
@@ -353,14 +364,11 @@ function Depth({ material, settings, units, onChange }: { material: Material; se
             role="radio"
             aria-checked={j.id === job.id}
             onClick={() => onChange({ job: j.id, depth: j.depth })}
-            className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-full border-[2.5px] border-foreground px-3.5 text-sm font-bold whitespace-nowrap transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
-              j.id === job.id ? "bg-foreground text-background" : "bg-card hover:bg-secondary",
-            )}
+            className={togglePillClass(j.id === job.id)}
           >
             {j.label}
             <span className={cn("font-mono text-xs", j.id === job.id ? "text-background/70" : "text-muted-foreground")}>
-              {j.min === j.max ? depthText(j.min, units) : `${depthText(j.min, units).split(" ")[0]}–${depthText(j.max, units)}`}
+              {depthRange(j, units)}
             </span>
           </button>
         ))}
@@ -384,7 +392,7 @@ function Depth({ material, settings, units, onChange }: { material: Material; se
           onChange={(v) => onChange({ depth: Number((v * CM_PER_INCH).toFixed(2)) })}
           min={0.25}
           max={18}
-          inputMax={150 / CM_PER_INCH}
+          inputMax={LIMITS.depth.max / CM_PER_INCH}
           step={0.25}
           suffix="in"
           decimals={2}
@@ -397,7 +405,7 @@ function Depth({ material, settings, units, onChange }: { material: Material; se
           onChange={(v) => onChange({ depth: v })}
           min={0.5}
           max={45}
-          inputMax={150}
+          inputMax={LIMITS.depth.max}
           step={0.5}
           suffix="cm"
           decimals={1}
@@ -405,7 +413,7 @@ function Depth({ material, settings, units, onChange }: { material: Material; se
       )}
       <p className="-mt-1 text-xs font-semibold text-muted-foreground">
         Drag the top of the layer or use the slider.
-        {outside && ` Usual for ${job.label.toLowerCase()}: ${job.min === job.max ? depthText(job.min, units) : `${depthText(job.min, units)} to ${depthText(job.max, units)}`}.`}
+        {outside && ` Usual for ${job.label.toLowerCase()}: ${depthRange(job, units)}.`}
       </p>
     </section>
   );
@@ -500,7 +508,7 @@ function Buying({
           onChange={(extra) => onChange({ extra })}
           min={0}
           max={30}
-          inputMax={100}
+          inputMax={LIMITS.extra.max}
           step={1}
           suffix="%"
           decimals={0}
@@ -522,8 +530,8 @@ function Buying({
             label="Density"
             value={settings.density}
             onChange={(density) => onChange({ density: density || defaults.density })}
-            min={0.05}
-            max={3}
+            min={LIMITS.density.min}
+            max={LIMITS.density.max}
             suffix="t/m³"
             decimals={2}
             hint={`Default ${defaults.density} for ${info.densityNote}. Usual range ${info.densityRange[0]}–${info.densityRange[1]}.`}
@@ -556,7 +564,7 @@ function SizePicker({
 }: {
   id: string;
   label: string;
-  unit: string;
+  unit: BagUnit;
   sizes: readonly number[];
   value: number;
   onChange: (v: number) => void;
@@ -581,12 +589,11 @@ function SizePicker({
               s === value ? "bg-foreground text-background" : "bg-card hover:bg-secondary",
             )}
           >
-            {formatNumber(s, 1)}
-            {unit === "L" ? " L" : " kg"}
+            {formatNumber(s, 1)} {unit}
           </button>
         ))}
       </div>
-      <NumericInput id={id} value={value} onChange={onChange} min={1} max={5000} suffix={unit} decimals={1} inputClassName="w-full" />
+      <NumericInput id={id} value={value} onChange={onChange} min={LIMITS.size.min} max={LIMITS.size.max} suffix={unit} decimals={1} inputClassName="w-full" />
       {hint && <p className="text-xs font-semibold text-muted-foreground">{hint}</p>}
     </div>
   );
@@ -620,7 +627,6 @@ function Results({
   const cost = best?.cost ?? null;
   const empty = volume <= 0;
   const litres = volume * 1000;
-  const weightText = weight >= 1 ? `${formatNumber(weight, 2)} t` : `${formatNumber(weight * 1000, 0)} kg`;
   const rowsToShow: { key: string; label: string; plan: Plan }[] = [
     { key: "bags", label: `Bags only`, plan: options.bagsOnly },
     { key: "bulk", label: `Bulk bags only`, plan: options.bulkOnly },
@@ -653,8 +659,8 @@ function Results({
           )}
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-5 rounded-2xl border-[2.5px] border-foreground bg-card px-4 py-4">
-            <Stat label="Weight" value={weightText} hint={`At ${formatNumber(settings.density, 2)} t/m³`} />
-            <Stat label="Barrow loads" value={String(result.barrowLoads)} hint="90 L barrow, up to 140 kg" />
+            <Stat label="Weight" value={weightText(weight)} hint={`At ${formatNumber(settings.density, 2)} t/m³`} />
+            <Stat label="Barrow loads" value={String(result.barrowLoads)} hint={`${BARROW.litres} L barrow, up to ${BARROW.kg} kg`} />
             <Stat
               label="Area"
               value={formatArea(area.net, units)}
@@ -740,7 +746,7 @@ function PlanRow({
   plan: Plan;
   cheapest: boolean;
   settings: Settings;
-  unit: "L" | "kg";
+  unit: BagUnit;
   money: Money;
 }) {
   const size = (n: number) => `${formatNumber(n, 1)} ${unit}`;
@@ -786,7 +792,7 @@ function Notes({ material, settings, result, units }: { material: Material; sett
   if (weight > 0.5) {
     notes.push({
       tone: "info",
-      text: `${weight >= 1 ? `${formatNumber(weight, 1)} tonnes` : `${formatNumber(weight * 1000, 0)} kg`} is more than most cars can carry in one go: check your car's payload, or get it delivered.`,
+      text: `${weightText(weight)} is more than most cars can carry in one go: check your car's payload, or get it delivered.`,
     });
   }
   if (options.best && options.best.bulk > 0) {

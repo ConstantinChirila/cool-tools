@@ -161,26 +161,56 @@ export function jobFor(material: Material, id: string): Job {
 
 /* ---------------------------------------------------------------- Areas -- */
 
-export type Shape = "rect" | "circle" | "known";
+/** Lengths in metres. A cut-out is subtracted from the total: a pond, patio or shed base. */
+export type Area =
+  | { shape: "rect"; length: number; width: number; cut: boolean }
+  | { shape: "circle"; diameter: number; cut: boolean }
+  | { shape: "known"; m2: number; cut: boolean };
 
-export interface Area {
-  shape: Shape;
-  /** Rectangle length, or circle diameter, in metres. */
-  a: number;
-  /** Rectangle width in metres; the size in m² for a known area. */
-  b: number;
-  /** Subtracted from the total: a pond, patio or shed base. */
-  cut: boolean;
-}
+export type Shape = Area["shape"];
 
 export const MAX_AREAS = 8;
 /** Largest length or area accepted from the URL. */
 export const MAX_DIMENSION = 10_000;
 
-export function areaOf({ shape, a, b }: Area): number {
-  if (shape === "rect") return a * b;
-  if (shape === "circle") return (Math.PI * a * a) / 4;
-  return b;
+/** Bounds for the settings, shared by the inputs and the URL. */
+export const LIMITS = {
+  /** cm */
+  depth: { min: 0.1, max: 150 },
+  /** Bag and bulk bag sizes, in litres or kg. */
+  size: { min: 1, max: 5000 },
+  /** t/m³ */
+  density: { min: 0.05, max: 3 },
+  /** % */
+  extra: { min: 0, max: 100 },
+} as const;
+
+export function areaOf(area: Area): number {
+  switch (area.shape) {
+    case "rect":
+      return area.length * area.width;
+    case "circle":
+      return (Math.PI * area.diameter ** 2) / 4;
+    case "known":
+      return area.m2;
+  }
+}
+
+/** The same area as another shape, about the same size, so switching shape doesn't zero the total. */
+export function reshape(area: Area, shape: Shape): Area {
+  const m2 = areaOf(area);
+  const round = (n: number) => Number(n.toFixed(2));
+  const { cut } = area;
+  switch (shape) {
+    case "rect": {
+      const side = round(Math.sqrt(m2));
+      return { shape, length: side, width: side, cut };
+    }
+    case "circle":
+      return { shape, diameter: round(2 * Math.sqrt(m2 / Math.PI)), cut };
+    case "known":
+      return { shape, m2: round(m2), cut };
+  }
 }
 
 export interface AreaTotal {
@@ -200,38 +230,45 @@ export function totalArea(areas: readonly Area[]): AreaTotal {
   return { net: Math.max(0, added - cut), added, cut };
 }
 
-const num = (n: number) => String(Number(n.toFixed(3)));
+/** A number for the URL: at most 3 decimals, no trailing zeros. */
+const urlNumber = (n: number) => String(Number(n.toFixed(3)));
+
+function encodeArea(area: Area): string {
+  switch (area.shape) {
+    case "rect":
+      return `r${urlNumber(area.length)}x${urlNumber(area.width)}`;
+    case "circle":
+      return `c${urlNumber(area.diameter)}`;
+    case "known":
+      return `k${urlNumber(area.m2)}`;
+  }
+}
 
 /**
  * Areas as a short URL-safe string: `r5x3_c2.4_k12_-r1x1` is a 5 × 3 m
  * rectangle, a 2.4 m circle, 12 m² and a 1 × 1 m cut-out.
  */
 export function encodeAreas(areas: readonly Area[]): string {
-  return areas
-    .map(({ shape, a, b, cut }) => {
-      const body = shape === "rect" ? `r${num(a)}x${num(b)}` : shape === "circle" ? `c${num(a)}` : `k${num(b)}`;
-      return cut ? `-${body}` : body;
-    })
-    .join("_");
+  return areas.map((area) => (area.cut ? "-" : "") + encodeArea(area)).join("_");
 }
 
 /** The reverse of `encodeAreas`. */
 export function parseAreas(raw: string): Result<Area[]> {
   const parts = raw.split("_");
   if (parts.length > MAX_AREAS) return fail(`At most ${MAX_AREAS} areas`);
+  const size = (s: string) => {
+    const n = Number(s);
+    return Number.isFinite(n) ? Math.min(Math.max(n, 0), MAX_DIMENSION) : 0;
+  };
   const areas: Area[] = [];
   for (const part of parts) {
     const match = /^(-?)(?:r([\d.]+)x([\d.]+)|c([\d.]+)|k([\d.]+))$/.exec(part);
     if (!match) return fail(`Not an area: ${part}`);
-    const [, minus, rl, rw, cd, ka] = match;
-    const size = (s: string | undefined) => {
-      const n = Number(s);
-      return Number.isFinite(n) ? Math.min(Math.max(n, 0), MAX_DIMENSION) : 0;
-    };
+    const [, minus, length, width, diameter, m2] = match;
     const cut = minus === "-";
-    if (rl !== undefined) areas.push({ shape: "rect", a: size(rl), b: size(rw), cut });
-    else if (cd !== undefined) areas.push({ shape: "circle", a: size(cd), b: 0, cut });
-    else areas.push({ shape: "known", a: 0, b: size(ka), cut });
+    if (length !== undefined && width !== undefined) areas.push({ shape: "rect", length: size(length), width: size(width), cut });
+    else if (diameter !== undefined) areas.push({ shape: "circle", diameter: size(diameter), cut });
+    else areas.push({ shape: "known", m2: size(m2 ?? ""), cut });
   }
   return ok(areas);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MATERIALS, type Area, type Job, type Material } from "@/lib/garden-materials";
+import { LIMITS, MATERIALS, type Area, type Job, type Material } from "@/lib/garden-materials";
 import { clamp, cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------ Textures -- */
@@ -222,7 +222,7 @@ export function CrossSection({
     const delta = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
     if (!delta) return;
     e.preventDefault();
-    onDepth(clamp(snap(depth + delta * step * (e.shiftKey ? 10 : 1)), step, 150));
+    onDepth(clamp(snap(depth + delta * step * (e.shiftKey ? 10 : 1)), step, LIMITS.depth.max));
   };
 
   const pct = (x: number) => `${(x / W) * 100}%`;
@@ -274,8 +274,8 @@ export function CrossSection({
           role="slider"
           tabIndex={0}
           aria-label="Depth"
-          aria-valuemin={0}
-          aria-valuemax={150}
+          aria-valuemin={step}
+          aria-valuemax={LIMITS.depth.max}
           aria-valuenow={depth}
           aria-valuetext={label}
           onPointerDown={start}
@@ -364,11 +364,11 @@ export function AreaThumb({ area, material }: { area: Area; material: Material }
   let shape: React.ReactNode;
   if (area.shape === "circle") {
     shape = <circle cx={24} cy={24} r={box / 2} {...common} />;
-  } else if (area.shape === "rect" && area.a > 0 && area.b > 0) {
-    const long = Math.max(area.a, area.b);
+  } else if (area.shape === "rect" && area.length > 0 && area.width > 0) {
+    const long = Math.max(area.length, area.width);
     // Keep very thin strips visible.
-    const w = Math.max(3, (area.a / long) * box);
-    const h = Math.max(3, (area.b / long) * box);
+    const w = Math.max(3, (area.length / long) * box);
+    const h = Math.max(3, (area.width / long) * box);
     shape = <rect x={24 - w / 2} y={24 - h / 2} width={w} height={h} rx={2} {...common} />;
   } else {
     shape = <rect x={24 - box / 2 + 3} y={24 - box / 2 + 3} width={box - 6} height={box - 6} rx={8} {...common} />;

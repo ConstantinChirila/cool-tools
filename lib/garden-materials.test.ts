@@ -8,19 +8,20 @@ import {
   encodeAreas,
   jobFor,
   parseAreas,
+  reshape,
   totalArea,
   unitVolume,
   type Area,
   type Settings,
 } from "@/lib/garden-materials";
 
-const rect = (a: number, b: number, cut = false): Area => ({ shape: "rect", a, b, cut });
+const rect = (length: number, width: number, cut = false): Area => ({ shape: "rect", length, width, cut });
 
 describe("areas", () => {
   it("measures each shape", () => {
     expect(areaOf(rect(5, 3))).toBe(15);
-    expect(areaOf({ shape: "circle", a: 2, b: 0, cut: false })).toBeCloseTo(Math.PI, 9);
-    expect(areaOf({ shape: "known", a: 0, b: 12, cut: false })).toBe(12);
+    expect(areaOf({ shape: "circle", diameter: 2, cut: false })).toBeCloseTo(Math.PI, 9);
+    expect(areaOf({ shape: "known", m2: 12, cut: false })).toBe(12);
   });
 
   it("subtracts cut-outs and never goes below zero", () => {
@@ -29,10 +30,18 @@ describe("areas", () => {
   });
 
   it("round-trips the URL form", () => {
-    const areas: Area[] = [rect(5, 3), { shape: "circle", a: 2.4, b: 0, cut: false }, { shape: "known", a: 0, b: 12.5, cut: false }, rect(1, 1, true)];
+    const areas: Area[] = [rect(5, 3), { shape: "circle", diameter: 2.4, cut: false }, { shape: "known", m2: 12.5, cut: false }, rect(1, 1, true)];
     const code = encodeAreas(areas);
     expect(code).toBe("r5x3_c2.4_k12.5_-r1x1");
     expect(parseAreas(code)).toEqual({ ok: true, value: areas });
+  });
+
+  it("keeps the size and cut-out when the shape changes", () => {
+    const circle = reshape(rect(4, 1, true), "circle");
+    expect(circle).toEqual({ shape: "circle", diameter: 2.26, cut: true });
+    expect(areaOf(circle)).toBeCloseTo(4, 1);
+    expect(reshape(circle, "known")).toEqual({ shape: "known", m2: 4.01, cut: true });
+    expect(reshape(rect(4, 1), "rect")).toEqual({ shape: "rect", length: 2, width: 2, cut: false });
   });
 
   it("rejects malformed lists", () => {
