@@ -11,6 +11,7 @@ import {
   KeyRound,
   Percent,
   PiggyBank,
+  Shovel,
   Stamp,
   Target,
   TrainFront,
@@ -243,6 +244,23 @@ export const tools: Tool[] = [
         "Count down the days, hours, minutes and seconds to any date and time, live, with the weeks, sleeps, weekends and working days to go. Name it and share the link.",
     },
     updated: "2026-09-18",
+  },
+  {
+    slug: "garden-materials-calculator",
+    name: "Garden Materials Calculator",
+    shortName: "Garden Materials",
+    description:
+      "How much topsoil, compost, mulch, bark, gravel or sand you need: cubic metres, litres, weight, bags or bulk bags, and the cheapest way to buy it.",
+    category: "Everyday",
+    icon: Shovel,
+    keywords: ["garden", "topsoil", "top soil", "compost", "mulch", "bark", "bark chippings", "wood chip", "gravel", "shingle", "pea gravel", "sand", "sharp sand", "play sand", "bulk bag", "jumbo bag", "tonne bag", "cubic metres", "m3", "litres", "how much", "raised bed", "lawn", "border", "driveway", "path", "patio", "landscaping", "soil calculator", "aggregate"],
+    tint: "var(--sticker-mint)",
+    seo: {
+      title: "Garden Materials Calculator: Topsoil, Bark, Gravel",
+      description:
+        "Work out how much topsoil, compost, mulch, bark, gravel or sand you need in m³, litres and tonnes, how many bags or bulk bags, and the cheapest way to buy it.",
+    },
+    updated: "2026-09-28",
   },
   {
     slug: "tv-distance-calculator",
