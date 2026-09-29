@@ -17,8 +17,8 @@ import {
   monthlyRate,
   type CarFinanceInput,
   type FinanceResult,
-  type Line,
 } from "@/lib/car-finance";
+import type { Line } from "@/lib/breakdown";
 
 /** £25,000 car, £2,500 down, 36 months: each case overrides what it is about. */
 const base: CarFinanceInput = {

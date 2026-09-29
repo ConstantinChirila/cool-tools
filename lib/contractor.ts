@@ -9,6 +9,7 @@
  * allowance taper come from the UK salary engine.
  */
 
+import type { Line } from "@/lib/breakdown";
 import { formatGbp as money, formatPercent } from "@/lib/currency";
 import {
   TAX_YEARS,
@@ -102,14 +103,6 @@ export interface ContractorInput {
   permBenefits: number;
 }
 
-type LineKind = "heading" | "income" | "cost" | "subtotal" | "total" | "note";
-
-export interface Line {
-  label: string;
-  /** Signed: deductions are negative. Headings and notes may carry 0. */
-  value: number;
-  kind: LineKind;
-}
 
 export interface ScenarioResult {
   scenario: Scenario;

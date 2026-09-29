@@ -3,6 +3,7 @@
 import * as React from "react";
 import { CalendarClock, Gauge, KeyRound, Landmark, Receipt, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BreakdownTable } from "@/components/calc/breakdown-table";
 import { Callout } from "@/components/calc/callout";
 import { CurrencySelect } from "@/components/calc/currency-select";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
@@ -30,11 +31,9 @@ import {
   type FinanceComparison,
   type FinanceKind,
   type FinanceResult,
-  type Line,
   type PcpEnd,
 } from "@/lib/car-finance";
 import { DEFAULT_CURRENCY, currencies } from "@/lib/currency";
-import { cn } from "@/lib/utils";
 
 const DEFAULT_INPUT: CarFinanceInput = {
   price: 25_000,
@@ -669,15 +668,11 @@ function Breakdown({
       <CardContent className="min-w-0 space-y-4">
         <Segmented label="Finance" size="sm" value={view} onChange={onViewChange} options={VIEW_OPTIONS} />
         <p className="text-sm font-semibold text-muted-foreground">{FINANCE_INFO[view].hint}.</p>
-        <div className="overflow-x-auto rounded-2xl border-[2.5px] border-foreground">
-          <table className="w-full min-w-[420px] font-mono text-sm font-bold text-numeric">
-            <tbody>
-              {lines.map((line, i) => (
-                <Row key={i} line={line} money={money} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <BreakdownTable
+          lines={lines}
+          format={(line) => (line.value < 0 ? `−${money(-line.value, 2)}` : money(line.value, 2))}
+          totalClassName="bg-pink"
+        />
         <p className="text-xs font-semibold leading-relaxed text-muted-foreground">
           Real cost is everything you pay less what you are left with: the car&apos;s value if you own it, or
           any equity above the balloon when a PCP goes back. Insurance, tax, servicing and fuel cost the same
@@ -688,34 +683,6 @@ function Breakdown({
   );
 }
 
-function Row({ line, money }: { line: Line; money: Money }) {
-  if (line.kind === "heading") {
-    return (
-      <tr className="border-b border-foreground/10 bg-secondary/60">
-        <td colSpan={2} className="px-4 pt-3 pb-1.5 font-sans text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          {line.label}
-        </td>
-      </tr>
-    );
-  }
-  const strong = line.kind === "total" || line.kind === "subtotal";
-  const value = line.value < 0 ? `−${money(-line.value, 2)}` : money(line.value, 2);
-  return (
-    <tr
-      className={cn(
-        "border-b border-foreground/10 last:border-0",
-        line.kind === "total" && "bg-pink",
-        line.kind === "subtotal" && "bg-secondary",
-        line.kind === "note" && "text-muted-foreground",
-      )}
-    >
-      <td className={cn("px-4 py-2.5 font-sans", strong ? "font-bold" : "font-semibold", line.kind === "note" && "pl-8")}>
-        {line.label}
-      </td>
-      <td className="px-4 py-2.5 text-right whitespace-nowrap">{value}</td>
-    </tr>
-  );
-}
 
 function PaidChart({
   input,

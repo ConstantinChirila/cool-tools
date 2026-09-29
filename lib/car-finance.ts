@@ -7,6 +7,8 @@
  * entered separately and are not folded back into the APR.
  */
 
+import type { Line, LineKind } from "@/lib/breakdown";
+
 export type FinanceKind = "pcp" | "hp" | "loan" | "lease";
 export type CompareBasis = "net" | "total";
 /** What happens when a PCP ends: return the car, or pay the balloon and keep it. */
@@ -346,14 +348,6 @@ export function compareFinance(input: CarFinanceInput, basis: CompareBasis): Fin
   };
 }
 
-type LineKind = "heading" | "cost" | "subtotal" | "total" | "credit" | "note";
-
-export interface Line {
-  label: string;
-  /** Money paid is positive; money you get back (the car's value) is negative. */
-  value: number;
-  kind: LineKind;
-}
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Briefcase, PiggyBank, Receipt, Umbrella } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BreakdownTable } from "@/components/calc/breakdown-table";
 import { Callout } from "@/components/calc/callout";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { NumberField } from "@/components/calc/number-field";
@@ -29,13 +30,13 @@ import {
   type CompareBasis,
   type ContractRoute,
   type ContractorInput,
-  type Line,
   type RouteComparison,
   type Scenario,
   type ScenarioResult,
 } from "@/lib/contractor";
 import { formatGbp as money, formatMoney } from "@/lib/currency";
 import { DEFAULT_TAX_YEAR, TAX_YEARS } from "@/lib/uk-tax";
+import type { Line } from "@/lib/breakdown";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_INPUT: ContractorInput = {
@@ -629,15 +630,7 @@ function Breakdown({
             </>
           )}
         </p>
-        <div className="overflow-x-auto rounded-2xl border-[2.5px] border-foreground">
-          <table className="w-full min-w-[420px] font-mono text-sm font-bold text-numeric">
-            <tbody>
-              {result.lines.map((line, i) => (
-                <Row key={i} line={line} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <BreakdownTable lines={result.lines} format={lineValue} />
         <p className="text-xs font-semibold leading-relaxed text-muted-foreground">
           Annual figures for {TAX_YEARS[input.taxYear].label}, before VAT, with no student loan. The limited
           company pays out all of its profit and has no other employees, so it cannot claim the Employment
@@ -648,36 +641,11 @@ function Breakdown({
   );
 }
 
-function Row({ line }: { line: Line }) {
-  if (line.kind === "heading") {
-    return (
-      <tr className="border-b border-foreground/10 bg-secondary/60">
-        <td colSpan={2} className="px-4 pt-3 pb-1.5 font-sans text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          {line.label}
-        </td>
-      </tr>
-    );
-  }
-  const strong = line.kind === "total" || line.kind === "subtotal";
-  const value =
-    line.kind === "cost"
-      ? `${line.value < 0 ? "−" : ""}${money(Math.abs(line.value), 2)}`
-      : line.kind === "note"
-        ? `+${money(line.value, 2)}`
-        : money(line.value, 2);
-  return (
-    <tr
-      className={cn(
-        "border-b border-foreground/10 last:border-0",
-        line.kind === "total" && "bg-yellow",
-        line.kind === "subtotal" && "bg-secondary",
-        line.kind === "note" && "text-muted-foreground",
-      )}
-    >
-      <td className={cn("px-4 py-2.5 font-sans", strong ? "font-bold" : "font-semibold")}>{line.label}</td>
-      <td className="px-4 py-2.5 text-right whitespace-nowrap">{value}</td>
-    </tr>
-  );
+/** Costs keep their sign, notes show what they add, the rest is plain. */
+function lineValue(line: Line): string {
+  if (line.kind === "cost") return `${line.value < 0 ? "−" : ""}${money(Math.abs(line.value), 2)}`;
+  if (line.kind === "note") return `+${money(line.value, 2)}`;
+  return money(line.value, 2);
 }
 
 function DayRateChart({ input, basis }: { input: ContractorInput; basis: CompareBasis }) {
