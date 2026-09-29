@@ -60,7 +60,7 @@ Pure calculation logic lives in `lib/` (see `lib/finance.ts`) so it stays testab
 
 ## SEO
 
-- Site URL comes from `NEXT_PUBLIC_SITE_URL` (fallback in `lib/site.ts`); it drives canonicals, Open Graph URLs, the sitemap and structured data. Set it in Vercel before launch.
+- Site URL is `https://bitsnbobs.tools` (`lib/site.ts`), overridable with `NEXT_PUBLIC_SITE_URL` for previews; it drives canonicals, Open Graph URLs, the sitemap and structured data.
 - `app/sitemap.ts` and `app/robots.ts` are generated from the registry; `updated` on each tool feeds `lastmod`.
 - Social cards are rendered at build time by `lib/og.tsx` (one `opengraph-image.tsx` per route).
 - Structured data: `WebApplication` + `BreadcrumbList` + `FAQPage` per tool, `WebSite` + `Organization` + `ItemList` on the homepage (`lib/seo.ts`). Validate with https://search.google.com/test/rich-results after deploying.

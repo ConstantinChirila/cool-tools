@@ -2,8 +2,8 @@
 
 export const SITE_NAME = "Bits & Bobs";
 
-/** Public origin. Set NEXT_PUBLIC_SITE_URL in production; the fallback keeps local builds working. */
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://bitsbobs.app").replace(/\/$/, "");
+/** Public origin. NEXT_PUBLIC_SITE_URL overrides it for previews; the fallback is the live domain. */
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://bitsnbobs.tools").replace(/\/$/, "");
 
 export const SITE_DESCRIPTION =
   "Free online calculators for UK money and everyday maths: take-home salary, mortgage repayments and overpayments, compound interest, percentages and more. No sign-up, no email.";
