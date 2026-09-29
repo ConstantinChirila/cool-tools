@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { LIMITS, MATERIALS, type Area, type Job, type Material } from "@/lib/garden-materials";
+import { owningSvg, svgPoint } from "@/lib/svg";
 import { clamp, cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------ Textures -- */
@@ -197,21 +198,15 @@ export function CrossSection({
   const step = unit === "in" ? 0.635 : 0.5;
   const snap = (cm: number) => Math.round(cm / step) * step;
 
-  const toPlan = (e: React.PointerEvent) => {
-    const svg = e.currentTarget instanceof SVGSVGElement ? e.currentTarget : (e.currentTarget as SVGElement).ownerSVGElement;
-    const ctm = svg?.getScreenCTM();
-    return ctm ? new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse()) : null;
-  };
-
   const start = (e: React.PointerEvent<SVGGElement>) => {
-    e.currentTarget.ownerSVGElement?.setPointerCapture(e.pointerId);
+    owningSvg(e)?.setPointerCapture(e.pointerId);
     setFrozen(scale);
     move(e, scale);
   };
 
   const move = (e: React.PointerEvent, s = frozen) => {
     if (s === null) return;
-    const p = toPlan(e);
+    const p = svgPoint(e);
     if (!p) return;
     onDepth(clamp(snap(((GROUND - p.y) / PX) * s), step, s));
   };

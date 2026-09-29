@@ -29,6 +29,7 @@ import {
   type Resolution,
   type ZoneId,
 } from "@/lib/tv-distance";
+import { owningSvg, svgPoint } from "@/lib/svg";
 import { clamp, cn } from "@/lib/utils";
 
 type Unit = "m" | "ft";
@@ -204,27 +205,16 @@ function RoomPlan({
   const pct = (x: number) => `${((x + WALL) / span) * 100}%`;
   const pctY = (y: number) => `${(y / depth) * 100}%`;
 
-  const planOf = (e: React.PointerEvent) => {
-    const el = e.currentTarget;
-    return el instanceof SVGSVGElement ? el : el instanceof SVGElement ? el.ownerSVGElement : null;
-  };
-
-  const toPlan = (e: React.PointerEvent) => {
-    const ctm = planOf(e)?.getScreenCTM();
-    if (!ctm) return null;
-    return new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
-  };
-
   const start = (e: React.PointerEvent, kind: Drag["kind"]) => {
-    const p = toPlan(e);
+    const p = svgPoint(e);
     if (!p) return;
-    planOf(e)?.setPointerCapture(e.pointerId);
+    owningSvg(e)?.setPointerCapture(e.pointerId);
     setDrag(kind === "sofa" ? { kind, offset: p.x - distance, room } : { kind });
   };
 
   const move = (e: React.PointerEvent) => {
     if (!drag) return;
-    const p = toPlan(e);
+    const p = svgPoint(e);
     if (!p) return;
     if (drag.kind === "sofa") {
       onDistance(Math.round(clamp(p.x - drag.offset, 0.5, drag.room - 1) * 100) / 100);
