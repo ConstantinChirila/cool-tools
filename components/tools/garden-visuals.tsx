@@ -9,7 +9,7 @@ import { clamp, cn } from "@/lib/utils";
 const INK = "var(--foreground)";
 
 /** Id of a material's fill pattern; `TextureDefs` must be on the page. */
-export const texture = (m: Material) => `url(#garden-tex-${m})`;
+const texture = (m: Material) => `url(#garden-tex-${m})`;
 
 /** Hand-placed marks in a 40-unit tile, kept clear of the edges so tiles meet without seams. */
 const SPECKS: [number, number, number][] = [
