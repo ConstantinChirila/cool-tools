@@ -33,7 +33,6 @@ import {
   type FinanceResult,
   type PcpEnd,
 } from "@/lib/car-finance";
-import { DEFAULT_CURRENCY, currencies } from "@/lib/currency";
 
 const DEFAULT_INPUT: CarFinanceInput = {
   price: 25_000,
@@ -84,7 +83,7 @@ type Update = FieldUpdate<CarFinanceInput>;
 const months = (n: number) => `${n} ${n === 1 ? "month" : "months"}`;
 
 export function CarFinanceCalculator() {
-  const { code, currency, setCurrency, money, axis } = useCurrency();
+  const { code, currency, setCurrency, money, axis, currencyField } = useCurrency();
   const [input, setInput] = React.useState<CarFinanceInput>(DEFAULT_INPUT);
   const [basis, setBasis] = React.useState<CompareBasis>("net");
   const [view, setView] = React.useState<FinanceKind>("pcp");
@@ -118,7 +117,7 @@ export function CarFinanceCalculator() {
     view: urlField(view, (v: string) => setView(v as FinanceKind), "pcp", FINANCE_KINDS),
     autoResale: urlField(autoResale, setAutoResale, true),
     autoGmfv: urlField(autoGmfv, setAutoGmfv, true),
-    currency: urlField(code, setCurrency, DEFAULT_CURRENCY, currencies.map((c) => c.code)),
+    currency: currencyField,
   });
 
   const effective: CarFinanceInput = {

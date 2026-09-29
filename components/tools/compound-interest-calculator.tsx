@@ -21,7 +21,6 @@ import { YearlyTable } from "@/components/charts/yearly-table";
 import { useCurrency } from "@/hooks/use-currency";
 import { MONEY_RANGE, useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateCompound } from "@/lib/finance";
-import { DEFAULT_CURRENCY, currencies } from "@/lib/currency";
 
 const FREQUENCIES = [
   { value: "12", label: "Monthly" },
@@ -31,7 +30,7 @@ const FREQUENCIES = [
 ];
 
 export function CompoundInterestCalculator() {
-  const { code, currency, setCurrency, money, axis } = useCurrency();
+  const { code, currency, setCurrency, money, axis, currencyField } = useCurrency();
   const [initial, setInitial] = React.useState(10_000);
   const [monthly, setMonthly] = React.useState(250);
   const [rate, setRate] = React.useState(7);
@@ -49,12 +48,7 @@ export function CompoundInterestCalculator() {
       FREQUENCIES.map((f) => f.value),
     ),
     years: urlField(years, setYears, 20, undefined, { min: 1, max: 50 }),
-    currency: urlField(
-      code,
-      setCurrency,
-      DEFAULT_CURRENCY,
-      currencies.map((c) => c.code),
-    ),
+    currency: currencyField,
   });
 
   const result = React.useMemo(

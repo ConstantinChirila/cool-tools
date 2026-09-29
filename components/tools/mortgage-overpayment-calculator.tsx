@@ -17,7 +17,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrency } from "@/hooks/use-currency";
 import { MONEY_RANGE, useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateMortgage } from "@/lib/finance";
-import { DEFAULT_CURRENCY, currencies } from "@/lib/currency";
 
 function formatDuration(totalMonths: number): string {
   const years = Math.floor(totalMonths / 12);
@@ -36,7 +35,7 @@ function padSeries(values: number[], length: number): number[] {
 }
 
 export function MortgageOverpaymentCalculator() {
-  const { code, currency, setCurrency, money, axis } = useCurrency();
+  const { code, currency, setCurrency, money, axis, currencyField } = useCurrency();
   const [amount, setAmount] = React.useState(LOAN_DEFAULTS.amount);
   const [rate, setRate] = React.useState(LOAN_DEFAULTS.rate);
   const [term, setTerm] = React.useState(LOAN_DEFAULTS.term);
@@ -49,12 +48,7 @@ export function MortgageOverpaymentCalculator() {
     term: urlField(term, setTerm, LOAN_DEFAULTS.term, undefined, LOAN_RANGES.term),
     overpay: urlField(monthlyOverpayment, setMonthlyOverpayment, 200, undefined, MONEY_RANGE),
     lump: urlField(lumpSum, setLumpSum, 0, undefined, MONEY_RANGE),
-    currency: urlField(
-      code,
-      setCurrency,
-      DEFAULT_CURRENCY,
-      currencies.map((c) => c.code),
-    ),
+    currency: currencyField,
   });
 
   const base = React.useMemo(

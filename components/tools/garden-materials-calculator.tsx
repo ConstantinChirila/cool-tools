@@ -84,7 +84,7 @@ const NUMBER_FIELDS: [keyof Omit<Settings, "job">, string, NumberRange][] = [
 ];
 
 export function GardenMaterialsCalculator() {
-  const { code, currency, setCurrency, money } = useCurrency();
+  const { code, currency, setCurrency, money, currencyField } = useCurrency();
   const [material, setMaterial] = React.useState<Material>("topsoil");
   const [all, setAll] = React.useState(DEFAULT_SETTINGS);
   const [rows, setRows] = React.useState<Row[]>(() => withIds(DEFAULT_AREAS));
@@ -100,6 +100,7 @@ export function GardenMaterialsCalculator() {
       if (parsed.ok) setRows(withIds(parsed.value));
     }, DEFAULT_AREAS_CODE),
     units: urlField(units, (v: string) => setUnits(v as Units), "metric", UNITS),
+    currency: currencyField,
     ...Object.fromEntries(
       MATERIALS.flatMap((m) => [
         [

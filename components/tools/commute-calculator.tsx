@@ -20,7 +20,7 @@ import {
   equivalentCount,
   type CostMode,
 } from "@/lib/commute";
-import { DEFAULT_CURRENCY, currencies, formatMoney, formatNumber } from "@/lib/currency";
+import { formatMoney, formatNumber } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 const DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
@@ -78,7 +78,7 @@ function PillRow<T extends number>({
 }
 
 export function CommuteCalculator() {
-  const { code, currency, setCurrency } = useCurrency();
+  const { code, currency, setCurrency, currencyField } = useCurrency();
   const [outbound, setOutbound] = React.useState(45);
   const [differentReturn, setDifferentReturn] = React.useState(false);
   const [returnMinutes, setReturnMinutes] = React.useState(45);
@@ -103,7 +103,7 @@ export function CommuteCalculator() {
     perday: urlField(perDay, setPerDay, 0, undefined, { min: 0, max: 1_000_000 }),
     monthly: urlField(monthly, setMonthly, 0, undefined, { min: 0, max: 1_000_000 }),
     years: urlField(horizon, setHorizon, "10" as Horizon, HORIZONS),
-    currency: urlField(code, setCurrency, DEFAULT_CURRENCY, currencies.map((c) => c.code)),
+    currency: currencyField,
   });
 
   const inputs = React.useMemo(

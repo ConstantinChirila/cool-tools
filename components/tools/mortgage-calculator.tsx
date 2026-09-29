@@ -16,7 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrency } from "@/hooks/use-currency";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateMortgage } from "@/lib/finance";
-import { DEFAULT_CURRENCY, currencies } from "@/lib/currency";
 
 type MortgageType = "repayment" | "interestOnly";
 
@@ -26,7 +25,7 @@ const MORTGAGE_TYPE_OPTIONS = [
 ];
 
 export function MortgageCalculator() {
-  const { code, currency, setCurrency, money, axis } = useCurrency();
+  const { code, currency, setCurrency, money, axis, currencyField } = useCurrency();
   const [amount, setAmount] = React.useState(LOAN_DEFAULTS.amount);
   const [rate, setRate] = React.useState(LOAN_DEFAULTS.rate);
   const [term, setTerm] = React.useState(LOAN_DEFAULTS.term);
@@ -40,12 +39,7 @@ export function MortgageCalculator() {
       "repayment",
       "interestOnly",
     ]),
-    currency: urlField(
-      code,
-      setCurrency,
-      DEFAULT_CURRENCY,
-      currencies.map((c) => c.code),
-    ),
+    currency: currencyField,
   });
 
   const interestOnly = mortgageType === "interestOnly";

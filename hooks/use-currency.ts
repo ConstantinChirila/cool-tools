@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { createStorageStore } from "@/hooks/create-storage-store";
-import { DEFAULT_CURRENCY, formatMoney, getCurrency } from "@/lib/currency";
+import { urlField } from "@/hooks/use-url-state";
+import { DEFAULT_CURRENCY, currencies, formatMoney, getCurrency } from "@/lib/currency";
 
 const store = createStorageStore<string>({
   key: "bitsbobs:currency",
@@ -10,6 +11,8 @@ const store = createStorageStore<string>({
   parse: (raw) => raw,
   serialize: (code) => code,
 });
+
+const CODES = currencies.map((c) => c.code);
 
 /** The chosen currency, shared by every tool, plus formatters bound to it. */
 export function useCurrency() {
@@ -23,6 +26,8 @@ export function useCurrency() {
       money: (v: number, decimals = 0) => formatMoney(v, code, { decimals }),
       /** Compact form for chart axes: £250k. */
       axis: (v: number) => formatMoney(v, code, { compact: true }),
+      /** The `currency` URL field, for a tool's useUrlState. */
+      currencyField: urlField(code, store.set, DEFAULT_CURRENCY, CODES),
     }),
     [code],
   );
