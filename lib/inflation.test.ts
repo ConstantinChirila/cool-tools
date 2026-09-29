@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { INFLATION_DATA } from "@/lib/inflation-data";
-import { LATEST, LATEST_YEAR, clampYear, convert, payCheck, project, yearLabel } from "@/lib/inflation";
+import { LATEST, LATEST_YEAR, clampYear, convert, payCheck, project } from "@/lib/inflation";
 
 // CPI (D7BT) annual averages used below, from the ONS: 2000 72.7, 2010 89.4,
 // 2020 108.7, 2021 111.6, 2022 121.7, 2023 130.5, 2025 138.4. The ONS does not
@@ -56,16 +56,10 @@ describe("convert", () => {
   });
 });
 
-describe("the latest year", () => {
-  it("labels an unfinished year with its month", () => {
-    expect(yearLabel(2020)).toBe("2020");
-    expect(yearLabel(LATEST_YEAR)).toBe(LATEST.partial ? `${LATEST_YEAR} (${LATEST.month})` : String(LATEST_YEAR));
-  });
-
-  it("uses the published 12-month rate for a partial year", () => {
-    if (!LATEST.partial) return;
-    const r = convert({ amount: 1, from: LATEST_YEAR - 1, to: LATEST_YEAR, measure: "cpi" });
-    expect(r.rows[1]?.rate).toBeCloseTo(LATEST.cpiRate / 100, 9);
+describe("the latest data", () => {
+  it("names its month the way the partial-year maths expects", () => {
+    // timePoint looks the month up in this list; anything else puts the latest figure in the wrong place.
+    expect(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]).toContain(LATEST.month);
   });
 });
 

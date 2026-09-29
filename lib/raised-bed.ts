@@ -173,12 +173,24 @@ export interface Board {
  * Pieces cut from stock lengths, first fit decreasing: each piece goes in
  * the first board with room for it and a saw cut. Close to the fewest boards
  * for the handful of pieces a bed needs.
+ *
+ * Beds repeat a few lengths many times, so a run of equal pieces resumes the
+ * search where the last one landed: boards before it had no room for that
+ * length and only get shorter. Same result as scanning from the start, but
+ * linear in the pieces rather than quadratic.
  */
 export function cutList(pieces: readonly number[], stock: number): Board[] {
   const boards: Board[] = [];
+  let last = Number.NaN;
+  let from = 0;
   for (const piece of [...pieces].sort((a, b) => b - a)) {
     if (piece <= 0) continue;
-    const board = boards.find((b) => b.offcut + 1e-9 >= piece + KERF);
+    if (piece !== last) {
+      last = piece;
+      from = 0;
+    }
+    let board = boards[from];
+    while (board && board.offcut + 1e-9 < piece + KERF) board = boards[++from];
     if (board) {
       board.cuts.push(piece);
       board.offcut -= piece + KERF;
@@ -225,6 +237,7 @@ export const LIMITS = {
 } as const;
 
 export interface TimberResult {
+  kind: Exclude<TimberKind, "none">;
   /** Rows of boards to reach the fill depth. */
   courses: number;
   /** Height the boards stand, mm. */
@@ -273,7 +286,7 @@ export function calculateTimber(bed: Bed, t: Timber): TimberResult | null {
 
   const boardCost = boards.length * t.price;
   const postCost = posts.stock.length * t.postPrice;
-  return { courses, height, outside, boards, posts, joins, cost: boardCost + postCost, boardCost, postCost };
+  return { kind: t.kind, courses, height, outside, boards, posts, joins, cost: boardCost + postCost, boardCost, postCost };
 }
 
 /** Boards with the same cuts, grouped for a cut list: "4 × [2.476, 1.2]". */
@@ -303,6 +316,8 @@ export interface IngredientResult {
 export interface RaisedBedResult {
   /** m³ in one bed, before the extra. */
   perBed: number;
+  /** m³ to buy for one bed, including the extra. */
+  perBedToBuy: number;
   /** m³ in all beds, before the extra. */
   exact: number;
   /** m³ to buy, including the extra. */
@@ -355,6 +370,7 @@ export function calculate({ bed, mix, extra, buying, timber, otherPerBed }: Rais
   const weight = parts.reduce((sum, p) => sum + p.weight, 0);
   return {
     perBed,
+    perBedToBuy: perBed * (1 + extra / 100),
     exact,
     volume,
     weight,

@@ -99,7 +99,9 @@ export function NumericInput({
       return;
     }
     const rounded = Number(clamp(parsed, min, max).toFixed(decimals));
-    onChange(rounded);
+    // Leave an untouched value alone: callers may show a converted or clamped
+    // figure, and writing it back would overwrite what they hold.
+    if (rounded !== value) onChange(rounded);
     setText(fmt(rounded));
   };
 

@@ -310,6 +310,9 @@ export interface BuyOptions {
 /** What `buyOptions` needs from a material's settings. */
 export type Buying = Pick<Settings, "bag" | "bagPrice" | "bulk" | "bulkPrice" | "delivery" | "density">;
 
+/** Bulk counts tried for a mixed plan before only the ends are scanned. */
+const MIX_SCAN = 2000;
+
 export function buyOptions(volume: number, s: Buying, unit: BagUnit): BuyOptions {
   const bagVol = unitVolume(s.bag, unit, s.density);
   const bulkVol = unitVolume(s.bulk, unit, s.density);
@@ -325,8 +328,12 @@ export function buyOptions(volume: number, s: Buying, unit: BagUnit): BuyOptions
   const maxBulk = unitsFor(volume, bulkVol);
   const bulkOnly = Number.isFinite(maxBulk) ? plan(maxBulk) : { bags: 0, bulk: 0, cost: null, spare: 0 };
 
+  // A mix's cost is linear in the bulk count give or take one bag's rounding,
+  // so the cheapest sits near one end. Tiny bulk sizes on huge volumes only
+  // scan the ends, which keeps a crafted link from locking up the page.
   let mix: Plan | null = null;
-  for (let n = 1; n < maxBulk && Number.isFinite(maxBulk); n++) {
+  const ends = maxBulk - 1 > MIX_SCAN ? MIX_SCAN / 2 : Number.POSITIVE_INFINITY;
+  for (let n = 1; n < maxBulk && Number.isFinite(maxBulk); n = n === ends ? maxBulk - ends : n + 1) {
     const p = plan(n);
     if (p.bags > 0 && cheaper(p, mix)) mix = p;
   }

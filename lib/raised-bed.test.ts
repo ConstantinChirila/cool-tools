@@ -90,6 +90,19 @@ describe("cut list", () => {
     expect(cutList([1.9485, 1.9485], 3.9)).toHaveLength(1);
   });
 
+  it("packs thousands of pieces the same as a plain first-fit scan", () => {
+    const pieces = Array.from({ length: 3000 }, (_, i) => [2.456, 1.2, 0.9, 2.456][i % 4]!);
+    const naive: { cuts: number[]; offcut: number }[] = [];
+    for (const piece of [...pieces].sort((a, b) => b - a)) {
+      const board = naive.find((b) => b.offcut + 1e-9 >= piece + KERF);
+      if (board) {
+        board.cuts.push(piece);
+        board.offcut -= piece + KERF;
+      } else naive.push({ cuts: [piece], offcut: 3.6 - piece });
+    }
+    expect(cutList(pieces, 3.6).map((b) => b.cuts)).toEqual(naive.map((b) => b.cuts));
+  });
+
   it("groups identical boards", () => {
     const groups = groupBoards(cutList([2, 2, 2, 1, 1, 1], 3.1));
     expect(groups).toEqual([{ count: 3, cuts: [2, 1], offcut: expect.closeTo(0.1 - KERF, 9) }]);
@@ -133,10 +146,15 @@ describe("timber", () => {
   });
 
   it("multiplies by the number of beds", () => {
+    // 144 mm decking, 3.6 m long, four courses to 45 cm. Each course takes two
+    // 2.456 m sides (one to a board, the 1.144 m offcut too short for an end)
+    // and two 1.2 m ends (two to a board): 12 courses over three beds = 36 boards.
     const one = calculateTimber(bed, timberFor("decking"))!;
     const three = calculateTimber({ ...bed, count: 3 }, timberFor("decking"))!;
+    expect(one.boards).toHaveLength(12);
+    expect(three.boards).toHaveLength(36);
+    expect(three.boardCost).toBe(36 * 12);
     expect(three.posts.count).toBe(one.posts.count * 3);
-    expect(three.boards.length).toBeLessThanOrEqual(one.boards.length * 3);
   });
 
   it("is skipped when the bed is already built", () => {

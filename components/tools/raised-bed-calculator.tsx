@@ -281,7 +281,7 @@ function BedSize({
         <SliderField
           id="rb-depth-in"
           label="Soil depth"
-          value={Number((bed.depth / CM_PER_INCH).toFixed(2))}
+          value={Number((bed.depth / CM_PER_INCH).toFixed(1))}
           onChange={(v) => update("depth", Number((v * CM_PER_INCH).toFixed(2)))}
           min={2}
           max={36}
@@ -760,7 +760,7 @@ function Results({
                 {t && (
                   <ShopRow
                     icon={<BoardEnd className="size-8" />}
-                    title={TIMBER_INFO[timber.kind as Exclude<TimberKind, "none">].label}
+                    title={TIMBER_INFO[t.kind].label}
                     detail={`${timber.height} × ${timber.thickness} mm, ${plural(t.courses, "board")} high`}
                     buy={plural(t.boards.length, "board")}
                     buyDetail={`${metres(timber.length)} long`}
@@ -784,7 +784,7 @@ function Results({
           )}
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-5 rounded-2xl border-[2.5px] border-foreground bg-card px-4 py-4">
-            <Stat label="Per bed" value={`${cubic(result.perBed * (1 + extra / 100))} m³`} hint={`${formatNumber(result.perBed * (1 + extra / 100) * 1000, 0)} L with the extra`} />
+            <Stat label="Per bed" value={`${cubic(result.perBedToBuy)} m³`} hint={`${formatNumber(result.perBedToBuy * 1000, 0)} L with the extra`} />
             <Stat label="Weight" value={weightText(result.weight)} hint="Damp, as delivered" />
             <Stat label="Barrow loads" value={String(result.barrowLoads)} hint={`${BARROW.litres} L barrow, up to ${BARROW.kg} kg`} />
             <Stat
