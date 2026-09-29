@@ -260,7 +260,7 @@ export interface Nudge {
 }
 
 /** Only price cuts up to this share of the price are worth suggesting. */
-export const MAX_NUDGE_SHARE = 0.05;
+const MAX_NUDGE_SHARE = 0.05;
 
 /**
  * The nearest lower price where the tax steps down: the start of the band the

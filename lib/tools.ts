@@ -393,7 +393,7 @@ function termScore(text: string, term: string): number {
  * "percentage" ranks the Percentage Calculator above tools that merely
  * mention percentages; every term must match somewhere or the score is 0.
  */
-export function scoreTool(tool: Tool, query: string): number {
+function scoreTool(tool: Tool, query: string): number {
   const q = query.trim().toLowerCase();
   if (!q) return 1;
   const name = tool.name.toLowerCase();

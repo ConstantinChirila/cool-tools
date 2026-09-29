@@ -94,7 +94,7 @@ export const TOO_FAR_ANGLE = 20;
  * Zones by viewing angle, nearest first. 30° is SMPTE's minimum and 40° the
  * THX ideal.
  */
-export const ZONES = [
+const ZONES = [
   {
     id: "tooClose",
     label: "Too close",
