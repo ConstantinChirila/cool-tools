@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Coins, Dices, RotateCcw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { urlField, useUrlState } from "@/hooks/use-url-state";
 import { rollDie } from "@/lib/dice";
 import { ChoiceGroup } from "@/components/calc/choice-group";
@@ -24,21 +25,6 @@ const TINT_VARS = [
 
 const FLIP_MS = 1100;
 const HISTORY_MAX = 8;
-const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
-
-function subscribeReducedMotion(onChange: () => void) {
-  const mq = window.matchMedia(REDUCED_QUERY);
-  mq.addEventListener("change", onChange);
-  return () => mq.removeEventListener("change", onChange);
-}
-
-function usePrefersReducedMotion() {
-  return React.useSyncExternalStore(
-    subscribeReducedMotion,
-    () => window.matchMedia(REDUCED_QUERY).matches,
-    () => false,
-  );
-}
 
 /** A labelled group of choice pills: the rail is too narrow for a segmented row. */
 function PillGroup<T extends string>({
@@ -91,7 +77,7 @@ function CoinFace({ label, className, back }: { label: string; className: string
 }
 
 export function DiceRoller() {
-  const reduced = usePrefersReducedMotion();
+  const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
 
   const [mode, setMode] = React.useState<Mode>("dice");
   const [count, setCount] = React.useState(2);

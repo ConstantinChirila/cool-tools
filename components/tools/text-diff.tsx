@@ -8,6 +8,7 @@ import { PillButton, TogglePill } from "@/components/calc/pill-button";
 import { Segmented } from "@/components/calc/segmented";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCopy, type CopyState } from "@/hooks/use-copy";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { createPatch, useTextDiff } from "@/hooks/use-text-diff";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
 import {
@@ -56,18 +57,6 @@ const COPY_LABEL: Record<CopyState, string> = {
   copied: "Patch copied",
   failed: "Could not copy",
 };
-
-function useIsWide() {
-  return React.useSyncExternalStore(
-    (notify) => {
-      const query = window.matchMedia("(min-width: 768px)");
-      query.addEventListener("change", notify);
-      return () => query.removeEventListener("change", notify);
-    },
-    () => window.matchMedia("(min-width: 768px)").matches,
-    () => true,
-  );
-}
 
 const NUMBER_CELL = "select-none px-2 text-right text-xs leading-6 text-muted-foreground";
 const TONE = {
@@ -356,7 +345,7 @@ const ResultsCard = React.memo(function ResultsCard({
     [result],
   );
 
-  const isWide = useIsWide();
+  const isWide = useMediaQuery("(min-width: 768px)", true);
   const shownView: DiffView = isWide ? view : "unified";
   const rows = React.useMemo(
     () => (result?.status === "ok" ? buildRows(result.blocks, shownView, fold, unfoldedBlocks) : []),
