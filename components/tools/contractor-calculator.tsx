@@ -34,7 +34,7 @@ import {
   type Scenario,
   type ScenarioResult,
 } from "@/lib/contractor";
-import { formatGbp as money, formatMoney } from "@/lib/currency";
+import { formatGbp as money, formatGbpCompact as axis } from "@/lib/currency";
 import { DEFAULT_TAX_YEAR, TAX_YEARS } from "@/lib/uk-tax";
 import type { Line } from "@/lib/breakdown";
 import { cn } from "@/lib/utils";
@@ -87,7 +87,6 @@ const COLORS: Record<Scenario, string> = {
 const signed = (v: number) => `${v >= 0 ? "+" : "−"}${money(Math.abs(v))}`;
 const dayRateGap = (v: number) =>
   v === 0 ? "exactly your rate" : `${money(Math.abs(v))} ${v > 0 ? "under" : "over"} your rate`;
-const axis = (v: number) => formatMoney(v, "GBP", { compact: true });
 
 export function ContractorCalculator() {
   const [input, setInput] = React.useState<ContractorInput>(DEFAULT_INPUT);

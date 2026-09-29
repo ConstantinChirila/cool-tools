@@ -60,6 +60,11 @@ export function formatGbp(value: number, decimals = 0): string {
   return formatMoney(value, "GBP", { decimals });
 }
 
+/** Pounds in compact form for chart axes: £250k. */
+export function formatGbpCompact(value: number): string {
+  return formatMoney(value, "GBP", { compact: true });
+}
+
 /** A fraction (0.2) as a percentage string ("20%"). Fixed decimals, or up to `decimals` with `trim`. */
 export function formatPercent(fraction: number, decimals = 0, options?: { trim?: boolean }): string {
   if (!Number.isFinite(fraction)) return "—";

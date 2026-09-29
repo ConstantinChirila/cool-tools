@@ -13,7 +13,7 @@ import { HeroStat } from "@/components/calc/stat";
 import { SwitchField } from "@/components/calc/switch-field";
 import { GrowthChart } from "@/components/charts/growth-chart";
 import { MONEY_RANGE, useUrlState, urlField, type NumberRange } from "@/hooks/use-url-state";
-import { formatGbp as money, formatMoney, formatPercent } from "@/lib/currency";
+import { formatGbp as money, formatGbpCompact as axis, formatPercent } from "@/lib/currency";
 import {
   BUYERS,
   BUYER_INFO,
@@ -57,7 +57,6 @@ const COLORS: Record<Buyer, string> = {
 const CHART_STEPS = 240;
 
 const pct = (rate: number) => formatPercent(rate, 1, { trim: true });
-const axis = (v: number) => formatMoney(v, "GBP", { compact: true });
 
 /** Half as far again as the price, at least £1m, in steps of £300k so the chart's thirds are round. */
 function chartMax(price: number): number {

@@ -34,7 +34,7 @@ import { SwitchField } from "@/components/calc/switch-field";
 import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
 import { MONEY_RANGE as MONEY, inputFields, useUrlState, urlField, type NumberRange } from "@/hooks/use-url-state";
-import { formatGbp as money, formatMoney, formatPercent } from "@/lib/currency";
+import { formatGbp as money, formatGbpCompact, formatPercent } from "@/lib/currency";
 import {
   calculateUkSalary,
   DEFAULT_TAX_YEAR,
@@ -897,9 +897,9 @@ export function UkSalaryCalculator() {
                   { name: "Tax, NI and loans", color: "var(--chart-1)", values: curve.deductions },
                 ]}
                 xLabel={(i) => `${money(curve.salaries[i] ?? 0)} salary`}
-                xTick={(i) => formatMoney(curve.salaries[i] ?? 0, "GBP", { compact: true })}
+                xTick={(i) => formatGbpCompact(curve.salaries[i] ?? 0)}
                 formatValue={(v) => money(v)}
-                formatAxis={(v) => formatMoney(v, "GBP", { compact: true })}
+                formatAxis={formatGbpCompact}
                 extraRow={(i) => {
                   const salary = curve.salaries[i] ?? 0;
                   const kept = curve.takeHome[i];
