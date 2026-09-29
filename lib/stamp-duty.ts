@@ -12,7 +12,7 @@ export const NATIONS: Nation[] = ["england", "scotland", "wales"];
 export const BUYERS: Buyer[] = ["main", "firstTime", "additional"];
 
 /** One slice of the price: everything above the previous band's `upTo` and up to this one. */
-export interface Band {
+interface Band {
   upTo: number;
   rate: number;
 }
@@ -141,7 +141,7 @@ export interface BandLine {
   tax: number;
 }
 
-export type ReliefStatus =
+type ReliefStatus =
   /** First-time buyer rates applied. */
   | "applied"
   /** First-time buyer, but the price is over the cap so normal rates apply. */

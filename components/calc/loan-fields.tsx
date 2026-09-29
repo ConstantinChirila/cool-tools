@@ -8,13 +8,13 @@ import { urlField, type NumberRange } from "@/hooks/use-url-state";
 import type { AmortizationYear } from "@/lib/finance";
 
 /** Bounds shared by the mortgage tools' inputs and their URL fields. */
-export const LOAN_RANGES = {
+const LOAN_RANGES = {
   amount: { min: 10_000, max: 10_000_000 },
   rate: { min: 0.1, max: 15 },
   term: { min: 1, max: 40 },
 } satisfies Record<string, NumberRange>;
 
-export const LOAN_DEFAULTS = { amount: 250_000, rate: 4.5, term: 25 };
+const LOAN_DEFAULTS = { amount: 250_000, rate: 4.5, term: 25 };
 
 /** The amount slider covers typical loans; bigger ones are typed. */
 const AMOUNT_SLIDER_MAX = 1_500_000;

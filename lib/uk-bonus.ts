@@ -32,7 +32,7 @@ import {
 import { clamp } from "@/lib/utils";
 
 /** The pay periods a bonus can land in: the subset of PayPeriod that payroll actually runs on. */
-export type BonusPayFrequency = Extract<PayPeriod, "month" | "4week" | "week">;
+type BonusPayFrequency = Extract<PayPeriod, "month" | "4week" | "week">;
 
 const BONUS_PERIODS = ["month", "4week", "week"] as const satisfies readonly BonusPayFrequency[];
 export const BONUS_FREQUENCIES = BONUS_PERIODS.map((value) => ({ value, ...PERIOD_INFO[value] }));
