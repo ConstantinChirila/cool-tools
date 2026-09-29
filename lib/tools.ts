@@ -9,6 +9,7 @@ import {
   Hourglass,
   House,
   KeyRound,
+  LandPlot,
   Percent,
   PiggyBank,
   Shovel,
@@ -295,6 +296,23 @@ export const tools: Tool[] = [
       title: "Raised Bed Calculator: Soil Mix, Timber and Cost",
       description:
         "Work out how much topsoil, compost and manure fills your raised beds, how many bags or bulk bags to buy, the scaffold boards or sleepers to build them, and the cost.",
+    },
+    updated: "2026-09-29",
+  },
+  {
+    slug: "lawn-calculator",
+    name: "Lawn Calculator",
+    shortName: "Lawn",
+    description:
+      "How much grass seed or turf your lawn needs, with paths, beds and sheds taken out, plus the topsoil, feed and water to get it going and what it all costs.",
+    category: "Everyday",
+    icon: LandPlot,
+    keywords: ["lawn", "grass", "grass seed", "lawn seed", "turf", "turf rolls", "how much turf", "how much grass seed", "overseed", "overseeding", "reseed", "patch", "topsoil", "top dressing", "lawn feed", "fertiliser", "fertilizer", "pre-seed", "pre-turf", "watering", "new lawn", "garden", "m2"],
+    tint: "var(--sticker-mint)",
+    seo: {
+      title: "Lawn Calculator: Grass Seed, Turf and Cost",
+      description:
+        "Work out how much grass seed or how many turf rolls your lawn needs, minus paths and sheds, plus topsoil, starter feed, watering and the total cost.",
     },
     updated: "2026-09-29",
   },

@@ -9,8 +9,8 @@ import { clamp, cn } from "@/lib/utils";
 
 const INK = "var(--foreground)";
 
-/** Fill patterns: every garden material, plus manure for raised bed mixes. */
-const TEXTURES = [...MATERIALS, "manure"] as const;
+/** Fill patterns: every garden material, plus manure for raised bed mixes and grass for lawns. */
+const TEXTURES = [...MATERIALS, "manure", "grass"] as const;
 export type Texture = (typeof TEXTURES)[number];
 
 /** Id of a material's fill pattern; `TextureDefs` must be on the page. */
@@ -108,6 +108,23 @@ function Tile({ material }: { material: Texture }) {
           ))}
           {SPECKS.map(([x, y], i) => (
             <circle key={`b${i}`} cx={(x + 11) % 38 + 1} cy={(y + 17) % 38 + 1} r={0.7} fill="oklch(0.7 0.08 75)" />
+          ))}
+        </>
+      );
+    case "grass":
+      return (
+        <>
+          <rect width={40} height={40} fill="oklch(0.66 0.15 140)" />
+          {SPECKS.map(([x, y, r], i) => (
+            <path
+              key={i}
+              d={`M${x - r} ${y + 2.5} l${r} -5 l${r} 5`}
+              fill="none"
+              stroke={i % 3 ? "oklch(0.5 0.13 145)" : "oklch(0.8 0.14 130)"}
+              strokeWidth={1.3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           ))}
         </>
       );
