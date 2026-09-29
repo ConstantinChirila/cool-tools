@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChoiceGroup } from "@/components/calc/choice-group";
 import { CurrencySelect } from "@/components/calc/currency-select";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { NumberField } from "@/components/calc/number-field";
@@ -59,25 +60,19 @@ function PillRow<T extends number>({
   return (
     <div className="space-y-3">
       <p className="text-[15px] font-bold">{label}</p>
-      <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
-        {options.map((opt) => (
-          <button
-            key={opt}
-            type="button"
-            role="radio"
-            aria-checked={opt === value}
-            onClick={() => onChange(opt)}
-            className={cn(
-              "h-9 min-w-9 flex-1 rounded-full border-2 px-2 text-sm font-bold transition-colors focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
-              opt === value
-                ? "border-foreground bg-foreground text-background"
-                : "border-foreground bg-card text-foreground hover:bg-secondary",
-            )}
-          >
-            {format ? format(opt) : opt}
-          </button>
-        ))}
-      </div>
+      <ChoiceGroup
+        label={label}
+        value={value}
+        onChange={onChange}
+        options={options.map((opt) => ({ value: opt, label: format ? format(opt) : opt }))}
+        className="flex flex-wrap gap-2"
+        itemClassName={(active) =>
+          cn(
+            "h-9 min-w-9 flex-1 rounded-full border-2 border-foreground px-2 text-sm font-bold transition-colors",
+            active ? "bg-foreground text-background" : "bg-card text-foreground hover:bg-secondary",
+          )
+        }
+      />
     </div>
   );
 }

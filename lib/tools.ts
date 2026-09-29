@@ -379,19 +379,50 @@ export function requireTool(slug: string): Tool {
   return tool;
 }
 
-export function searchTools(query: string): Tool[] {
+/** How well one search term matches one piece of text: whole word, word start, substring, or not at all. */
+function termScore(text: string, term: string): number {
+  if (!text.includes(term)) return 0;
+  const words = text.split(/[\s/-]+/);
+  if (words.includes(term)) return 3;
+  if (words.some((w) => w.startsWith(term))) return 2;
+  return 1;
+}
+
+/**
+ * Score a tool against a query. The name outweighs everything else so that
+ * "percentage" ranks the Percentage Calculator above tools that merely
+ * mention percentages; every term must match somewhere or the score is 0.
+ */
+export function scoreTool(tool: Tool, query: string): number {
   const q = query.trim().toLowerCase();
-  if (!q) return tools;
-  const terms = q.split(/\s+/);
-  return tools.filter((tool) => {
-    const haystack = [
-      tool.name,
-      tool.description,
-      tool.category,
-      ...tool.keywords,
-    ]
-      .join(" ")
-      .toLowerCase();
-    return terms.every((term) => haystack.includes(term));
-  });
+  if (!q) return 1;
+  const name = tool.name.toLowerCase();
+  const shortName = tool.shortName?.toLowerCase() ?? "";
+  const keywords = tool.keywords.join(" ").toLowerCase();
+  const description = tool.description.toLowerCase();
+  const category = tool.category.toLowerCase();
+  if (name === q || shortName === q) return 1000;
+
+  let total = name.startsWith(q) ? 100 : 0;
+  for (const term of q.split(/\s+/)) {
+    const score =
+      termScore(name, term) * 30 +
+      termScore(shortName, term) * 20 +
+      termScore(keywords, term) * 8 +
+      termScore(category, term) * 4 +
+      termScore(description, term);
+    if (score === 0) return 0;
+    total += score;
+  }
+  return total;
+}
+
+/** Tools matching the query, best match first; registry order when the query is blank or scores tie. */
+export function searchTools(query: string): Tool[] {
+  if (!query.trim()) return tools;
+  return tools
+    .map((tool, index) => ({ tool, index, score: scoreTool(tool, query) }))
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((r) => r.tool);
 }

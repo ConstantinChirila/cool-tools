@@ -19,6 +19,7 @@ import {
   type CodecId,
   type Direction,
 } from "@/lib/encoding";
+import { ChoiceGroup } from "@/components/calc/choice-group";
 import { cn } from "@/lib/utils";
 
 const SAMPLE = "Hello, wörld! <b>Fish & chips</b> for £5 👋";
@@ -104,30 +105,27 @@ export function EncoderDecoder({
 
   return (
     <div className="space-y-6">
-      <div role="radiogroup" aria-label="Encoding" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 sm:gap-4">
-        {codecs.map((c) => {
-          const selected = c.id === codecId;
-          const style = TILE_STYLE[c.id];
-          return (
-            <button
-              key={c.id}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              onClick={() => pickCodec(c.id)}
-              className={cn(
-                "flex min-h-20 flex-col justify-between gap-2 rounded-2xl border-[2.5px] border-foreground px-4 py-3 text-left transition-transform hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none",
-                selected ? cn("sticker", style.bg, style.tilt) : "bg-card hover:bg-secondary",
-              )}
-            >
-              <span className="font-heading text-lg leading-tight font-extrabold">{c.name}</span>
-              <span className={cn("font-mono text-xs font-bold", selected ? "text-foreground/75" : "text-muted-foreground")}>
-                {c.example}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <ChoiceGroup
+        label="Encoding"
+        value={codecId}
+        onChange={pickCodec}
+        options={codecs.map((c) => ({ ...c, value: c.id }))}
+        className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 sm:gap-4"
+        itemClassName={(selected, c) =>
+          cn(
+            "flex min-h-20 flex-col justify-between gap-2 rounded-2xl border-[2.5px] border-foreground px-4 py-3 text-left transition-transform hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/60",
+            selected ? cn("sticker", TILE_STYLE[c.id].bg, TILE_STYLE[c.id].tilt) : "bg-card hover:bg-secondary",
+          )
+        }
+        renderLabel={(c, selected) => (
+          <>
+            <span className="font-heading text-lg leading-tight font-extrabold">{c.name}</span>
+            <span className={cn("font-mono text-xs font-bold", selected ? "text-foreground/75" : "text-muted-foreground")}>
+              {c.example}
+            </span>
+          </>
+        )}
+      />
 
       <Card>
         <CardContent className="space-y-5">

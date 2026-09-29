@@ -73,10 +73,60 @@ function serialize(v: Primitive): string {
 }
 
 /**
+ * Every tool's last-used inputs, keyed by the path under /tools/, each stored
+ * as the same short query string that goes in the URL (only fields that differ
+ * from their default). One key for the whole site keeps storage tidy as the
+ * number of tools grows.
+ */
+const SAVED_STATE_KEY = "bitsbobs:state";
+
+function toolKey(): string {
+  return window.location.pathname.replace(/^\/tools\//, "").replace(/\/$/, "");
+}
+
+function readSavedStates(): Record<string, string> {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(SAVED_STATE_KEY) ?? "{}");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, string>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveState(key: string, serialized: string) {
+  try {
+    const states = readSavedStates();
+    if (serialized) states[key] = serialized;
+    else delete states[key];
+    if (Object.keys(states).length) localStorage.setItem(SAVED_STATE_KEY, JSON.stringify(states));
+    else localStorage.removeItem(SAVED_STATE_KEY);
+  } catch {
+    // Storage blocked or full: the URL still carries the state for this visit.
+  }
+}
+
+function applyParams(params: URLSearchParams, fields: Record<string, UrlField>): boolean {
+  let applied = false;
+  for (const [key, field] of Object.entries(fields)) {
+    const raw = params.get(key);
+    if (raw === null) continue;
+    const parsed = parse(raw, field);
+    if (parsed === undefined) continue;
+    (field.set as (v: Primitive) => void)(parsed);
+    applied = true;
+  }
+  return applied;
+}
+
+/**
  * Keeps a tool's inputs in the URL so the address bar is always a shareable
- * link. On mount, any recognised query params are applied to state; after
- * that, state changes are written back with replaceState (debounced), and
- * fields at their default value are left out to keep links short.
+ * link, and remembers them in localStorage so the tool reopens as it was left.
+ * On mount, recognised query params are applied to state; a URL with none
+ * falls back to the saved state. After that, state changes are written back
+ * to both (debounced), with fields at their default value left out to keep
+ * links short.
  */
 export function useUrlState(fields: Record<string, UrlField>) {
   // Setters and defaults are stable, so the fields seen on first render are
@@ -85,12 +135,10 @@ export function useUrlState(fields: Record<string, UrlField>) {
   const ready = React.useRef(false);
 
   React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    for (const [key, field] of Object.entries(initial)) {
-      const raw = params.get(key);
-      if (raw === null) continue;
-      const parsed = parse(raw, field);
-      if (parsed !== undefined) (field.set as (v: Primitive) => void)(parsed);
+    const fromUrl = applyParams(new URLSearchParams(window.location.search), initial);
+    if (!fromUrl) {
+      const saved = readSavedStates()[toolKey()];
+      if (saved) applyParams(new URLSearchParams(saved), initial);
     }
     ready.current = true;
   }, [initial]);
@@ -106,6 +154,7 @@ export function useUrlState(fields: Record<string, UrlField>) {
       const { pathname, hash, search } = window.location;
       const next = serialized ? `?${serialized}` : "";
       if (next !== search) window.history.replaceState(null, "", `${pathname}${next}${hash}`);
+      saveState(toolKey(), serialized);
     }, 300);
     return () => window.clearTimeout(id);
   }, [serialized]);

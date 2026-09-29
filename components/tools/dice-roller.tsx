@@ -5,6 +5,7 @@ import { Coins, Dices, RotateCcw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { urlField, useUrlState } from "@/hooks/use-url-state";
 import { rollDie } from "@/lib/dice";
+import { ChoiceGroup } from "@/components/calc/choice-group";
 import { cn } from "@/lib/utils";
 import { DiceCanvas } from "./dice-canvas";
 
@@ -56,28 +57,19 @@ function PillGroup<T extends string>({
   return (
     <div className="space-y-1.5">
       <p className="text-[15px] font-bold">{label}</p>
-      <div role="radiogroup" aria-label={label} className={cn("grid gap-1.5", columns)}>
-        {options.map((opt) => {
-          const active = opt.value === value;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => onChange(opt.value)}
-              className={cn(
-                "h-10 rounded-xl border-[2.5px] border-foreground text-sm font-bold transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-                active
-                  ? "bg-foreground text-background"
-                  : "bg-card hover:-translate-y-0.5 hover:bg-secondary",
-              )}
-            >
-              {opt.label}
-            </button>
-          );
-        })}
-      </div>
+      <ChoiceGroup
+        label={label}
+        value={value}
+        onChange={onChange}
+        options={options}
+        className={cn("grid gap-1.5", columns)}
+        itemClassName={(active) =>
+          cn(
+            "h-10 rounded-xl border-[2.5px] border-foreground text-sm font-bold transition-transform",
+            active ? "bg-foreground text-background" : "bg-card hover:-translate-y-0.5 hover:bg-secondary",
+          )
+        }
+      />
     </div>
   );
 }

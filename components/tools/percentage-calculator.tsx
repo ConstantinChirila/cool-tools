@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
 import { formatNumber } from "@/lib/currency";
 import { calculatePercentage, type PercentDirection, type PercentMode } from "@/lib/percentage";
+import { ChoiceGroup } from "@/components/calc/choice-group";
 import { cn } from "@/lib/utils";
 
 function InlineNumber({
@@ -125,34 +126,32 @@ export function PercentageCalculator() {
 
   return (
     <div className="space-y-6">
-      <div role="radiogroup" aria-label="What do you want to work out" className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-        {MODES.map((m) => {
-          const selected = m.value === mode;
-          return (
-            <button
-              key={m.value}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              onClick={() => setMode(m.value)}
+      <ChoiceGroup
+        label="What do you want to work out"
+        value={mode}
+        onChange={setMode}
+        options={MODES}
+        className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4"
+        itemClassName={(selected, m) =>
+          cn(
+            "flex min-h-24 flex-col justify-between gap-3 rounded-2xl border-[2.5px] border-foreground px-4 py-4 text-left transition-transform hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/60",
+            selected ? cn("sticker", m.bg, m.tilt) : "bg-card hover:bg-secondary",
+          )
+        }
+        renderLabel={(m, selected) => (
+          <>
+            <span className="font-heading text-lg leading-tight font-extrabold sm:text-xl">{m.title}</span>
+            <span
               className={cn(
-                "flex min-h-24 flex-col justify-between gap-3 rounded-2xl border-[2.5px] border-foreground px-4 py-4 text-left transition-transform hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none",
-                selected ? cn("sticker", m.bg, m.tilt) : "bg-card hover:bg-secondary",
+                "w-fit max-w-full truncate rounded-full border-2 px-2.5 py-0.5 font-mono text-xs font-bold",
+                selected ? "border-foreground/30 bg-card/60 text-foreground" : "border-foreground/15 text-muted-foreground",
               )}
             >
-              <span className="font-heading text-lg leading-tight font-extrabold sm:text-xl">{m.title}</span>
-              <span
-                className={cn(
-                  "w-fit max-w-full truncate rounded-full border-2 px-2.5 py-0.5 font-mono text-xs font-bold",
-                  selected ? "border-foreground/30 bg-card/60 text-foreground" : "border-foreground/15 text-muted-foreground",
-                )}
-              >
-                {m.example}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+              {m.example}
+            </span>
+          </>
+        )}
+      />
 
       <Card>
         <CardContent className="space-y-7 py-8">

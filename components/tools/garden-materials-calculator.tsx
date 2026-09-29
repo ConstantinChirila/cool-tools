@@ -4,6 +4,7 @@ import { Plus, SlidersHorizontal, X } from "lucide-react";
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Callout } from "@/components/calc/callout";
+import { ChoiceGroup } from "@/components/calc/choice-group";
 import { CurrencySelect } from "@/components/calc/currency-select";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { NumberField } from "@/components/calc/number-field";
@@ -174,27 +175,25 @@ function price(v: number, money: Money): string {
 
 function MaterialTabs({ value, onChange }: { value: Material; onChange: (m: Material) => void }) {
   return (
-    <div role="radiogroup" aria-label="Material" className="grid grid-cols-3 gap-2.5 sm:grid-cols-6">
-      {MATERIALS.map((m) => {
-        const active = m === value;
-        return (
-          <button
-            key={m}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            onClick={() => onChange(m)}
-            className={cn(
-              "flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-[15px] font-bold transition-transform focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
-              active ? "sticker-sm -translate-y-0.5 bg-mint" : "border-2 border-foreground bg-card hover:-translate-y-0.5",
-            )}
-          >
-            <Swatch material={m} className="size-7" />
-            {MATERIAL_INFO[m].label}
-          </button>
-        );
-      })}
-    </div>
+    <ChoiceGroup
+      label="Material"
+      value={value}
+      onChange={onChange}
+      options={MATERIALS.map((m) => ({ value: m }))}
+      className="grid grid-cols-3 gap-2.5 sm:grid-cols-6"
+      itemClassName={(active) =>
+        cn(
+          "flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-[15px] font-bold transition-transform",
+          active ? "sticker-sm -translate-y-0.5 bg-mint" : "border-2 border-foreground bg-card hover:-translate-y-0.5",
+        )
+      }
+      renderLabel={({ value: m }) => (
+        <>
+          <Swatch material={m} className="size-7" />
+          {MATERIAL_INFO[m].label}
+        </>
+      )}
+    />
   );
 }
 
@@ -356,23 +355,20 @@ function Depth({ material, settings, units, onChange }: { material: Material; se
       <h3 id="gm-depth" className="text-[15px] font-bold">
         What&apos;s it for?
       </h3>
-      <div role="radiogroup" aria-label="Job" className="flex flex-wrap gap-2">
-        {info.jobs.map((j) => (
-          <button
-            key={j.id}
-            type="button"
-            role="radio"
-            aria-checked={j.id === job.id}
-            onClick={() => onChange({ job: j.id, depth: j.depth })}
-            className={togglePillClass(j.id === job.id)}
-          >
+      <ChoiceGroup
+        label="Job"
+        value={job.id}
+        onChange={(id) => onChange({ job: id, depth: jobFor(material, id).depth })}
+        options={info.jobs.map((j) => ({ ...j, value: j.id }))}
+        className="flex flex-wrap gap-2"
+        itemClassName={(active) => togglePillClass(active)}
+        renderLabel={(j, active) => (
+          <>
             {j.label}
-            <span className={cn("font-mono text-xs", j.id === job.id ? "text-background/70" : "text-muted-foreground")}>
-              {depthRange(j, units)}
-            </span>
-          </button>
-        ))}
-      </div>
+            <span className={cn("font-mono text-xs", active ? "text-background/70" : "text-muted-foreground")}>{depthRange(j, units)}</span>
+          </>
+        )}
+      />
       <p className="text-xs font-semibold text-muted-foreground">{job.hint}</p>
 
       <CrossSection
