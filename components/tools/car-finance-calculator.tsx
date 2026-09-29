@@ -14,7 +14,7 @@ import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat } from "@/components/calc/stat";
 import { GrowthChart } from "@/components/charts/growth-chart";
 import { useCurrency } from "@/hooks/use-currency";
-import { MONEY_RANGE, PERCENT_RANGE, useUrlState, urlField, type NumberRange } from "@/hooks/use-url-state";
+import { MONEY_RANGE, PERCENT_RANGE, inputFields, useUrlState, urlField, type FieldUpdate, type NumberRange } from "@/hooks/use-url-state";
 import {
   FINANCE_INFO,
   FINANCE_KINDS,
@@ -80,9 +80,7 @@ const COLORS: Record<FinanceKind, string> = {
 };
 
 type Money = (v: number, decimals?: number) => string;
-type Update = <K extends keyof CarFinanceInput>(key: K, value: CarFinanceInput[K]) => void;
-/** The CarFinanceInput fields that hold numbers, so the URL binding needs no casts. */
-type NumericKey = { [K in keyof CarFinanceInput]: CarFinanceInput[K] extends number ? K : never }[keyof CarFinanceInput];
+type Update = FieldUpdate<CarFinanceInput>;
 
 const months = (n: number) => `${n} ${n === 1 ? "month" : "months"}`;
 
@@ -97,28 +95,26 @@ export function CarFinanceCalculator() {
 
   const update: Update = (key, value) => setInput((prev) => ({ ...prev, [key]: value }));
 
-  const num = (key: NumericKey, urlKey: string, range: NumberRange) => ({
-    [urlKey]: urlField(input[key], (v: number) => update(key, v), DEFAULT_INPUT[key], undefined, range),
-  });
+  const field = inputFields(input, update, DEFAULT_INPUT);
 
   useUrlState({
-    ...num("price", "price", MONEY_RANGE),
-    ...num("deposit", "deposit", MONEY_RANGE),
-    ...num("dealerContribution", "contribution", MONEY_RANGE),
-    ...num("termMonths", "term", TERM_RANGE),
-    ...num("apr", "apr", APR_RANGE),
-    ...num("loanApr", "loanApr", APR_RANGE),
-    ...num("resalePct", "resale", PERCENT_RANGE),
-    ...num("gmfvPct", "gmfv", PERCENT_RANGE),
-    ...num("adminFee", "admin", MONEY_RANGE),
-    ...num("optionFee", "option", MONEY_RANGE),
-    ...num("leaseMonthly", "lease", MONEY_RANGE),
-    ...num("leaseInitial", "initial", { min: 1, max: 12 }),
-    ...num("leaseFee", "leaseFee", MONEY_RANGE),
-    ...num("milesPerYear", "miles", MILES_RANGE),
-    ...num("mileageAllowance", "allowance", MILES_RANGE),
-    ...num("excessPerMile", "excess", { min: 0, max: 10 }),
-    end: urlField(input.pcpEnd, (v: string) => update("pcpEnd", v as PcpEnd), "handBack", ["handBack", "keep"]),
+    price: field("price", { range: MONEY_RANGE }),
+    deposit: field("deposit", { range: MONEY_RANGE }),
+    contribution: field("dealerContribution", { range: MONEY_RANGE }),
+    term: field("termMonths", { range: TERM_RANGE }),
+    apr: field("apr", { range: APR_RANGE }),
+    loanApr: field("loanApr", { range: APR_RANGE }),
+    resale: field("resalePct", { range: PERCENT_RANGE }),
+    gmfv: field("gmfvPct", { range: PERCENT_RANGE }),
+    admin: field("adminFee", { range: MONEY_RANGE }),
+    option: field("optionFee", { range: MONEY_RANGE }),
+    lease: field("leaseMonthly", { range: MONEY_RANGE }),
+    initial: field("leaseInitial", { range: { min: 1, max: 12 } }),
+    leaseFee: field("leaseFee", { range: MONEY_RANGE }),
+    miles: field("milesPerYear", { range: MILES_RANGE }),
+    allowance: field("mileageAllowance", { range: MILES_RANGE }),
+    excess: field("excessPerMile", { range: { min: 0, max: 10 } }),
+    end: field("pcpEnd", { allowed: ["handBack", "keep"] }),
     compare: urlField(basis, (v: string) => setBasis(v as CompareBasis), "net", BASIS_OPTIONS.map((o) => o.value)),
     view: urlField(view, (v: string) => setView(v as FinanceKind), "pcp", FINANCE_KINDS),
     autoResale: urlField(autoResale, setAutoResale, true),

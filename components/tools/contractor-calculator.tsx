@@ -14,7 +14,7 @@ import { HeroStat, Stat } from "@/components/calc/stat";
 import { SwitchField } from "@/components/calc/switch-field";
 import { TaxYearSelect } from "@/components/calc/tax-year-select";
 import { GrowthChart } from "@/components/charts/growth-chart";
-import { MONEY_RANGE, PERCENT_RANGE, useUrlState, urlField, type NumberRange } from "@/hooks/use-url-state";
+import { MONEY_RANGE, PERCENT_RANGE, inputFields, useUrlState, urlField, type FieldUpdate, type NumberRange } from "@/hooks/use-url-state";
 import {
   MAX_DAY_RATE,
   ROUTE_INFO,
@@ -35,7 +35,7 @@ import {
   type ScenarioResult,
 } from "@/lib/contractor";
 import { formatGbp as money, formatMoney } from "@/lib/currency";
-import { DEFAULT_TAX_YEAR, TAX_YEARS, type TaxYear } from "@/lib/uk-tax";
+import { DEFAULT_TAX_YEAR, TAX_YEARS } from "@/lib/uk-tax";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_INPUT: ContractorInput = {
@@ -95,35 +95,31 @@ export function ContractorCalculator() {
   // Until you type your own figure, the contractor pension follows the job's, so the pots stay level.
   const [matchPension, setMatchPension] = React.useState(true);
 
-  const update = <K extends keyof ContractorInput>(key: K, value: ContractorInput[K]) =>
-    setInput((prev) => ({ ...prev, [key]: value }));
-
-  const num = (key: NumericKey, urlKey: string, range: NumberRange) => ({
-    [urlKey]: urlField(input[key], (v: number) => update(key, v), DEFAULT_INPUT[key], undefined, range),
-  });
+  const update: Update = (key, value) => setInput((prev) => ({ ...prev, [key]: value }));
+  const field = inputFields(input, update, DEFAULT_INPUT);
 
   useUrlState({
-    ...num("dayRate", "rate", DAY_RATE_RANGE),
-    ...num("daysPerWeek", "dpw", { min: 3, max: 5 }),
-    ...num("holidayDays", "hol", DAYS_RANGE),
-    ...num("bankHolidays", "bank", DAYS_RANGE),
-    ...num("sickDays", "sick", DAYS_RANGE),
-    ...num("benchDays", "bench", DAYS_RANGE),
-    ...num("expenses", "exp", MONEY_RANGE),
-    ...num("ltdCosts", "ltdCosts", MONEY_RANGE),
-    ...num("soleTraderCosts", "soleCosts", MONEY_RANGE),
-    ...num("directorSalary", "dirSalary", MONEY_RANGE),
-    ...num("umbrellaMargin", "margin", MONEY_RANGE),
-    ...num("contractorPension", "pension", MONEY_RANGE),
-    ...num("permSalary", "salary", MONEY_RANGE),
-    ...num("permBonus", "bonus", MONEY_RANGE),
-    ...num("permEmployeePension", "eePension", PERCENT_RANGE),
-    ...num("permEmployerPension", "erPension", PERCENT_RANGE),
-    ...num("permBenefits", "benefits", MONEY_RANGE),
-    levy: urlField(input.apprenticeshipLevy, (v: boolean) => update("apprenticeshipLevy", v), true),
-    sacrifice: urlField(input.permSacrifice, (v: boolean) => update("permSacrifice", v), false),
-    scotland: urlField(input.scotland, (v: boolean) => update("scotland", v), false),
-    year: urlField(input.taxYear, (v: string) => update("taxYear", v as TaxYear), DEFAULT_INPUT.taxYear, Object.keys(TAX_YEARS)),
+    rate: field("dayRate", { range: DAY_RATE_RANGE }),
+    dpw: field("daysPerWeek", { range: { min: 3, max: 5 } }),
+    hol: field("holidayDays", { range: DAYS_RANGE }),
+    bank: field("bankHolidays", { range: DAYS_RANGE }),
+    sick: field("sickDays", { range: DAYS_RANGE }),
+    bench: field("benchDays", { range: DAYS_RANGE }),
+    exp: field("expenses", { range: MONEY_RANGE }),
+    ltdCosts: field("ltdCosts", { range: MONEY_RANGE }),
+    soleCosts: field("soleTraderCosts", { range: MONEY_RANGE }),
+    dirSalary: field("directorSalary", { range: MONEY_RANGE }),
+    margin: field("umbrellaMargin", { range: MONEY_RANGE }),
+    pension: field("contractorPension", { range: MONEY_RANGE }),
+    salary: field("permSalary", { range: MONEY_RANGE }),
+    bonus: field("permBonus", { range: MONEY_RANGE }),
+    eePension: field("permEmployeePension", { range: PERCENT_RANGE }),
+    erPension: field("permEmployerPension", { range: PERCENT_RANGE }),
+    benefits: field("permBenefits", { range: MONEY_RANGE }),
+    levy: field("apprenticeshipLevy"),
+    sacrifice: field("permSacrifice"),
+    scotland: field("scotland"),
+    year: field("taxYear", { allowed: Object.keys(TAX_YEARS) }),
     compare: urlField(basis, (v: string) => setBasis(v as CompareBasis), "package", BASIS_OPTIONS.map((o) => o.value)),
     view: urlField(view, (v: string) => setView(v as Scenario), "ltd", SCENARIOS),
     matchPension: urlField(matchPension, setMatchPension, true),
@@ -153,10 +149,7 @@ export function ContractorCalculator() {
   );
 }
 
-/** The ContractorInput fields that hold numbers, so the URL binding needs no casts. */
-type NumericKey = { [K in keyof ContractorInput]: ContractorInput[K] extends number ? K : never }[keyof ContractorInput];
-
-type Update = <K extends keyof ContractorInput>(key: K, value: ContractorInput[K]) => void;
+type Update = FieldUpdate<ContractorInput>;
 
 function ContractorInputs({
   input,

@@ -17,13 +17,12 @@ import { TaxYearSelect } from "@/components/calc/tax-year-select";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { SwitchField } from "@/components/calc/switch-field";
 import { SplitBar } from "@/components/charts/split-bar";
-import { MONEY_RANGE, PERCENT_RANGE, useUrlState, urlField, type NumberRange } from "@/hooks/use-url-state";
+import { MONEY_RANGE, PERCENT_RANGE, inputFields, useUrlState, type FieldUpdate, type NumberRange } from "@/hooks/use-url-state";
 import { formatGbp as money, formatPercent as pct } from "@/lib/currency";
 import {
   BONUS_FREQUENCIES,
   compareSacrifice,
   type BonusInput,
-  type BonusPayFrequency,
   type BonusResult,
   type SacrificeComparison,
 } from "@/lib/uk-bonus";
@@ -34,8 +33,6 @@ import {
   STUDENT_PLANS,
   TAX_YEARS,
   type PensionType,
-  type StudentPlan,
-  type TaxYear,
   type UkSalaryInput,
 } from "@/lib/uk-tax";
 import { cn } from "@/lib/utils";
@@ -114,39 +111,24 @@ function Outcome({
 export function BonusTaxCalculator() {
   const [input, setInput] = React.useState<BonusInput>(DEFAULT_INPUT);
 
-  const update = <K extends keyof BonusInput>(key: K, value: BonusInput[K]) =>
-    setInput((prev) => ({ ...prev, [key]: value }));
+  const update: FieldUpdate<BonusInput> = (key, value) => setInput((prev) => ({ ...prev, [key]: value }));
+  const field = inputFields(input, update, DEFAULT_INPUT);
 
   useUrlState({
-    salary: urlField(input.salary, (v: number) => update("salary", v), DEFAULT_INPUT.salary, undefined, MONEY_RANGE),
-    bonus: urlField(input.bonus, (v: number) => update("bonus", v), DEFAULT_INPUT.bonus, undefined, MONEY_RANGE),
-    year: urlField(input.taxYear, (v: string) => update("taxYear", v as TaxYear), DEFAULT_INPUT.taxYear, Object.keys(TAX_YEARS)),
-    paid: urlField(
-      input.frequency,
-      (v: string) => update("frequency", v as BonusPayFrequency),
-      DEFAULT_INPUT.frequency,
-      BONUS_FREQUENCIES.map((f) => f.value),
-    ),
-    scotland: urlField(input.scotland, (v: boolean) => update("scotland", v), false),
-    code: urlField(input.taxCode, (v: string) => update("taxCode", v), ""),
-    loan: urlField(
-      input.studentPlan,
-      (v: string) => update("studentPlan", v as StudentPlan),
-      DEFAULT_INPUT.studentPlan,
-      STUDENT_PLANS.map((p) => p.value),
-    ),
-    postgrad: urlField(input.postgradLoan, (v: boolean) => update("postgradLoan", v), false),
-    pension: urlField(
-      input.pensionType,
-      (v: string) => update("pensionType", v as PensionType),
-      DEFAULT_INPUT.pensionType,
-      PENSION_OPTIONS.map((p) => p.value),
-    ),
-    pensionPct: urlField(input.pensionPct, (v: number) => update("pensionPct", v), DEFAULT_INPUT.pensionPct, undefined, PENSION_PCT_RANGE),
-    pensionOnBonus: urlField(input.pensionOnBonus, (v: boolean) => update("pensionOnBonus", v), false),
-    sacrifice: urlField(input.sacrificePct, (v: number) => update("sacrificePct", v), 0, undefined, PERCENT_RANGE),
-    director: urlField(input.director, (v: boolean) => update("director", v), false),
-    noNi: urlField(input.noNi, (v: boolean) => update("noNi", v), false),
+    salary: field("salary", { range: MONEY_RANGE }),
+    bonus: field("bonus", { range: MONEY_RANGE }),
+    year: field("taxYear", { allowed: Object.keys(TAX_YEARS) }),
+    paid: field("frequency", { allowed: BONUS_FREQUENCIES.map((f) => f.value) }),
+    scotland: field("scotland"),
+    code: field("taxCode"),
+    loan: field("studentPlan", { allowed: STUDENT_PLANS.map((p) => p.value) }),
+    postgrad: field("postgradLoan"),
+    pension: field("pensionType", { allowed: PENSION_OPTIONS.map((p) => p.value) }),
+    pensionPct: field("pensionPct", { range: PENSION_PCT_RANGE }),
+    pensionOnBonus: field("pensionOnBonus"),
+    sacrifice: field("sacrificePct", { range: PERCENT_RANGE }),
+    director: field("director"),
+    noNi: field("noNi"),
   });
 
   const comparison = React.useMemo(() => compareSacrifice(input), [input]);

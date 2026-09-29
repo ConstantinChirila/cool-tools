@@ -33,7 +33,7 @@ import { HeroStat, Stat } from "@/components/calc/stat";
 import { SwitchField } from "@/components/calc/switch-field";
 import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
-import { MONEY_RANGE as MONEY, useUrlState, urlField, type NumberRange, type UrlField } from "@/hooks/use-url-state";
+import { MONEY_RANGE as MONEY, inputFields, useUrlState, urlField, type NumberRange } from "@/hooks/use-url-state";
 import { formatGbp as money, formatMoney, formatPercent } from "@/lib/currency";
 import {
   calculateUkSalary,
@@ -146,22 +146,6 @@ const NUMBER_RANGES: Partial<Record<keyof UkSalaryInput, NumberRange>> = {
   postTaxDeduction: MONEY,
 };
 
-/**
- * Binds one UkSalaryInput field to the URL. urlField's generic can't prove
- * that a dynamic key's value type satisfies Primitive, even though every
- * UkSalaryInput field actually is a string, number or boolean, so the casts
- * below are the contained escape hatch for that.
- */
-function bindInputField<K extends keyof UkSalaryInput>(
-  key: K,
-  input: UkSalaryInput,
-  update: <K2 extends keyof UkSalaryInput>(key: K2, value: UkSalaryInput[K2]) => void,
-): UrlField {
-  const value = input[key] as string | number | boolean;
-  const def = DEFAULT_INPUT[key] as string | number | boolean;
-  const set = (v: string | number | boolean) => update(key, v as UkSalaryInput[K]);
-  return urlField(value, set, def, ALLOWED_VALUES[key], NUMBER_RANGES[key]);
-}
 
 /* ------------------------------------------------------------------ */
 /* Main component                                                       */
@@ -178,11 +162,13 @@ export function UkSalaryCalculator() {
     [],
   );
 
+  const field = inputFields(input, update, DEFAULT_INPUT);
+
   useUrlState({
     ...Object.fromEntries(
       (Object.keys(DEFAULT_INPUT) as (keyof UkSalaryInput)[]).map((key) => [
         key,
-        bindInputField(key, input, update),
+        field(key, { allowed: ALLOWED_VALUES[key], range: NUMBER_RANGES[key] }),
       ]),
     ),
     view: urlField(

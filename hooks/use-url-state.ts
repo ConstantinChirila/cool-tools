@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-type Primitive = string | number | boolean;
+export type Primitive = string | number | boolean;
 
 export interface UrlField {
   value: Primitive;
@@ -33,6 +33,25 @@ export function urlField<T extends Primitive>(
   range?: NumberRange,
 ): UrlField {
   return { value, set, def, allowed, range };
+}
+
+/** The setter of a tool that keeps all its inputs in one state object. */
+export type FieldUpdate<T> = <K extends keyof T>(key: K, value: T[K]) => void;
+
+/**
+ * URL fields for a tool that keeps its inputs in one object: returns a
+ * function that binds a key, with `allowed` for string unions and `range`
+ * for numbers.
+ */
+export function inputFields<T extends { [K in keyof T]: Primitive }>(input: T, update: FieldUpdate<T>, defaults: T) {
+  return <K extends keyof T>(key: K, opts: { allowed?: readonly string[]; range?: NumberRange } = {}): UrlField => ({
+    value: input[key],
+    // Values from the URL are checked against `allowed` and `range` before they get here.
+    set: (v: T[K]) => update(key, v),
+    def: defaults[key],
+    allowed: opts.allowed,
+    range: opts.range,
+  });
 }
 
 function parse(raw: string, field: UrlField): Primitive | undefined {
