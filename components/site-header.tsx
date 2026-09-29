@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { LogoMark, Wordmark } from "@/components/logo";
 import { openCommandPalette } from "@/components/command-palette-events";
 
 export function SiteHeader() {
+  // The homepage already lists every tool, so the link would go nowhere new.
+  const isHome = usePathname() === "/";
+
   return (
     <header className="glass sticky top-0 z-40">
       <div className="mx-auto flex h-[76px] w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
@@ -21,12 +25,14 @@ export function SiteHeader() {
         </Link>
 
         <nav className="flex items-center gap-2 text-sm font-bold">
-          <Link
-            href="/"
-            className="hidden h-11 items-center rounded-full border-[2.5px] border-foreground bg-card px-4 transition-transform hover:-translate-y-0.5 sm:flex"
-          >
-            All tools
-          </Link>
+          {!isHome && (
+            <Link
+              href="/"
+              className="hidden h-11 items-center rounded-full border-[2.5px] border-foreground bg-card px-4 transition-transform hover:-translate-y-0.5 sm:flex"
+            >
+              All tools
+            </Link>
+          )}
           <button
             type="button"
             onClick={openCommandPalette}
