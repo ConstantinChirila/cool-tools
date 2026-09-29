@@ -64,13 +64,8 @@ const INPUT_PERIODS: { value: InputPeriod; label: string }[] = [
   { value: "hour", label: "Hour" },
 ];
 
-const VIEW_PERIODS: { value: PayPeriod; label: string }[] = [
-  { value: "year", label: "Year" },
-  { value: "month", label: "Month" },
-  { value: "week", label: "Week" },
-  { value: "day", label: "Day" },
-  { value: "hour", label: "Hour" },
-];
+/** Results show the same periods you can enter a salary in. */
+const VIEW_PERIODS: { value: PayPeriod; label: string }[] = INPUT_PERIODS;
 
 const SALARY_RANGE: Record<InputPeriod, { max: number; step: number; sliderStep: number; decimals: number }> = {
   year: { max: 300_000, step: 100, sliderStep: 500, decimals: 0 },
