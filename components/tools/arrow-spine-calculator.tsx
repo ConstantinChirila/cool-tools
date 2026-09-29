@@ -4,6 +4,7 @@ import * as React from "react";
 import { MoveDown, MoveUp, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
+import { TogglePill } from "@/components/calc/pill-button";
 import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
@@ -153,18 +154,9 @@ export function ArrowSpineCalculator() {
                 />
                 <div className="flex gap-2">
                   {POINT_PRESETS.map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => setNewPoint(preset)}
-                      className={`h-9 flex-1 rounded-full border-2 text-sm font-bold transition-colors ${
-                        newPoint === preset
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-foreground bg-card text-foreground hover:bg-secondary"
-                      }`}
-                    >
+                    <TogglePill key={preset} pressed={newPoint === preset} onPressedChange={() => setNewPoint(preset)} className="flex-1 justify-center">
                       {preset} gr
-                    </button>
+                    </TogglePill>
                   ))}
                 </div>
               </div>
