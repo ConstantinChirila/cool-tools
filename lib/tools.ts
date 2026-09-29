@@ -20,6 +20,7 @@ import {
   TrainFront,
   TrendingUp,
   Tv,
+  Umbrella,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -194,6 +195,23 @@ export const tools: Tool[] = [
       title: "UK Inflation Calculator: Then vs Now (CPI & RPI)",
       description:
         "See what money from any year since 1800 is worth today using ONS CPI and RPI data, check if your pay has kept up with inflation, and project future prices.",
+    },
+    updated: "2026-09-29",
+  },
+  {
+    slug: "emergency-fund-calculator",
+    name: "Emergency Fund Calculator",
+    shortName: "Emergency Fund",
+    description:
+      "How long your savings would last if your pay stopped, at normal spending and cut back to essentials, and how long it takes to build a safety net.",
+    category: "Finance",
+    icon: Umbrella,
+    keywords: ["emergency fund", "emergency savings", "rainy day fund", "safety net", "runway", "financial runway", "how long will my savings last", "savings last", "job loss", "redundancy", "unemployment", "laid off", "essential spending", "budget", "months of expenses", "3 months", "6 months", "jsa", "jobseeker's allowance", "universal credit", "cushion", "buffer"],
+    tint: "var(--sticker-mint)",
+    seo: {
+      title: "Emergency Fund Calculator: How Long Would Savings Last?",
+      description:
+        "See how many months your savings would last if your income stopped, with essentials-only spending, redundancy pay and JSA, plus how long to build a 3 to 6 month fund.",
     },
     updated: "2026-09-29",
   },

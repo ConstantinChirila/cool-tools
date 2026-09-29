@@ -32,6 +32,16 @@
       "due": "2026-10-29"
     },
     {
+      "id": "uk-benefits",
+      "what": "New Style JSA weekly rates and Universal Credit savings limits used by the emergency fund calculator",
+      "tools": ["emergency-fund-calculator"],
+      "files": ["lib/emergency-fund.ts (JSA, UC_CAPITAL)", "lib/emergency-fund.test.ts", "content/emergency-fund-calculator.ts"],
+      "sources": ["https://www.gov.uk/jobseekers-allowance/what-youll-get", "https://www.gov.uk/guidance/universal-credit-money-savings-and-investments"],
+      "when": "Benefit rates are uprated every April; the new rates are announced in the autumn",
+      "lastChecked": "2026-09-29",
+      "due": "2027-04-10"
+    },
+    {
       "id": "inflation-data",
       "what": "ONS CPI and long-run RPI indices; run `pnpm data:inflation` and check the diff and the guide's numbers",
       "tools": ["inflation-calculator"],
