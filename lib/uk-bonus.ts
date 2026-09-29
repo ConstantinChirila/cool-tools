@@ -18,6 +18,7 @@ import {
   PERIOD_INFO,
   TAX_YEARS,
   calculateUkSalaryBase,
+  employeeNiOn,
   employerNiOn,
   periodsPerYear,
   type BandResult,
@@ -126,10 +127,8 @@ function niThresholds(taxYear: TaxYear, frequency: BonusPayFrequency) {
 }
 
 function periodNi(pay: number, taxYear: TaxYear, frequency: BonusPayFrequency) {
-  const { mainRate, upperRate } = TAX_YEARS[taxYear].ni;
   const { primary, upper } = niThresholds(taxYear, frequency);
-  const main = Math.min(Math.max(pay - primary, 0), upper - primary);
-  return main * mainRate + Math.max(pay - upper, 0) * upperRate;
+  return employeeNiOn({ ...TAX_YEARS[taxYear].ni, primaryThreshold: primary, upperEarningsLimit: upper }, pay);
 }
 
 function salaryInput(input: BonusInput, bonus: number): UkSalaryInput {
