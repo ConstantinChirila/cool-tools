@@ -2,7 +2,9 @@
 
 import { TogglePill } from "@/components/calc/pill-button";
 import { SliderField } from "@/components/calc/slider-field";
+import type { YearlyColumn } from "@/components/charts/yearly-table";
 import type { NumberRange } from "@/hooks/use-url-state";
+import type { AmortizationYear } from "@/lib/finance";
 
 /** Bounds shared by the mortgage tools' inputs and their URL fields. */
 export const LOAN_RANGES = {
@@ -17,6 +19,15 @@ export const LOAN_DEFAULTS = { amount: 250_000, rate: 4.5, term: 25 };
 const AMOUNT_SLIDER_MAX = 1_500_000;
 
 const TERM_PRESETS = [15, 20, 25, 30];
+
+/** The mortgage tools' yearly table: what each year's payments went on. */
+export function loanYearColumns(money: (v: number) => string): YearlyColumn<AmortizationYear>[] {
+  return [
+    { label: "Interest", value: (r) => money(r.interestPaid) },
+    { label: "Principal", value: (r) => money(r.principalPaid) },
+    { label: "Balance", value: (r) => money(r.balance) },
+  ];
+}
 
 interface LoanFieldsProps {
   /** Prefix for the input ids, so two tools on one page never collide. */

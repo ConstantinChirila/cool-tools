@@ -11,7 +11,7 @@ interface ChartSeries {
   area?: boolean;
 }
 
-interface GrowthChartProps {
+export interface GrowthChartProps {
   series: ChartSeries[];
   /** Label for x position i (e.g. "Year 5"). */
   xLabel: (index: number) => string;

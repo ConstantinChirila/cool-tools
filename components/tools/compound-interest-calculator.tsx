@@ -10,14 +10,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CurrencySelect } from "@/components/calc/currency-select";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
-import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
-import { YearlyTable } from "@/components/charts/yearly-table";
+import { YearlyChartCard } from "@/components/charts/yearly-chart-card";
 import { useCurrency } from "@/hooks/use-currency";
 import { MONEY_RANGE, useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateCompound } from "@/lib/finance";
@@ -182,56 +180,34 @@ export function CompoundInterestCalculator() {
         </div>
       </div>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base">Growth over time</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="chart">
-            <TabsList className="mb-4">
-              <TabsTrigger value="chart">Chart</TabsTrigger>
-              <TabsTrigger value="table">Yearly breakdown</TabsTrigger>
-            </TabsList>
-            <TabsContent value="chart">
-              <GrowthChart
-                series={[
-                  {
-                    name: "Balance",
-                    color: "var(--chart-1)",
-                    values: result.balanceSeries,
-                    area: true,
-                  },
-                  {
-                    name: "Contributed",
-                    color: "var(--chart-neutral)",
-                    values: result.contributedSeries,
-                  },
-                ]}
-                xLabel={(i) => (i === 0 ? "Start" : `Year ${i}`)}
-                xTick={(i) => (i === 0 ? "0" : `${i}y`)}
-                formatValue={(v) => money(v)}
-                formatAxis={axis}
-                extraRow={(i) => ({
-                  name: "Interest",
-                  value: money(
-                    (result.balanceSeries[i] ?? 0) - (result.contributedSeries[i] ?? 0),
-                  ),
-                })}
-              />
-            </TabsContent>
-            <TabsContent value="table">
-              <YearlyTable
-                rows={result.years}
-                columns={[
-                  { label: "Contributed", value: (r) => money(r.contributed) },
-                  { label: "Interest this year", value: (r) => money(r.interestThisYear) },
-                  { label: "Balance", value: (r) => money(r.balance) },
-                ]}
-              />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+      <YearlyChartCard
+        title="Growth over time"
+        series={[
+          {
+            name: "Balance",
+            color: "var(--chart-1)",
+            values: result.balanceSeries,
+            area: true,
+          },
+          {
+            name: "Contributed",
+            color: "var(--chart-neutral)",
+            values: result.contributedSeries,
+          },
+        ]}
+        formatValue={(v) => money(v)}
+        formatAxis={axis}
+        extraRow={(i) => ({
+          name: "Interest",
+          value: money((result.balanceSeries[i] ?? 0) - (result.contributedSeries[i] ?? 0)),
+        })}
+        rows={result.years}
+        columns={[
+          { label: "Contributed", value: (r) => money(r.contributed) },
+          { label: "Interest this year", value: (r) => money(r.interestThisYear) },
+          { label: "Balance", value: (r) => money(r.balance) },
+        ]}
+      />
 
       <MobileResultBar
         label={`Balance after ${years}y`}

@@ -4,16 +4,14 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Callout } from "@/components/calc/callout";
 import { CurrencySelect } from "@/components/calc/currency-select";
-import { LOAN_DEFAULTS, LOAN_RANGES, LoanFields } from "@/components/calc/loan-fields";
+import { LOAN_DEFAULTS, LOAN_RANGES, LoanFields, loanYearColumns } from "@/components/calc/loan-fields";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { NumberField } from "@/components/calc/number-field";
 import { PillLink } from "@/components/calc/pill-button";
 import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
-import { GrowthChart } from "@/components/charts/growth-chart";
 import { SplitBar } from "@/components/charts/split-bar";
-import { YearlyTable } from "@/components/charts/yearly-table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { YearlyChartCard } from "@/components/charts/yearly-chart-card";
 import { useCurrency } from "@/hooks/use-currency";
 import { MONEY_RANGE, useUrlState, urlField } from "@/hooks/use-url-state";
 import { calculateMortgage } from "@/lib/finance";
@@ -178,50 +176,26 @@ export function MortgageOverpaymentCalculator() {
         </div>
       </div>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base">Over the life of the loan</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="chart">
-            <TabsList className="mb-4">
-              <TabsTrigger value="chart">Chart</TabsTrigger>
-              <TabsTrigger value="table">Yearly breakdown</TabsTrigger>
-            </TabsList>
-            <TabsContent value="chart">
-              <GrowthChart
-                series={[
-                  {
-                    name: "Balance without overpaying",
-                    color: "var(--chart-3)",
-                    values: balanceWithout,
-                  },
-                  {
-                    name: "Balance with overpaying",
-                    color: "var(--chart-2)",
-                    values: balanceWith,
-                    area: true,
-                  },
-                ]}
-                xLabel={(i) => (i === 0 ? "Start" : `Year ${i}`)}
-                xTick={(i) => (i === 0 ? "0" : `${i}y`)}
-                formatValue={(v) => money(v)}
-                formatAxis={axis}
-              />
-            </TabsContent>
-            <TabsContent value="table">
-              <YearlyTable
-                rows={over.years}
-                columns={[
-                  { label: "Interest", value: (r) => money(r.interestPaid) },
-                  { label: "Principal", value: (r) => money(r.principalPaid) },
-                  { label: "Balance", value: (r) => money(r.balance) },
-                ]}
-              />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+      <YearlyChartCard
+        title="Over the life of the loan"
+        series={[
+          {
+            name: "Balance without overpaying",
+            color: "var(--chart-3)",
+            values: balanceWithout,
+          },
+          {
+            name: "Balance with overpaying",
+            color: "var(--chart-2)",
+            values: balanceWith,
+            area: true,
+          },
+        ]}
+        formatValue={(v) => money(v)}
+        formatAxis={axis}
+        rows={over.years}
+        columns={loanYearColumns(money)}
+      />
 
       <MobileResultBar label="Interest saved" value={money(interestSaved)} />
     </>

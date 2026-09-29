@@ -1,7 +1,7 @@
 /** Longest term either schedule will simulate, whatever the caller asks for. */
 const MAX_TERM_YEARS = 100;
 
-interface AmortizationYear {
+export interface AmortizationYear {
   year: number;
   interestPaid: number;
   principalPaid: number;
