@@ -73,7 +73,7 @@ export const MATERIAL_INFO: Record<Material, MaterialInfo> = {
     densityNote: "screened and damp",
     extraHint: "Loose topsoil settles by 10–15% once firmed, so 15% extra is usual.",
     jobs: [
-      { id: "dressing", label: "Lawn top dressing", min: 1, max: 2.5, depth: 1.5, hint: "A thin layer brushed into the grass." },
+      { id: "dressing", label: "Lawn top dressing", min: 0.2, max: 0.2, depth: 0.2, hint: "The RHS spreads 2–3 kg/m², about a shovelful: only 2 mm or so, brushed in so the grass shows through." },
       { id: "lawn", label: "New lawn", min: 10, max: 15, depth: 12.5, hint: "The RHS says at least 10 cm under new turf or seed." },
       { id: "border", label: "New bed or border", min: 20, max: 30, depth: 25, hint: "The RHS suggests about 20 cm or more for beds and borders." },
       { id: "raised", label: "Raised bed", min: 30, max: 45, depth: 30, hint: "Fill to the height of the bed, less any compost you'll mix in." },

@@ -20,7 +20,7 @@ export const content: ToolContent = {
       bullets: [
         "**Topsoil for a new lawn**: 10 to 15 cm. The RHS says at least 10 cm under new turf or seed.",
         "**Topsoil for new beds and borders**: 20 to 30 cm. The RHS suggests about 20 cm or more.",
-        "**Lawn top dressing**: 1 to 2.5 cm, brushed into the grass.",
+        "**Lawn top dressing**: about 2 mm (the RHS uses 2 to 3 kg per m², about a shovelful), brushed into the grass.",
         "**Compost dug in to improve soil**: spread 7.5 cm on clay, 5 cm on chalk or 3 cm on sandy soil, then dig it in (Rolawn's guidance).",
         "**Mulch**: the RHS says at least 5 cm and ideally 7.5 cm, or weeds push through.",
         "**Bark on beds and borders**: 5 to 10 cm. Play-grade bark is usually laid 30 cm deep; check the product's fall-height rating.",
