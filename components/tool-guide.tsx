@@ -28,10 +28,10 @@ export function ToolGuide({ tool, content }: { tool: Tool; content: ToolContent 
   const related = [
     ...tools.filter((t) => t.category === tool.category && t.slug !== tool.slug),
     ...tools.filter((t) => t.category !== tool.category),
-  ].slice(0, 3);
+  ].slice(0, 4);
 
   return (
-    <div className="mx-auto mt-14 max-w-3xl space-y-12">
+    <div className="mt-14 space-y-12">
       <section className="space-y-4 text-lg font-semibold leading-relaxed">
         {content.intro.map((p, i) => (
           <p key={i}>
@@ -76,7 +76,7 @@ export function ToolGuide({ tool, content }: { tool: Tool; content: ToolContent 
 
       <section className="space-y-5">
         <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">More bits and bobs</h2>
-        <ul className="grid gap-4 sm:grid-cols-3">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {related.map((t) => (
             <li key={t.slug}>
               <Link
