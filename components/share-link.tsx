@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { Check, Link2 } from "lucide-react";
+import { useCopy } from "@/hooks/use-copy";
 
 /**
  * Copies the current URL (which carries the tool's inputs, see
@@ -9,23 +9,19 @@ import { Check, Link2 } from "lucide-react";
  * opens that instead.
  */
 export function ShareLink() {
-  const [copied, setCopied] = React.useState(false);
+  const { state, copy } = useCopy();
+  const copied = state === "copied";
 
   const share = async () => {
     const url = window.location.href;
     const canShare =
       typeof navigator.share === "function" &&
       window.matchMedia("(pointer: coarse)").matches;
+    if (!canShare) return copy(url);
     try {
-      if (canShare) {
-        await navigator.share({ title: document.title, url });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
+      await navigator.share({ title: document.title, url });
     } catch {
-      // User dismissed the share sheet or clipboard is unavailable.
+      // User dismissed the share sheet.
     }
   };
 
@@ -41,7 +37,7 @@ export function ShareLink() {
       ) : (
         <Link2 className="size-4" strokeWidth={2.5} />
       )}
-      <span>{copied ? "Link copied" : "Share link"}</span>
+      <span>{copied ? "Link copied" : state === "failed" ? "Couldn't copy" : "Share link"}</span>
     </button>
   );
 }

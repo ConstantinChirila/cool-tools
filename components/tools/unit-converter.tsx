@@ -12,6 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { useCopy } from "@/hooks/use-copy";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
 import {
   PRECISIONS,
@@ -91,7 +92,7 @@ export function UnitConverter({ initial }: { initial?: UnitConverterInitial }) {
   const [groupTab, setGroupTab] = React.useState<GroupTab | null>(null);
   const [listFilter, setListFilter] = React.useState("");
   const [picker, setPicker] = React.useState<Side | null>(null);
-  const [copied, setCopied] = React.useState(false);
+  const { state: copyState, copy } = useCopy();
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   useUrlState({
@@ -175,15 +176,7 @@ export function UnitConverter({ initial }: { initial?: UnitConverterInitial }) {
     return true;
   };
 
-  const copyResult = async () => {
-    try {
-      await navigator.clipboard.writeText(`${resultText} ${to.sym}`);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1400);
-    } catch {
-      // Clipboard blocked: nothing sensible to do beyond leaving the value on screen.
-    }
-  };
+  const copyResult = () => copy(`${resultText} ${to.sym}`);
 
   /* ---------- derived copy ---------- */
 
@@ -358,8 +351,8 @@ export function UnitConverter({ initial }: { initial?: UnitConverterInitial }) {
                   disabled={Number.isNaN(result)}
                   className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border-[2.5px] border-foreground bg-card px-3.5 text-[13px] font-extrabold transition-transform hover:-translate-y-0.5 disabled:opacity-50 focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none"
                 >
-                  {copied ? <Check className="size-3.5" strokeWidth={3} /> : <Copy className="size-3.5" strokeWidth={2.5} />}
-                  {copied ? "Copied" : "Copy"}
+                  {copyState === "copied" ? <Check className="size-3.5" strokeWidth={3} /> : <Copy className="size-3.5" strokeWidth={2.5} />}
+                  {copyState === "copied" ? "Copied" : copyState === "failed" ? "Couldn't copy" : "Copy"}
                 </button>
               </div>
             </div>
