@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, SlidersHorizontal, X } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Callout } from "@/components/calc/callout";
@@ -8,29 +8,40 @@ import { ChoiceGroup } from "@/components/calc/choice-group";
 import { CurrencySelect } from "@/components/calc/currency-select";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { NumberField } from "@/components/calc/number-field";
-import { PillButton, togglePillClass } from "@/components/calc/pill-button";
+import { togglePillClass } from "@/components/calc/pill-button";
 import { Section, useSectionState } from "@/components/calc/section";
 import { Segmented } from "@/components/calc/segmented";
 import { SizePicker } from "@/components/calc/size-picker";
 import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
-import { AreaThumb, BagIcon, CrossSection, Swatch, TextureDefs } from "@/components/tools/garden-visuals";
+import { AreaList, withIds, type AreaRow } from "@/components/tools/garden-areas";
+import {
+  CM_PER_INCH,
+  CUBIC_YARD,
+  UNITS,
+  UNIT_OPTIONS,
+  cubic,
+  depthText,
+  formatArea,
+  planText,
+  price,
+  weightText,
+  type Money,
+  type Units,
+} from "@/components/tools/garden-format";
+import { BagIcon, CrossSection, Swatch, TextureDefs } from "@/components/tools/garden-visuals";
 import { useCurrency } from "@/hooks/use-currency";
 import { MONEY_RANGE, useUrlState, urlField, type NumberRange } from "@/hooks/use-url-state";
-import { formatNumber, plural } from "@/lib/currency";
+import { formatNumber } from "@/lib/currency";
 import {
   BARROW,
   LIMITS,
   MATERIALS,
   MATERIAL_INFO,
-  MAX_AREAS,
-  MAX_DIMENSION,
-  areaOf,
   calculate,
   encodeAreas,
   jobFor,
   parseAreas,
-  reshape,
   unitVolume,
   type Area,
   type BagUnit,
@@ -39,37 +50,13 @@ import {
   type Material,
   type Plan,
   type Settings,
-  type Shape,
 } from "@/lib/garden-materials";
 import { cn } from "@/lib/utils";
-
-type Units = "metric" | "imperial";
-const UNITS = ["metric", "imperial"] as const;
-const UNIT_OPTIONS = [
-  { value: "metric" as const, label: "Metres" },
-  { value: "imperial" as const, label: "Feet" },
-];
-
-const FOOT = 0.3048;
-const CM_PER_INCH = 2.54;
-const CUBIC_YARD = 0.764555;
-
-type Row = Area & { id: number };
-
-/** Ids only need to be unique within the list; index-based so server and client agree. */
-const withIds = (areas: Area[]): Row[] => areas.map((area, id) => ({ ...area, id }));
-const nextId = (rows: Row[]) => rows.reduce((max, r) => Math.max(max, r.id), -1) + 1;
 
 const DEFAULT_AREAS: Area[] = [{ shape: "rect", length: 4, width: 1.5, cut: false }];
 const DEFAULT_AREAS_CODE = encodeAreas(DEFAULT_AREAS);
 
 const DEFAULT_SETTINGS = Object.fromEntries(MATERIALS.map((m) => [m, MATERIAL_INFO[m].defaults])) as Record<Material, Settings>;
-
-const SHAPE_OPTIONS: { value: Shape; label: string }[] = [
-  { value: "rect", label: "Rectangle" },
-  { value: "circle", label: "Circle" },
-  { value: "known", label: "Know the area" },
-];
 
 /** Numeric settings mirrored into the URL per material, e.g. `bark-depth=10`. */
 const NUMBER_FIELDS: [keyof Omit<Settings, "job">, string, NumberRange][] = [
@@ -87,7 +74,7 @@ export function GardenMaterialsCalculator() {
   const { code, currency, setCurrency, money, currencyField } = useCurrency();
   const [material, setMaterial] = React.useState<Material>("topsoil");
   const [all, setAll] = React.useState(DEFAULT_SETTINGS);
-  const [rows, setRows] = React.useState<Row[]>(() => withIds(DEFAULT_AREAS));
+  const [rows, setRows] = React.useState<AreaRow[]>(() => withIds(DEFAULT_AREAS));
   const [units, setUnits] = React.useState<Units>("metric");
 
   const setFor = (m: Material, patch: Partial<Settings>) => setAll((prev) => ({ ...prev, [m]: { ...prev[m], ...patch } }));
@@ -131,7 +118,7 @@ export function GardenMaterialsCalculator() {
             <Segmented label="Measure in" size="sm" value={units} onChange={setUnits} options={UNIT_OPTIONS} className="w-48" />
           </CardHeader>
           <CardContent className="space-y-8">
-            <Areas rows={rows} onChange={setRows} material={material} units={units} />
+            <AreaList id="gm" title="Areas to cover" cutLabel="Cut out a pond or patio" rows={rows} onChange={setRows} material={material} units={units} />
             <Depth material={material} settings={settings} units={units} onChange={update} />
             <Buying
               material={material}
@@ -153,23 +140,6 @@ export function GardenMaterialsCalculator() {
       />
     </>
   );
-}
-
-type Money = (v: number, decimals?: number) => string;
-
-/** Cubic metres to 2 places (1 from 10 up), nudged so 1.725 shows as 1.73 like its 1,725 litres. */
-function cubic(m3: number): string {
-  return formatNumber(m3 + 1e-9, m3 < 10 ? 2 : 1);
-}
-
-/** Tonnes from one up, kilograms below. */
-function weightText(t: number): string {
-  return t >= 1 ? `${formatNumber(t, 2)} t` : `${formatNumber(t * 1000, 0)} kg`;
-}
-
-/** Pence while it matters, whole pounds once it doesn't. */
-function price(v: number, money: Money): string {
-  return money(v, v < 100 && !Number.isInteger(v) ? 2 : 0);
 }
 
 /* ---------------------------------------------------------------- Tabs -- */
@@ -198,145 +168,7 @@ function MaterialTabs({ value, onChange }: { value: Material; onChange: (m: Mate
   );
 }
 
-/* --------------------------------------------------------------- Areas -- */
-
-function lengthIn(units: Units): { factor: number; suffix: string; area: string } {
-  return units === "imperial" ? { factor: FOOT, suffix: "ft", area: "ft²" } : { factor: 1, suffix: "m", area: "m²" };
-}
-
-function formatArea(m2: number, units: Units): string {
-  const { factor, area } = lengthIn(units);
-  const v = m2 / (factor * factor);
-  return `${formatNumber(v, v < 10 ? 2 : 1)} ${area}`;
-}
-
-function Areas({ rows, onChange, material, units }: { rows: Row[]; onChange: (rows: Row[]) => void; material: Material; units: Units }) {
-  const set = (id: number, area: Area) => onChange(rows.map((r) => (r.id === id ? { ...area, id } : r)));
-  const add = (cut: boolean) => {
-    const side = cut ? 1 : 2;
-    onChange([...rows, { shape: "rect", length: side, width: side, cut, id: nextId(rows) }]);
-  };
-  const full = rows.length >= MAX_AREAS;
-  let areaNo = 0;
-  let cutNo = 0;
-
-  return (
-    <section className="space-y-3" aria-labelledby="gm-areas">
-      <h3 id="gm-areas" className="text-[15px] font-bold">
-        Areas to cover
-      </h3>
-      <ul className="space-y-3">
-        {rows.map((row) => (
-          <AreaRow
-            key={row.id}
-            row={row}
-            name={row.cut ? `Cut-out ${++cutNo}` : `Area ${++areaNo}`}
-            material={material}
-            units={units}
-            onChange={(area) => set(row.id, area)}
-            onRemove={rows.length > 1 ? () => onChange(rows.filter((r) => r.id !== row.id)) : undefined}
-          />
-        ))}
-      </ul>
-      <div className="flex flex-wrap gap-2">
-        <PillButton onClick={() => add(false)} disabled={full}>
-          <Plus className="size-4" /> Add an area
-        </PillButton>
-        <PillButton onClick={() => add(true)} disabled={full}>
-          <Plus className="size-4" /> Cut out a pond or patio
-        </PillButton>
-      </div>
-    </section>
-  );
-}
-
-function AreaRow({
-  row,
-  name,
-  material,
-  units,
-  onChange,
-  onRemove,
-}: {
-  row: Row;
-  name: string;
-  material: Material;
-  units: Units;
-  onChange: (area: Area) => void;
-  onRemove?: () => void;
-}) {
-  const { factor, suffix, area } = lengthIn(units);
-  const id = `gm-area-${row.id}`;
-  const metres = (key: string, label: string, value: number, set: (m: number) => void) => (
-    <NumberField
-      id={`${id}-${key}`}
-      label={label}
-      value={Number((value / factor).toFixed(2))}
-      onChange={(v) => set(v * factor)}
-      max={MAX_DIMENSION / factor}
-      suffix={suffix}
-      decimals={2}
-    />
-  );
-
-  return (
-    <li className={cn("space-y-3 rounded-2xl border-[2.5px] border-foreground p-3", row.cut ? "border-dashed bg-secondary" : "bg-card")}>
-      <div className="flex items-center gap-3">
-        <AreaThumb area={row} material={material} />
-        <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-bold">{name}</p>
-          <p className="font-mono text-xs font-bold text-muted-foreground">
-            {row.cut ? "−" : ""}
-            {formatArea(areaOf(row), units)}
-          </p>
-        </div>
-        {onRemove && (
-          <button
-            type="button"
-            onClick={onRemove}
-            aria-label={`Remove ${name.toLowerCase()}`}
-            className="flex size-9 items-center justify-center rounded-full hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
-          >
-            <X className="size-4" />
-          </button>
-        )}
-      </div>
-      <Segmented
-        label={`${name} shape`}
-        size="sm"
-        value={row.shape}
-        onChange={(shape) => onChange(reshape(row, shape))}
-        options={SHAPE_OPTIONS}
-      />
-      <div className="grid grid-cols-2 gap-3">
-        {row.shape === "rect" && (
-          <>
-            {metres("length", "Length", row.length, (length) => onChange({ ...row, length }))}
-            {metres("width", "Width", row.width, (width) => onChange({ ...row, width }))}
-          </>
-        )}
-        {row.shape === "circle" && metres("diameter", "Across (diameter)", row.diameter, (diameter) => onChange({ ...row, diameter }))}
-        {row.shape === "known" && (
-          <NumberField
-            id={`${id}-m2`}
-            label="Area"
-            value={Number((row.m2 / (factor * factor)).toFixed(2))}
-            onChange={(v) => onChange({ ...row, m2: v * factor * factor })}
-            max={MAX_DIMENSION / (factor * factor)}
-            suffix={area}
-            decimals={2}
-          />
-        )}
-      </div>
-    </li>
-  );
-}
-
 /* --------------------------------------------------------------- Depth -- */
-
-function depthText(cm: number, units: Units): string {
-  return units === "imperial" ? `${formatNumber(cm / CM_PER_INCH, 1)} in` : `${formatNumber(cm, 1)} cm`;
-}
 
 /** A job's usual depth: "7.5 cm", or "20–30 cm" for a range. */
 function depthRange({ min, max }: Job, units: Units): string {
@@ -554,13 +386,6 @@ function Buying({
 }
 
 /* ------------------------------------------------------------- Results -- */
-
-function planText(plan: Plan): string {
-  const parts = [];
-  if (plan.bulk) parts.push(plural(plan.bulk, "bulk bag"));
-  if (plan.bags) parts.push(plural(plan.bags, "bag"));
-  return parts.join(" + ") || "Nothing";
-}
 
 function Results({
   material,

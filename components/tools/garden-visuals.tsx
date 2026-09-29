@@ -360,7 +360,7 @@ function CrossLabel({ left, top, className, children }: { left: string; top: str
 /* --------------------------------------------------------------- Areas -- */
 
 /** One area drawn to its own proportions, so a 50 typed for 5 shows at a glance. */
-export function AreaThumb({ area, material }: { area: Area; material: Material }) {
+export function AreaThumb({ area, material }: { area: Area; material: Texture }) {
   const box = 32;
   const fill = area.cut ? "var(--card)" : texture(material);
   const common = {

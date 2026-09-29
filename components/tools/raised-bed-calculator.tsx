@@ -16,12 +16,26 @@ import { SliderField } from "@/components/calc/slider-field";
 import { SwitchField } from "@/components/calc/switch-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { SplitBar } from "@/components/charts/split-bar";
+import {
+  CM_PER_INCH,
+  FOOT,
+  UNITS,
+  UNIT_OPTIONS,
+  cubic,
+  depthText,
+  lengthText,
+  planText,
+  price,
+  weightText,
+  type Money,
+  type Units,
+} from "@/components/tools/garden-format";
 import { BagIcon, Swatch, TextureDefs } from "@/components/tools/garden-visuals";
 import { BedDrawing, MixBar } from "@/components/tools/raised-bed-visuals";
 import { useCurrency } from "@/hooks/use-currency";
 import { MONEY_RANGE, PERCENT_RANGE, inputFields, useUrlState, urlField, type FieldUpdate, type NumberRange } from "@/hooks/use-url-state";
 import { formatNumber, plural } from "@/lib/currency";
-import { BARROW, type Buying, type Plan } from "@/lib/garden-materials";
+import { BARROW, type Buying } from "@/lib/garden-materials";
 import {
   DEFAULT_POST_PRICE,
   INGREDIENTS,
@@ -44,16 +58,6 @@ import {
   type TimberKind,
 } from "@/lib/raised-bed";
 import { cn } from "@/lib/utils";
-
-type Units = "metric" | "imperial";
-const UNITS = ["metric", "imperial"] as const;
-const UNIT_OPTIONS = [
-  { value: "metric" as const, label: "Metres" },
-  { value: "imperial" as const, label: "Feet" },
-];
-
-const FOOT = 0.3048;
-const CM_PER_INCH = 2.54;
 
 const DEFAULT_BED: Bed = { length: 2.4, width: 1.2, depth: 45, count: 1 };
 const DEFAULT_MIX: Mix = MIX_PRESETS[0]!.mix;
@@ -79,8 +83,6 @@ const BUYING_FIELDS: [keyof Buying, string, NumberRange][] = [
   ["delivery", "delivery", MONEY_RANGE],
   ["density", "density", LIMITS.density],
 ];
-
-type Money = (v: number, decimals?: number) => string;
 
 /** Each ingredient's swatch as a Section icon. */
 const SWATCH_ICONS = Object.fromEntries(
@@ -170,33 +172,6 @@ export function RaisedBedCalculator() {
 }
 
 /* ------------------------------------------------------------ Formats -- */
-
-/** Cubic metres to 2 places (1 from 10 up), nudged so 1.725 shows as 1.73. */
-function cubic(m3: number): string {
-  return formatNumber(m3 + 1e-9, m3 < 10 ? 2 : 1);
-}
-
-function weightText(t: number): string {
-  return t >= 1 ? `${formatNumber(t, 2)} t` : `${formatNumber(t * 1000, 0)} kg`;
-}
-
-/** Pence while it matters, whole pounds once it doesn't. */
-function price(v: number, money: Money): string {
-  return money(v, v < 100 && !Number.isInteger(v) ? 2 : 0);
-}
-
-function lengthText(m: number, units: Units): string {
-  if (units === "imperial") {
-    const inches = Math.round(m / 0.0254);
-    const ft = Math.floor(inches / 12);
-    return inches % 12 ? `${ft}′${inches % 12}″` : `${ft} ft`;
-  }
-  return `${formatNumber(m, m < 10 ? 2 : 1)} m`;
-}
-
-function depthText(cm: number, units: Units): string {
-  return units === "imperial" ? `${formatNumber(cm / CM_PER_INCH, 1)} in` : `${formatNumber(cm, 1)} cm`;
-}
 
 /** Board lengths are always metric in the UK. */
 const metres = (m: number) => `${formatNumber(m, m < 1 ? 3 : 2)} m`;
@@ -669,13 +644,6 @@ function BuyingSection({
 }
 
 /* ------------------------------------------------------------ Results -- */
-
-function planText(plan: Plan): string {
-  const parts = [];
-  if (plan.bulk) parts.push(plural(plan.bulk, "bulk bag"));
-  if (plan.bags) parts.push(plural(plan.bags, "bag"));
-  return parts.join(" + ") || "Nothing";
-}
 
 const COST_COLORS = {
   topsoil: "oklch(0.55 0.07 55)",
