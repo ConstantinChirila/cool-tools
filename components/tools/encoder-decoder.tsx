@@ -9,6 +9,7 @@ import { Segmented } from "@/components/calc/segmented";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCopy } from "@/hooks/use-copy";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
+import { plural } from "@/lib/currency";
 import {
   byteLength,
   codecIds,
@@ -41,7 +42,7 @@ function sizeOf(text: string) {
     if (unit < 0xdc00 || unit > 0xdfff) chars++;
   }
   const bytes = byteLength(text);
-  const c = `${chars.toLocaleString("en-GB")} ${chars === 1 ? "character" : "characters"}`;
+  const c = plural(chars, "character");
   return bytes === chars ? c : `${c}, ${bytes.toLocaleString("en-GB")} bytes`;
 }
 

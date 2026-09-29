@@ -11,6 +11,7 @@ import { useCopy, type CopyState } from "@/hooks/use-copy";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { createPatch, useTextDiff } from "@/hooks/use-text-diff";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
+import { plural } from "@/lib/currency";
 import {
   buildRows,
   countLines,
@@ -199,7 +200,7 @@ const TextPane = React.memo(function TextPane({
           {label}
         </label>
         <span className="text-xs font-semibold text-muted-foreground text-numeric">
-          {lines.toLocaleString("en-GB")} {lines === 1 ? "line" : "lines"}
+          {plural(lines, "line")}
         </span>
       </div>
       <CodeTextarea

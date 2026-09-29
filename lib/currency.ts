@@ -72,6 +72,11 @@ export function formatPercent(fraction: number, decimals = 0, options?: { trim?:
   return `${options?.trim ? Number(fixed) : fixed}%`;
 }
 
+/** A whole count with its noun: "1 day", "1,000 days". Pass the plural when it isn't just an added "s". */
+export function plural(n: number, word: string, words = `${word}s`): string {
+  return `${formatNumber(n, 0)} ${n === 1 ? word : words}`;
+}
+
 export function formatNumber(value: number, decimals = 2): string {
   if (!Number.isFinite(value)) return "—";
   return numberFormat({

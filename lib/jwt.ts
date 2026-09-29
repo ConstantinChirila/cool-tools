@@ -1,4 +1,5 @@
 import { base64ToBytes } from "@/lib/base64";
+import { plural } from "@/lib/currency";
 import { fail, ok, type Result } from "@/lib/result";
 
 export type JsonObject = Record<string, unknown>;
@@ -144,7 +145,7 @@ export function roughDuration(ms: number): string {
   for (const [unit, name] of UNITS) {
     if (size >= unit) {
       const n = Math.floor(size / unit);
-      return `${n} ${name}${n === 1 ? "" : "s"}`;
+      return plural(n, name);
     }
   }
   return "less than a second";

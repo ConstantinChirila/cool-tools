@@ -8,6 +8,7 @@
  */
 
 import type { Line, LineKind } from "@/lib/breakdown";
+import { plural } from "@/lib/currency";
 import { clamp } from "@/lib/utils";
 
 export type FinanceKind = "pcp" | "hp" | "loan" | "lease";
@@ -349,8 +350,6 @@ export function compareFinance(input: CarFinanceInput, basis: CompareBasis): Fin
   };
 }
 
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 /** Row by row: what you pay and when, then what you are left with. */
 export function breakdownLines(

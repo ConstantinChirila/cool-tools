@@ -26,16 +26,12 @@ import {
   type CalendarBreakdown,
   type CountdownResult,
 } from "@/lib/countdown";
-import { formatNumber } from "@/lib/currency";
+import { formatNumber, plural } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 const TILE_STYLES = ["bg-yellow tilt-1", "bg-sky tilt-2", "bg-pink tilt-3"];
 
 /* ---------- Formatting ---------- */
-
-function plural(n: number, unit: string): string {
-  return `${formatNumber(n, 0)} ${unit}${n === 1 ? "" : "s"}`;
-}
 
 function formatCalendar(c: CalendarBreakdown): string {
   const big = [

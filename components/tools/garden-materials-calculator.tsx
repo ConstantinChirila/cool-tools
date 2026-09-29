@@ -17,7 +17,7 @@ import { HeroStat, Stat } from "@/components/calc/stat";
 import { AreaThumb, BagIcon, CrossSection, Swatch, TextureDefs } from "@/components/tools/garden-visuals";
 import { useCurrency } from "@/hooks/use-currency";
 import { MONEY_RANGE, useUrlState, urlField, type NumberRange } from "@/hooks/use-url-state";
-import { formatNumber } from "@/lib/currency";
+import { formatNumber, plural } from "@/lib/currency";
 import {
   BARROW,
   LIMITS,
@@ -600,8 +600,8 @@ function SizePicker({
 
 function planText(plan: Plan): string {
   const parts = [];
-  if (plan.bulk) parts.push(`${plan.bulk} bulk bag${plan.bulk === 1 ? "" : "s"}`);
-  if (plan.bags) parts.push(`${plan.bags} bag${plan.bags === 1 ? "" : "s"}`);
+  if (plan.bulk) parts.push(plural(plan.bulk, "bulk bag"));
+  if (plan.bags) parts.push(plural(plan.bags, "bag"));
   return parts.join(" + ") || "Nothing";
 }
 

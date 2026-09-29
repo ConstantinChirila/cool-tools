@@ -13,6 +13,7 @@ import { SplitBar } from "@/components/charts/split-bar";
 import { YearlyChartCard } from "@/components/charts/yearly-chart-card";
 import { useCurrency } from "@/hooks/use-currency";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
+import { plural } from "@/lib/currency";
 import { calculateMortgage } from "@/lib/finance";
 
 type MortgageType = "repayment" | "interestOnly";
@@ -81,8 +82,8 @@ export function MortgageCalculator() {
                 value={money(result.monthlyPayment, 2)}
                 hint={
                   interestOnly
-                    ? `interest only, for ${term} ${term === 1 ? "year" : "years"} at ${rate}%`
-                    : `for ${term} ${term === 1 ? "year" : "years"} at ${rate}%`
+                    ? `interest only, for ${plural(term, "year")} at ${rate}%`
+                    : `for ${plural(term, "year")} at ${rate}%`
                 }
               />
               {interestOnly && (

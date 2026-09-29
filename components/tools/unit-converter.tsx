@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/command";
 import { useCopy } from "@/hooks/use-copy";
 import { useUrlState, urlField } from "@/hooks/use-url-state";
+import { plural } from "@/lib/currency";
 import {
   PRECISIONS,
   convert,
@@ -623,7 +624,7 @@ function UnitPicker({
             </p>
           )}
           {hits && hits.length > 0 && (
-            <CommandGroup heading={`${hits.length} ${hits.length === 1 ? "match" : "matches"}`}>
+            <CommandGroup heading={plural(hits.length, "match", "matches")}>
               {hits.map(({ category: c, unit: u }) => item(c, u, true))}
             </CommandGroup>
           )}

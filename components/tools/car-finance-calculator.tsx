@@ -33,6 +33,7 @@ import {
   type FinanceResult,
   type PcpEnd,
 } from "@/lib/car-finance";
+import { plural } from "@/lib/currency";
 
 const DEFAULT_INPUT: CarFinanceInput = {
   price: 25_000,
@@ -80,7 +81,7 @@ const COLORS: Record<FinanceKind, string> = {
 type Money = (v: number, decimals?: number) => string;
 type Update = FieldUpdate<CarFinanceInput>;
 
-const months = (n: number) => `${n} ${n === 1 ? "month" : "months"}`;
+const months = (n: number) => plural(n, "month");
 
 export function CarFinanceCalculator() {
   const { code, currency, setCurrency, money, axis, currencyField } = useCurrency();

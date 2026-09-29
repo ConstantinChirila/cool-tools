@@ -14,15 +14,16 @@ import { SplitBar } from "@/components/charts/split-bar";
 import { YearlyChartCard } from "@/components/charts/yearly-chart-card";
 import { useCurrency } from "@/hooks/use-currency";
 import { MONEY_RANGE, useUrlState, urlField } from "@/hooks/use-url-state";
+import { plural } from "@/lib/currency";
 import { calculateMortgage } from "@/lib/finance";
 
 function formatDuration(totalMonths: number): string {
   const years = Math.floor(totalMonths / 12);
   const months = totalMonths % 12;
   const parts: string[] = [];
-  if (years > 0) parts.push(`${years} ${years === 1 ? "yr" : "yrs"}`);
+  if (years > 0) parts.push(plural(years, "yr"));
   if (months > 0 || years === 0) {
-    parts.push(`${months} ${months === 1 ? "mo" : "mos"}`);
+    parts.push(plural(months, "mo"));
   }
   return parts.join(" ");
 }
@@ -147,7 +148,7 @@ export function MortgageOverpaymentCalculator() {
               <HeroStat
                 label="Interest saved"
                 value={money(interestSaved)}
-                hint={`vs no overpayments over ${term} ${term === 1 ? "year" : "years"}`}
+                hint={`vs no overpayments over ${plural(term, "year")}`}
               />
               <div className="grid grid-cols-2 gap-4 border-t border-foreground/15 pt-5">
                 <Stat label="Paid off in" value={formatDuration(over.monthsToPayoff)} />
