@@ -1,0 +1,55 @@
+{
+  "$comment": "Figures that go stale when laws, budgets or prices change. scripts/check-data-reviews.mjs reads this at the start of every Claude Code session (SessionStart hook in .claude/settings.json) and flags any entry past its `due` date or not checked for a year. After checking, run `pnpm data:reviewed <id> <next-due YYYY-MM-DD>`.",
+  "reviews": [
+    {
+      "id": "uk-income-tax",
+      "what": "Income tax bands and rates (rUK and Scotland), personal allowance taper, National Insurance, student loan thresholds, tax years offered",
+      "tools": ["uk-salary-calculator", "bonus-tax-calculator", "contractor-calculator"],
+      "files": ["lib/uk-tax.ts", "lib/uk-bonus.ts", "content/uk-salary-calculator.ts", "content/bonus-tax-calculator.ts", "lib/tools.ts (SEO titles name the tax year)"],
+      "sources": ["https://www.gov.uk/government/publications/rates-and-allowances-income-tax", "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027", "https://www.gov.scot/collections/scottish-income-tax/"],
+      "when": "After each UK Budget and Scottish Budget; add the new tax year before 6 April",
+      "lastChecked": "2026-09-18",
+      "due": "2026-10-29"
+    },
+    {
+      "id": "contractor-business-tax",
+      "what": "Dividend allowance and rates, corporation tax rates and marginal relief, Class 4 NI, umbrella/Ltd assumptions",
+      "tools": ["contractor-calculator"],
+      "files": ["lib/contractor.ts", "content/contractor-calculator.ts"],
+      "sources": ["https://www.gov.uk/tax-on-dividends", "https://www.gov.uk/corporation-tax-rates", "https://www.gov.uk/self-employed-national-insurance-rates"],
+      "when": "After each UK Budget; new rates usually start 6 April (dividends, NI) or 1 April (corporation tax)",
+      "lastChecked": "2026-09-26",
+      "due": "2026-10-29"
+    },
+    {
+      "id": "stamp-duty",
+      "what": "SDLT, LBTT (and ADS) and LTT bands, first-time buyer relief, surcharges",
+      "tools": ["stamp-duty-calculator"],
+      "files": ["lib/stamp-duty.ts", "lib/stamp-duty.test.ts", "content/stamp-duty-calculator.ts"],
+      "sources": ["https://www.gov.uk/stamp-duty-land-tax/residential-property-rates", "https://revenue.scot/taxes/land-buildings-transaction-tax/residential-property", "https://www.gov.wales/land-transaction-tax-rates-and-bands"],
+      "when": "After each UK Budget (next 28 Oct 2026), Scottish Budget and Welsh Budget; changes can start the day after",
+      "lastChecked": "2026-09-27",
+      "due": "2026-10-29"
+    },
+    {
+      "id": "inflation-data",
+      "what": "ONS CPI and long-run RPI indices; run `pnpm data:inflation` and check the diff and the guide's numbers",
+      "tools": ["inflation-calculator"],
+      "files": ["lib/inflation-data.ts (generated)", "content/inflation-calculator.ts"],
+      "sources": ["https://www.ons.gov.uk/economy/inflationandpriceindices"],
+      "when": "Once a year after December's figures come out in mid January (completes the previous year's average); any month for a fresher latest figure",
+      "lastChecked": "2026-09-29",
+      "due": "2027-01-25"
+    },
+    {
+      "id": "market-defaults",
+      "what": "Default prices and rates that follow the market, not the law: mortgage rates, car finance APRs and lease quote, garden material prices, contractor umbrella fees and costs",
+      "tools": ["mortgage-calculator", "mortgage-overpayment-calculator", "car-finance-calculator", "garden-materials-calculator", "contractor-calculator"],
+      "files": ["components/tools/*.tsx defaults", "lib/garden-materials.ts", "lib/car-finance.ts"],
+      "sources": ["https://www.bankofengland.co.uk/statistics/visual-summaries/quoted-household-interest-rates"],
+      "when": "Once a year",
+      "lastChecked": "2026-09-28",
+      "due": "2027-09-28"
+    }
+  ]
+}

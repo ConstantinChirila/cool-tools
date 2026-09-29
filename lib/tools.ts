@@ -12,6 +12,7 @@ import {
   Percent,
   PiggyBank,
   Shovel,
+  ShoppingBasket,
   Stamp,
   Target,
   TrainFront,
@@ -176,6 +177,23 @@ export const tools: Tool[] = [
         "Project savings and investment growth with compound interest, regular monthly contributions and monthly, quarterly or yearly compounding. Chart and yearly table.",
     },
     updated: "2026-09-16",
+  },
+  {
+    slug: "inflation-calculator",
+    name: "Inflation Calculator",
+    shortName: "Inflation",
+    description:
+      "What money from any year since 1800 is worth today, whether your pay has kept up with prices, and what things will cost in future.",
+    category: "Finance",
+    icon: ShoppingBasket,
+    keywords: ["inflation", "cpi", "rpi", "cpih", "prices", "cost of living", "purchasing power", "buying power", "value of money", "worth today", "then and now", "historical prices", "real terms", "pay rise", "salary", "wages", "keep up", "ons", "bank of england", "pound", "money"],
+    tint: "var(--sticker-yellow)",
+    seo: {
+      title: "UK Inflation Calculator: Then vs Now (CPI & RPI)",
+      description:
+        "See what money from any year since 1800 is worth today using ONS CPI and RPI data, check if your pay has kept up with inflation, and project future prices.",
+    },
+    updated: "2026-09-29",
   },
   {
     slug: "percentage-calculator",

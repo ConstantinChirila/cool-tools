@@ -12,7 +12,10 @@ export function YearlyChartCard<Row extends { year: number }>({
   extraRow,
   rows,
   columns,
-}: Pick<GrowthChartProps, "series" | "formatValue" | "formatAxis" | "extraRow"> & {
+  xLabel = (i) => (i === 0 ? "Start" : `Year ${i}`),
+  xTick = (i) => (i === 0 ? "0" : `${i}y`),
+}: Pick<GrowthChartProps, "series" | "formatValue" | "formatAxis" | "extraRow"> &
+  Partial<Pick<GrowthChartProps, "xLabel" | "xTick">> & {
   title: string;
   rows: readonly Row[];
   columns: readonly YearlyColumn<Row>[];
@@ -31,8 +34,8 @@ export function YearlyChartCard<Row extends { year: number }>({
           <TabsContent value="chart">
             <GrowthChart
               series={series}
-              xLabel={(i) => (i === 0 ? "Start" : `Year ${i}`)}
-              xTick={(i) => (i === 0 ? "0" : `${i}y`)}
+              xLabel={xLabel}
+              xTick={xTick}
               formatValue={formatValue}
               formatAxis={formatAxis}
               extraRow={extraRow}

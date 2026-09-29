@@ -9,6 +9,7 @@ Odd little tools that just work. A growing library of free online calculators bu
 - **Stamp Duty Calculator**: SDLT (England & NI), LBTT (Scotland) and LTT (Wales) for movers, first-time buyers and additional properties, with the SDLT non-resident surcharge, a band-by-band table, every buyer type side by side, a tax-by-price chart, a "negotiate to the band edge" nudge and the total cash needed to buy (engine in `lib/stamp-duty.ts`; rates as data in `RULES`, tests use the official gov.uk / revenue.scot / gov.wales worked examples)
 - **Mortgage Calculator**: monthly repayment, total interest, amortization chart and yearly table, with a repayment vs interest-only toggle
 - **Mortgage Overpayment Calculator**: interest and time saved by overpaying monthly or with a lump sum, with a with/without overpayment comparison chart and yearly table
+- **Inflation Calculator**: what money from one year is worth in another (ONS CPI from 1988, long-run RPI from 1800, annual averages; the unfinished current year uses its latest month), whether pay has kept up with prices, and future prices at a steady rate (engine in `lib/inflation.ts`; data in the generated `lib/inflation-data.ts`, refreshed with `pnpm data:inflation`)
 - **Compound Interest Calculator**: growth projection with contributions, compounding frequency, chart and yearly table
 - **Percentage Calculator**: % of a number, what %, % change, increase/decrease
 - **TV Viewing Distance Calculator**: best seat for a TV size and best size for a seat, from SMPTE 30° / THX 40° viewing angles, with a draggable top-down floor plan (sofa sets the distance, TV ends set the size), viewing zones striped on the floor, a size guide table and when 4K/8K detail is visible at 20/20 acuity (engine in `lib/tv-distance.ts`)
@@ -31,6 +32,18 @@ pnpm dev      # start dev server
 pnpm build    # production build
 pnpm lint     # eslint
 ```
+
+## Keeping figures current
+
+Tax rates, stamp duty bands, inflation data and market-rate defaults go stale. `scripts/data-reviews.json` lists each group with its files, official sources and a `due` date (set to the next Budget, tax year or data release, and never more than a year after the last check). A SessionStart hook in `.claude/settings.json` runs `scripts/check-data-reviews.mjs --hook`, so Claude Code flags anything due at the start of a session.
+
+```bash
+pnpm data:reviews                          # list every group and when it is due
+pnpm data:inflation                        # refetch ONS CPI/RPI into lib/inflation-data.ts
+pnpm data:reviewed <id> <next-due>         # after checking: stamp today and set the next due date
+```
+
+When a tool gains figures that can change by law or by market, add or extend an entry there.
 
 ## Adding a new tool
 
