@@ -4,9 +4,9 @@ import { JsonLd } from "@/components/json-ld";
 import { RecordRecentTool } from "@/components/record-recent-tool";
 import { ShareLink } from "@/components/share-link";
 import { ToolGuide } from "@/components/tool-guide";
-import { toolJsonLd, toolPath } from "@/lib/seo";
+import { toolJsonLd } from "@/lib/seo";
 import type { ToolContent } from "@/lib/tool-content";
-import type { Tool } from "@/lib/tools";
+import { toolPath, type Tool } from "@/lib/tools";
 import { cn } from "@/lib/utils";
 
 /** What a page under a tool (one conversion, one codec, a shared card) shows instead of the tool's own heading. */

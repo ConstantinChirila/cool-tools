@@ -15,7 +15,7 @@ Odd little tools that just work. A growing library of free online calculators bu
 - **Garden Materials Calculator**: topsoil, compost, mulch, bark, gravel and sand in one tool (material tabs), for several rectangles, circles or known areas with cut-outs; depth set by job presets or by dragging the layer in a side-view cross-section with a brick for scale; m³, litres, weight and barrow loads; and the cheapest of bags only, bulk bags only, or bulk bags topped up with bags, including delivery. Litre bags for soils and bark, kg bags for aggregates via density. Settings are remembered per material and mirrored into the URL as `<material>-<setting>` (engine and material data in `lib/garden-materials.ts`, drawings in `components/tools/garden-visuals.tsx`)
 - **Countdown Calculator**: live days/hours/minutes/seconds to any date and time, with calendar breakdown, weeks, sleeps, weekends and working days (engine in `lib/countdown.ts`)
 - **Text Diff Checker**: line-by-line comparison of two texts with word-level highlights, side by side or inline, ignore case/whitespace, folding of unchanged runs and copy as unified patch (engine in `lib/text-diff.ts`, built on jsdiff; `hooks/use-text-diff.ts` runs small diffs during render and sends anything over 20,000 characters to the `lib/text-diff.worker.ts` web worker). The texts are deliberately kept out of the URL: only the view options are shareable
-- **Encoder & Decoder**: Base64, URL percent-encoding, HTML entities, hex and Unicode escapes in one two-box tool (engine in `lib/encoding.ts`, HTML entities via the `entities` package). Each codec also has a static landing page at `/tools/encoder-decoder/<slug>` driven by `lib/encoding-pages.ts` (title, examples run through the engine at build time, sections, FAQs): add a page there and the route, sitemap and guide chips pick it up
+- **Encoder & Decoder**: Base64, URL percent-encoding, HTML entities, hex and Unicode escapes in one two-box tool (engine in `lib/encoding.ts`, HTML entities via the `entities` package). Each codec also has a static landing page at `/encoder-decoder/<slug>` driven by `lib/encoding-pages.ts` (title, examples run through the engine at build time, sections, FAQs): add a page there and the route, sitemap and guide chips pick it up
 - **JWT Decoder**: header, payload and claims with time claims as dates, expiry status and HS256/384/512 signature check via WebCrypto (engine in `lib/jwt.ts`). No signature verification for RS/ES/PS/EdDSA
 
 All financial tools default to GBP with a switchable currency (persisted in localStorage and shared across tools).
@@ -50,7 +50,7 @@ pnpm lint     # eslint
    - `components/charts/growth-chart.tsx`: line/area chart with crosshair tooltip
    - `components/charts/split-bar.tsx`: part-to-whole stacked bar with legend
 3. **Write the guide** in `content/<slug>.ts`: a `ToolContent` object (intro, sections, FAQs; type in `lib/tool-content.ts`). It renders under the calculator and feeds the FAQ structured data, so make it genuinely useful and keep the numbers verified against the engine.
-4. **Create the route** at `app/tools/<slug>/page.tsx` plus `opengraph-image.tsx`: copy any existing tool folder and change the slug. `toolMetadata(tool)` builds title, description, canonical and social tags from the registry's `seo` field; `ToolPageShell` adds breadcrumbs, JSON-LD, the guide and related tools.
+4. **Create the route** at `app/<slug>/page.tsx` plus `opengraph-image.tsx`: copy any existing tool folder and change the slug. `toolMetadata(tool)` builds title, description, canonical and social tags from the registry's `seo` field; `ToolPageShell` adds breadcrumbs, JSON-LD, the guide and related tools.
 
 Static pages under a tool (unit conversion pairs, codec pages) render through the same `ToolPageShell` with its `subPage` prop, and take their metadata and structured data from `subPageMetadata` / `subPageJsonLd` in `lib/seo.ts`.
 
@@ -65,7 +65,7 @@ Pure calculation logic lives in `lib/` (see `lib/finance.ts`) so it stays testab
 - Social cards are rendered at build time by `lib/og.tsx` (one `opengraph-image.tsx` per route).
 - Structured data: `WebApplication` + `BreadcrumbList` + `FAQPage` per tool, `WebSite` + `Organization` + `ItemList` on the homepage (`lib/seo.ts`). Validate with https://search.google.com/test/rich-results after deploying.
 - Analytics: Cloudflare Web Analytics beacon in `app/layout.tsx`.
-- Unit converter landing pages: `lib/units/pairs.ts` is a curated list of conversions (stone to kg, mpg to L/100km…) that each get a static page at `/tools/unit-converter/<slug>` via `app/tools/unit-converter/[pair]/page.tsx`, with their own metadata, quick table, FAQ structured data and sitemap entries. Add a pair there; nothing else needs registering.
+- Unit converter landing pages: `lib/units/pairs.ts` is a curated list of conversions (stone to kg, mpg to L/100km…) that each get a static page at `/unit-converter/<slug>` via `app/unit-converter/[pair]/page.tsx`, with their own metadata, quick table, FAQ structured data and sitemap entries. Add a pair there; nothing else needs registering.
 
 ## Design system notes
 

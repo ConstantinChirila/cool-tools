@@ -12,7 +12,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useRecentTools } from "@/hooks/use-recent-tools";
-import { categories, getTool, searchTools, tools, type Tool } from "@/lib/tools";
+import { categories, getTool, searchTools, toolPath, tools, type Tool } from "@/lib/tools";
 import { convert, formatQuantity } from "@/lib/units/convert";
 import { getUnit } from "@/lib/units/data";
 import { parseQuantity, parseQuery } from "@/lib/units/parse";
@@ -35,7 +35,7 @@ function conversionFor(search: string): { label: string; detail: string; href: s
   const value = parsed.numberRaw ? parseQuantity(parsed.numberRaw, from, category) : NaN;
   const query = new URLSearchParams({ c: category.id, f: from.id, t: to.id });
   if (!Number.isNaN(value)) query.set("v", parsed.numberRaw);
-  const href = `/tools/unit-converter?${query.toString()}`;
+  const href = `/unit-converter?${query.toString()}`;
   if (Number.isNaN(value)) {
     return { label: `${from.name} → ${to.name}`, detail: category.name, href };
   }
@@ -80,7 +80,7 @@ export default function CommandPaletteDialog({
     <CommandItem
       key={`${keyPrefix}${tool.slug}`}
       value={`${keyPrefix}${tool.slug}`}
-      onSelect={() => go(`/tools/${tool.slug}`)}
+      onSelect={() => go(toolPath(tool))}
     >
       <tool.icon className="size-4" style={{ color: tool.tint }} />
       <span>{tool.name}</span>

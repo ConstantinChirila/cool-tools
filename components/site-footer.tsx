@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { InstallApp } from "@/components/install-app";
-import { categories, tools } from "@/lib/tools";
+import { categories, toolPath, tools } from "@/lib/tools";
 
 export function SiteFooter() {
   return (
@@ -17,7 +17,7 @@ export function SiteFooter() {
                   .filter((t) => t.category === category)
                   .map((t) => (
                     <li key={t.slug}>
-                      <Link href={`/tools/${t.slug}`} className="hover:underline">
+                      <Link href={toolPath(t)} className="hover:underline">
                         {t.name}
                       </Link>
                     </li>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { History } from "lucide-react";
 import { useRecentTools } from "@/hooks/use-recent-tools";
+import { toolPath } from "@/lib/tools";
 
 /** Pill row of recently opened tools, one click away above the grid. */
 export function RecentTools() {
@@ -21,7 +22,7 @@ export function RecentTools() {
       {recent.map((tool) => (
         <Link
           key={tool.slug}
-          href={`/tools/${tool.slug}`}
+          href={toolPath(tool)}
           className="sticker-sm flex h-9 items-center gap-2 rounded-full pl-2.5 pr-3.5 text-sm font-bold transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           style={{ background: tool.tint }}
         >

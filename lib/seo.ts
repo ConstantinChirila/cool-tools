@@ -2,11 +2,7 @@ import type { Metadata } from "next";
 import { OG_SIZE } from "@/lib/og";
 import type { ToolContent } from "@/lib/tool-content";
 import { SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/site";
-import type { Tool } from "@/lib/tools";
-
-export function toolPath(tool: Tool): string {
-  return `/tools/${tool.slug}`;
-}
+import { toolPath, type Tool } from "@/lib/tools";
 
 /** Page metadata for a tool route: title, description, canonical, Open Graph and Twitter. */
 export function toolMetadata(tool: Tool): Metadata {
@@ -84,7 +80,7 @@ export function toolJsonLd(tool: Tool, content: ToolContent) {
 
 /** A static page under a tool, such as one unit conversion or one codec. */
 export interface SubPage {
-  /** Site-relative path, e.g. /tools/unit-converter/stone-to-kg. */
+  /** Site-relative path, e.g. /unit-converter/stone-to-kg. */
   path: string;
   /** Search title: the site name is appended. */
   title: string;

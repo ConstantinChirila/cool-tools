@@ -4,8 +4,8 @@ import { Pencil } from "lucide-react";
 import { ToolPageShell } from "@/components/tool-page-shell";
 import { CountdownCard } from "@/components/tools/countdown-card";
 import { DEFAULT_TIME, NAME_MAX, isValidDateString, isValidTimeString } from "@/lib/countdown";
-import { subPageMetadata, toolPath } from "@/lib/seo";
-import { requireTool } from "@/lib/tools";
+import { subPageMetadata } from "@/lib/seo";
+import { requireTool, toolPath } from "@/lib/tools";
 
 const tool = requireTool("countdown-calculator");
 

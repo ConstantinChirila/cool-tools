@@ -2,7 +2,7 @@ import { getCategory, getUnit, type Unit, type UnitCategory } from "@/lib/units/
 
 /**
  * Curated conversions that get their own landing page under
- * /tools/unit-converter/<slug>. Titles use the words people search for
+ * /unit-converter/<slug>. Titles use the words people search for
  * ("feet to cm"), not the formal unit names.
  */
 export interface UnitPair {
@@ -101,5 +101,5 @@ export function reversePair(pair: UnitPair): UnitPair | undefined {
 }
 
 export function pairPath(pair: UnitPair): string {
-  return `/tools/unit-converter/${pair.slug}`;
+  return `/unit-converter/${pair.slug}`;
 }

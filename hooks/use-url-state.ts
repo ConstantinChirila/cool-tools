@@ -74,7 +74,7 @@ function serialize(v: Primitive): string {
 }
 
 /**
- * Every tool's last-used inputs, keyed by the path under /tools/, each stored
+ * Every tool's last-used inputs, keyed by the tool slug (the path), each stored
  * as the same short query string that goes in the URL (only fields that differ
  * from their default). One key for the whole site keeps storage tidy as the
  * number of tools grows.
@@ -82,7 +82,7 @@ function serialize(v: Primitive): string {
 const SAVED_STATE_KEY = "bitsbobs:state";
 
 function toolKey(): string {
-  return window.location.pathname.replace(/^\/tools\//, "").replace(/\/$/, "");
+  return window.location.pathname.replace(/^\//, "").replace(/\/$/, "");
 }
 
 function readSavedStates(): Record<string, string> {

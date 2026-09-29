@@ -2,7 +2,7 @@ import type { CodecId } from "@/lib/encoding";
 import type { ContentSection, Faq } from "@/lib/tool-content";
 
 /**
- * Landing pages under /tools/encoder-decoder/<slug>, one per codec. People
+ * Landing pages under /encoder-decoder/<slug>, one per codec. People
  * search for "base64 decode", not "encoder", so each codec gets its own page
  * with the tool preset, worked examples and its own FAQs.
  */
@@ -321,5 +321,5 @@ export function getCodecPage(slug: string): CodecPage | undefined {
 }
 
 export function codecPagePath(page: CodecPage): string {
-  return `/tools/encoder-decoder/${page.slug}`;
+  return `/encoder-decoder/${page.slug}`;
 }

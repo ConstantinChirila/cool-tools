@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
   env: {
     BUILD_ID: process.env.VERCEL_GIT_COMMIT_SHA ?? "dev",
   },
+  // Tools used to live under /tools/<slug>; old links and search results still point there.
+  async redirects() {
+    return [
+      { source: "/tools", destination: "/", permanent: true },
+      { source: "/tools/:path*", destination: "/:path*", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

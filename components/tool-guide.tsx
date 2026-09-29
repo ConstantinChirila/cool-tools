@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { ToolContent } from "@/lib/tool-content";
-import { tools, type Tool } from "@/lib/tools";
+import { toolPath, tools, type Tool } from "@/lib/tools";
 
 /** Renders "**bold**" spans inside a plain-text paragraph. */
 function Rich({ text }: { text: string }) {
@@ -80,7 +80,7 @@ export function ToolGuide({ tool, content }: { tool: Tool; content: ToolContent 
           {related.map((t) => (
             <li key={t.slug}>
               <Link
-                href={`/tools/${t.slug}`}
+                href={toolPath(t)}
                 className="sticker-sm group flex h-full flex-col gap-2 rounded-2xl p-4 transition-transform hover:-translate-y-0.5"
                 style={{ background: t.tint }}
               >

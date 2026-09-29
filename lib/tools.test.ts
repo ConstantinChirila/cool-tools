@@ -35,3 +35,15 @@ describe("searchTools", () => {
     expect(slugs("JWT")[0]).toBe("jwt-decoder");
   });
 });
+
+describe("tool slugs", () => {
+  // Tools are served at /<slug>, so a slug must not collide with another top-level route or metadata file.
+  const reserved = ["tools", "version", "pwa-icon", "manifest.webmanifest", "robots.txt", "sitemap.xml", "opengraph-image", "apple-icon", "icon.svg"];
+  it("do not shadow a top-level route", () => {
+    for (const tool of tools) expect(reserved).not.toContain(tool.slug);
+  });
+  it("are unique and URL-safe", () => {
+    expect(new Set(tools.map((t) => t.slug)).size).toBe(tools.length);
+    for (const tool of tools) expect(tool.slug).toMatch(/^[a-z0-9-]+$/);
+  });
+});

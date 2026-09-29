@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { codecPagePath, codecPages } from "@/lib/encoding-pages";
 import { absoluteUrl } from "@/lib/site";
-import { getTool, tools } from "@/lib/tools";
+import { getTool, toolPath, tools } from "@/lib/tools";
 import { pairPath, pairs } from "@/lib/units/pairs";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -14,7 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     ...tools.map((tool) => ({
-      url: absoluteUrl(`/tools/${tool.slug}`),
+      url: absoluteUrl(toolPath(tool)),
       lastModified: new Date(tool.updated),
       changeFrequency: "monthly" as const,
       priority: 0.8,

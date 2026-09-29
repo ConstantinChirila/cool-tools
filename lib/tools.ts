@@ -368,6 +368,11 @@ export const tools: Tool[] = [
 
 export const categories: ToolCategory[] = ["Finance", "Maths", "Sport", "Everyday", "Text"];
 
+/** Site-relative path of a tool page. Tools live at the root: /<slug>. */
+export function toolPath(tool: Tool): string {
+  return `/${tool.slug}`;
+}
+
 export function getTool(slug: string): Tool | undefined {
   return tools.find((t) => t.slug === slug);
 }
