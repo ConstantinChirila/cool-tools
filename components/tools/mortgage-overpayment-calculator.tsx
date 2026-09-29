@@ -4,7 +4,7 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Callout } from "@/components/calc/callout";
 import { CurrencySelect } from "@/components/calc/currency-select";
-import { LOAN_DEFAULTS, LOAN_RANGES, LoanFields, loanYearColumns } from "@/components/calc/loan-fields";
+import { LoanFields, loanYearColumns, useLoanState } from "@/components/calc/loan-fields";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
 import { NumberField } from "@/components/calc/number-field";
 import { PillLink } from "@/components/calc/pill-button";
@@ -34,16 +34,12 @@ function padSeries(values: number[], length: number): number[] {
 
 export function MortgageOverpaymentCalculator() {
   const { code, currency, setCurrency, money, axis, currencyField } = useCurrency();
-  const [amount, setAmount] = React.useState(LOAN_DEFAULTS.amount);
-  const [rate, setRate] = React.useState(LOAN_DEFAULTS.rate);
-  const [term, setTerm] = React.useState(LOAN_DEFAULTS.term);
+  const { amount, rate, term, setAmount, setRate, setTerm, urlFields: loanFields } = useLoanState();
   const [monthlyOverpayment, setMonthlyOverpayment] = React.useState(200);
   const [lumpSum, setLumpSum] = React.useState(0);
 
   useUrlState({
-    amount: urlField(amount, setAmount, LOAN_DEFAULTS.amount, undefined, LOAN_RANGES.amount),
-    rate: urlField(rate, setRate, LOAN_DEFAULTS.rate, undefined, LOAN_RANGES.rate),
-    term: urlField(term, setTerm, LOAN_DEFAULTS.term, undefined, LOAN_RANGES.term),
+    ...loanFields,
     overpay: urlField(monthlyOverpayment, setMonthlyOverpayment, 200, undefined, MONEY_RANGE),
     lump: urlField(lumpSum, setLumpSum, 0, undefined, MONEY_RANGE),
     currency: currencyField,

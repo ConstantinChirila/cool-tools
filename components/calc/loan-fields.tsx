@@ -1,9 +1,10 @@
 "use client";
 
+import * as React from "react";
 import { TogglePill } from "@/components/calc/pill-button";
 import { SliderField } from "@/components/calc/slider-field";
 import type { YearlyColumn } from "@/components/charts/yearly-table";
-import type { NumberRange } from "@/hooks/use-url-state";
+import { urlField, type NumberRange } from "@/hooks/use-url-state";
 import type { AmortizationYear } from "@/lib/finance";
 
 /** Bounds shared by the mortgage tools' inputs and their URL fields. */
@@ -19,6 +20,26 @@ export const LOAN_DEFAULTS = { amount: 250_000, rate: 4.5, term: 25 };
 const AMOUNT_SLIDER_MAX = 1_500_000;
 
 const TERM_PRESETS = [15, 20, 25, 30];
+
+/** Loan amount, rate and term state for a mortgage tool, with their URL fields to spread into useUrlState. */
+export function useLoanState() {
+  const [amount, setAmount] = React.useState(LOAN_DEFAULTS.amount);
+  const [rate, setRate] = React.useState(LOAN_DEFAULTS.rate);
+  const [term, setTerm] = React.useState(LOAN_DEFAULTS.term);
+  return {
+    amount,
+    rate,
+    term,
+    setAmount,
+    setRate,
+    setTerm,
+    urlFields: {
+      amount: urlField(amount, setAmount, LOAN_DEFAULTS.amount, undefined, LOAN_RANGES.amount),
+      rate: urlField(rate, setRate, LOAN_DEFAULTS.rate, undefined, LOAN_RANGES.rate),
+      term: urlField(term, setTerm, LOAN_DEFAULTS.term, undefined, LOAN_RANGES.term),
+    },
+  };
+}
 
 /** The mortgage tools' yearly table: what each year's payments went on. */
 export function loanYearColumns(money: (v: number) => string): YearlyColumn<AmortizationYear>[] {
