@@ -29,6 +29,7 @@ import {
   type UkSalaryInput,
   type UkSalaryBase,
 } from "./uk-tax";
+import { clamp } from "@/lib/utils";
 
 /** The pay periods a bonus can land in: the subset of PayPeriod that payroll actually runs on. */
 export type BonusPayFrequency = Extract<PayPeriod, "month" | "4week" | "week">;
@@ -169,7 +170,7 @@ const NEGLIGIBLE = 1;
 export function calculateBonus(input: BonusInput, baseline?: UkSalaryBase): BonusResult {
   const cfg = TAX_YEARS[input.taxYear];
   const bonus = Math.max(input.bonus, 0);
-  const sacrificed = bonus * (Math.min(Math.max(input.sacrificePct, 0), 100) / 100);
+  const sacrificed = bonus * (clamp(input.sacrificePct, 0, 100) / 100);
   const cashBonus = bonus - sacrificed;
 
   // The year without the bonus does not depend on the sacrifice, so scenarios can share it.

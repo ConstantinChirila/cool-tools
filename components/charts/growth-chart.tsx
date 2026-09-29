@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { clamp, cn } from "@/lib/utils";
 
 interface ChartSeries {
   name: string;
@@ -89,7 +89,7 @@ export function GrowthChart({
     const rect = e.currentTarget.getBoundingClientRect();
     const px = e.clientX - rect.left;
     const i = Math.round(((px - left) / Math.max(plotW, 1)) * (n - 1));
-    setHover(Math.min(n - 1, Math.max(0, i)));
+    setHover(clamp(i, 0, n - 1));
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {

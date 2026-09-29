@@ -414,7 +414,7 @@ function compute(input: UkSalaryInput): UkSalaryBase {
   const pensionGross =
     input.pensionMethod === "percent"
       ? pensionable * (clamp(input.pensionValue, 0, 100) / 100)
-      : Math.min(Math.max(input.pensionValue, 0), gross);
+      : clamp(input.pensionValue, 0, gross);
   const employerPension = pensionable * (clamp(input.employerPensionPct, 0, 100) / 100);
   const sacrificePension = input.pensionType === "sacrifice" ? pensionGross : 0;
   const netPayPension = input.pensionType === "auto" || input.pensionType === "netpay" ? pensionGross : 0;
@@ -422,7 +422,7 @@ function compute(input: UkSalaryInput): UkSalaryBase {
   const pensionDeducted = personalPension > 0 ? personalPension * 0.8 : pensionGross;
 
   // Other sacrifice
-  const salarySacrifice = Math.min(Math.max(input.salarySacrifice, 0), gross);
+  const salarySacrifice = clamp(input.salarySacrifice, 0, gross);
   const childcareMonthly = Math.max(input.childcareVouchers, 0);
   const childcareVouchers = Math.min(childcareMonthly * 12, gross);
   const estimatedEarnings = gross - sacrificePension - netPayPension;

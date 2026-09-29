@@ -3,6 +3,8 @@
  * components/tools/commute-calculator.tsx only formats what comes out.
  */
 
+import { clamp } from "@/lib/utils";
+
 /** Weeks used to turn a weekly figure into a yearly one. */
 const WEEKS_PER_YEAR = 52;
 /** Length of a working day, for the "working days" equivalent. */
@@ -121,7 +123,7 @@ export function compareHybrid(
   wfhDaysPerWeek: number,
   cost?: CommuteCostInputs,
 ): HybridComparison {
-  const wfh = Math.min(Math.max(0, wfhDaysPerWeek), inputs.daysPerWeek);
+  const wfh = clamp(wfhDaysPerWeek, 0, inputs.daysPerWeek);
   const base = calculateCommuteTime(inputs);
   const time = calculateCommuteTime({ ...inputs, daysPerWeek: inputs.daysPerWeek - wfh });
   const hoursSaved = base.hoursPerYear - time.hoursPerYear;

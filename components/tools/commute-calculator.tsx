@@ -21,7 +21,7 @@ import {
   type CostMode,
 } from "@/lib/commute";
 import { formatMoney, formatNumber } from "@/lib/currency";
-import { cn } from "@/lib/utils";
+import { clamp, cn } from "@/lib/utils";
 
 const DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
 const HORIZONS = ["5", "10", "20", "40"] as const;
@@ -207,7 +207,7 @@ export function CommuteCalculator() {
               <PillRow
                 label="What if you worked from home some days?"
                 value={effectiveWfh}
-                options={Array.from({ length: Math.min(7, Math.max(1, Math.round(daysPerWeek))) + 1 }, (_, i) => i)}
+                options={Array.from({ length: clamp(Math.round(daysPerWeek), 1, 7) + 1 }, (_, i) => i)}
                 onChange={setWfhDays}
                 format={(d) => (d === 0 ? "None" : `${d}`)}
               />

@@ -8,6 +8,7 @@
  */
 
 import type { Line, LineKind } from "@/lib/breakdown";
+import { clamp } from "@/lib/utils";
 
 export type FinanceKind = "pcp" | "hp" | "loan" | "lease";
 export type CompareBasis = "net" | "total";
@@ -148,7 +149,7 @@ export function excessMileageCharge(input: CarFinanceInput): number {
 }
 
 function termOf(input: CarFinanceInput): number {
-  return Math.min(MAX_TERM_MONTHS, Math.max(1, Math.round(input.termMonths)));
+  return clamp(Math.round(input.termMonths), 1, MAX_TERM_MONTHS);
 }
 
 /**
@@ -196,12 +197,12 @@ function financeResult(
 }
 
 function depositOf(input: CarFinanceInput): number {
-  return Math.min(Math.max(0, input.deposit), input.price);
+  return clamp(input.deposit, 0, input.price);
 }
 
 /** The dealer contribution, capped at what the deposit leaves to pay. */
 function contributionOf(input: CarFinanceInput): number {
-  return Math.min(Math.max(0, input.dealerContribution), input.price - depositOf(input));
+  return clamp(input.dealerContribution, 0, input.price - depositOf(input));
 }
 
 function loanBorrowed(input: CarFinanceInput): number {

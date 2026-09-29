@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { clamp } from "@/lib/utils";
 
 /**
  * Canvas dice: a small 3D renderer, no dependencies.
@@ -250,7 +251,7 @@ function faceInradius(points: Vec3[], centre: Vec3) {
     const a = points[i]!;
     const b = points[(i + 1) % points.length]!;
     const edge = sub(b, a);
-    const t = Math.max(0, Math.min(1, dot(sub(centre, a), edge) / dot(edge, edge)));
+    const t = clamp(dot(sub(centre, a), edge) / dot(edge, edge), 0, 1);
     min = Math.min(min, length(sub(centre, [a[0] + edge[0] * t, a[1] + edge[1] * t, a[2] + edge[2] * t])));
   }
   return min;
@@ -376,7 +377,7 @@ function readVar(name: string, fallback: string) {
 /** The orientation that rests `value`'s face towards the camera, upright. */
 function restQuat(solid: Solid, value: number): Quat {
   if (solid.cornerRead) {
-    const top = Math.min(solid.vertices.length, Math.max(1, value)) - 1;
+    const top = clamp(value, 1, solid.vertices.length) - 1;
     const align = qBetween(unit(solid.vertices[top]!), [0, 1, 0]);
     // Swing one of the faces under that corner round to the camera.
     const front = solid.faces.find((f) => f.indices.includes(top)) ?? solid.faces[0]!;
@@ -582,7 +583,7 @@ export function DiceCanvas({
 
         // A d4 corner number sits in the narrow tip, where a glancing face only smears it.
         const [from, full] = solid.cornerRead ? FACING_D4 : FACING;
-        const facing = Math.min(1, Math.max(0, (normal[2] - from) / (full - from)));
+        const facing = clamp((normal[2] - from) / (full - from), 0, 1);
         if (facing <= 0) continue;
         const inkFor = (value: number) =>
           facing * (value === spec.value ? 1 : 1 - (1 - BYSTANDER) * calm);
@@ -654,14 +655,14 @@ export function DiceCanvas({
         let lift = 0;
         let calm = 1;
         if (state.duration > 0) {
-          const t = Math.min(1, Math.max(0, (now - state.start) / state.duration));
+          const t = clamp((now - state.start) / state.duration, 0, 1);
           const e = easeOut(t);
           state.q = normalizeQ(
             qmul(qSlerp(state.from, state.to, e), qAxis(state.spinAxis, 2 * Math.PI * state.spins * (1 - e))),
           );
           lift = Math.min(hopAt(t) * state.hop * radius, headroom);
           // Only over the last stretch, so nothing is given away mid-tumble.
-          calm = Math.min(1, Math.max(0, (t - 0.7) / 0.3));
+          calm = clamp((t - 0.7) / 0.3, 0, 1);
           if (t >= 1) {
             state.duration = 0;
             state.q = state.to;

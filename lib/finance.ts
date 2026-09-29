@@ -1,3 +1,5 @@
+import { clamp } from "@/lib/utils";
+
 /** Longest term either schedule will simulate, whatever the caller asks for. */
 const MAX_TERM_YEARS = 100;
 
@@ -41,7 +43,7 @@ export function calculateMortgage(
 ): MortgageResult {
   const { interestOnly = false, monthlyOverpayment = 0, lumpSum = 0 } = options;
   // Guard against callers passing unbounded terms (a schedule loop runs per month).
-  const months = Math.min(MAX_TERM_YEARS * 12, Math.max(1, Math.round(termYears * 12)));
+  const months = clamp(Math.round(termYears * 12), 1, MAX_TERM_YEARS * 12);
   const r = annualRatePct / 100 / 12;
   const monthlyPayment = interestOnly
     ? principal * r
@@ -168,7 +170,7 @@ export function calculateCompound(
   termYears: number,
 ): CompoundResult {
   const rate = annualRatePct / 100;
-  const termCapped = Math.min(MAX_TERM_YEARS, Math.max(0, Math.round(termYears)));
+  const termCapped = clamp(Math.round(termYears), 0, MAX_TERM_YEARS);
   const years: CompoundYear[] = [];
   const balanceSeries: number[] = [initial];
   const contributedSeries: number[] = [initial];

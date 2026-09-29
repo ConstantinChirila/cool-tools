@@ -265,7 +265,7 @@ export function calculateLtd(input: ContractorInput): ScenarioResult {
         : (available + ni.secondaryThreshold * ni.employerRate) / (1 + ni.employerRate);
   }
   const salaryNi = employerNi(taxYear, salary);
-  const pension = Math.min(Math.max(input.contractorPension, 0), Math.max(available - salary - salaryNi, 0));
+  const pension = clamp(input.contractorPension, 0, Math.max(available - salary - salaryNi, 0));
   const profit = Math.max(available - salary - salaryNi - pension, 0);
   const ct = corporationTax(profit);
   const dividends = profit - ct;
@@ -317,7 +317,7 @@ export function calculateUmbrella(input: ContractorInput): ScenarioResult {
   const weeks = input.daysPerWeek > 0 ? days.billable / input.daysPerWeek : 0;
   const margin = Math.min(Math.max(input.umbrellaMargin, 0) * weeks, revenue);
   // Salary sacrifice: the umbrella pays the pension as an employer contribution, before employer NI.
-  const pension = Math.min(Math.max(input.contractorPension, 0), revenue - margin);
+  const pension = clamp(input.contractorPension, 0, revenue - margin);
   const pot = Math.max(revenue - margin - pension, 0);
 
   // Employer NI and the levy are paid out of the assignment rate, so solve
@@ -366,7 +366,7 @@ export function calculateSoleTrader(input: ContractorInput): ScenarioResult {
   const costs = Math.max(input.expenses, 0) + Math.max(input.soleTraderCosts, 0);
   const profit = Math.max(revenue - costs, 0);
   // Tax relief is capped at your earnings; relief at source means you pay 80%.
-  const pension = Math.min(Math.max(input.contractorPension, 0), profit);
+  const pension = clamp(input.contractorPension, 0, profit);
 
   const r = calculateUkSalaryBase(
     paye(taxYear, input.scotland, {

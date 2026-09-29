@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { clamp } from "@/lib/utils";
 
 export type Primitive = string | number | boolean;
 
@@ -59,7 +60,7 @@ function parse(raw: string, field: UrlField): Primitive | undefined {
     case "number": {
       const n = Number(raw);
       if (!Number.isFinite(n)) return undefined;
-      return field.range ? Math.min(field.range.max, Math.max(field.range.min, n)) : n;
+      return field.range ? clamp(n, field.range.min, field.range.max) : n;
     }
     case "boolean":
       return raw === "1" || raw === "true" ? true : raw === "0" || raw === "false" ? false : undefined;

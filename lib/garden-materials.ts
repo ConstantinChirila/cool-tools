@@ -9,6 +9,7 @@
  */
 
 import { fail, ok, type Result } from "@/lib/result";
+import { clamp } from "@/lib/utils";
 
 export const MATERIALS = ["topsoil", "compost", "mulch", "bark", "gravel", "sand"] as const;
 export type Material = (typeof MATERIALS)[number];
@@ -258,7 +259,7 @@ export function parseAreas(raw: string): Result<Area[]> {
   if (parts.length > MAX_AREAS) return fail(`At most ${MAX_AREAS} areas`);
   const size = (s: string) => {
     const n = Number(s);
-    return Number.isFinite(n) ? Math.min(Math.max(n, 0), MAX_DIMENSION) : 0;
+    return Number.isFinite(n) ? clamp(n, 0, MAX_DIMENSION) : 0;
   };
   const areas: Area[] = [];
   for (const part of parts) {

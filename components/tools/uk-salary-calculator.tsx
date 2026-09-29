@@ -52,7 +52,7 @@ import {
   type PensionType,
   type UkSalaryInput,
 } from "@/lib/uk-tax";
-import { cn } from "@/lib/utils";
+import { clamp, cn } from "@/lib/utils";
 
 type InputPeriod = Extract<PayPeriod, "year" | "month" | "week" | "day" | "hour">;
 
@@ -632,7 +632,7 @@ export function UkSalaryCalculator() {
                     id="days"
                     label="Days per week"
                     value={input.daysPerWeek}
-                    onChange={(v) => update("daysPerWeek", Math.min(Math.max(v, 1), 7))}
+                    onChange={(v) => update("daysPerWeek", clamp(v, 1, 7))}
                     min={1}
                     max={7}
                     suffix="days"
