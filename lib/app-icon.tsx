@@ -1,13 +1,9 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { ImageResponse } from "next/og";
+import { BLOB, loadGabarito } from "@/lib/og";
 
 const INK = "#2a2723";
 const PAPER = "#fbf9f4";
 const YELLOW = "#f7d54a";
-
-/** Same blob as app/icon.svg, in a 64 unit box. */
-const BLOB = "M12 8 C26 2 44 4 55 12 C63 20 61 40 54 51 C46 62 22 62 12 54 C2 46 2 18 12 8 Z";
 
 /** Sizes served at /pwa-icon/<size> for the web manifest. */
 export const MANIFEST_ICON_SIZES = [192, 512] as const;
@@ -17,10 +13,7 @@ export const MANIFEST_ICON_SIZES = [192, 512] as const;
  * and the mark stays inside the central 80% so Android's maskable crop never clips it.
  */
 export async function renderAppIcon(size: number) {
-  // woff, not woff2: satori cannot read woff2.
-  const gabarito = await readFile(
-    join(process.cwd(), "node_modules/@fontsource/gabarito/files/gabarito-latin-900-normal.woff"),
-  );
+  const gabarito = await loadGabarito(900);
   const mark = size * 0.66;
   const offset = size * 0.035;
 
@@ -73,7 +66,7 @@ export async function renderAppIcon(size: number) {
     {
       width: size,
       height: size,
-      fonts: [{ name: "Gabarito", data: gabarito, weight: 900, style: "normal" }],
+      fonts: [gabarito],
     },
   );
 }
