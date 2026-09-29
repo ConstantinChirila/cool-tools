@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, type LucideIcon } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** A collapsible group of optional inputs: tinted when it is contributing to the result. */
@@ -14,7 +14,7 @@ export function Section({
   onToggle,
   children,
 }: {
-  icon: LucideIcon;
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   summary: string;
   active: boolean;

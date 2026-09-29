@@ -307,7 +307,10 @@ export interface BuyOptions {
   best: Plan | null;
 }
 
-export function buyOptions(volume: number, s: Settings, unit: BagUnit): BuyOptions {
+/** What `buyOptions` needs from a material's settings. */
+export type Buying = Pick<Settings, "bag" | "bagPrice" | "bulk" | "bulkPrice" | "delivery" | "density">;
+
+export function buyOptions(volume: number, s: Buying, unit: BagUnit): BuyOptions {
   const bagVol = unitVolume(s.bag, unit, s.density);
   const bulkVol = unitVolume(s.bulk, unit, s.density);
 
@@ -346,6 +349,11 @@ function cheaper(p: Plan, than: Plan | null): boolean {
 /** A 90 L builder's barrow, rated for about 140 kg. */
 export const BARROW = { litres: 90, kg: 140 } as const;
 
+/** Barrow trips for a load, whichever runs out first: the barrow's space or its weight rating. */
+export function barrowLoads(volume: number, weight: number): number {
+  return volume > 0 ? Math.ceil(Math.max((volume * 1000) / BARROW.litres, (weight * 1000) / BARROW.kg) - 1e-9) : 0;
+}
+
 export interface GardenResult {
   area: AreaTotal;
   /** m³ to cover the area at the depth, before the extra. */
@@ -363,6 +371,5 @@ export function calculate(areas: readonly Area[], material: Material, s: Setting
   const exact = area.net * (s.depth / 100);
   const volume = exact * (1 + s.extra / 100);
   const weight = volume * s.density;
-  const barrowLoads = volume > 0 ? Math.ceil(Math.max((volume * 1000) / BARROW.litres, (weight * 1000) / BARROW.kg) - 1e-9) : 0;
-  return { area, exact, volume, weight, barrowLoads, options: buyOptions(volume, s, MATERIAL_INFO[material].bagUnit) };
+  return { area, exact, volume, weight, barrowLoads: barrowLoads(volume, weight), options: buyOptions(volume, s, MATERIAL_INFO[material].bagUnit) };
 }

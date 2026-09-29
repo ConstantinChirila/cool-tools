@@ -12,6 +12,7 @@ import {
   Percent,
   PiggyBank,
   Shovel,
+  Sprout,
   ShoppingBasket,
   Stamp,
   Target,
@@ -279,6 +280,23 @@ export const tools: Tool[] = [
         "Work out how much topsoil, compost, mulch, bark, gravel or sand you need in m³, litres and tonnes, how many bags or bulk bags, and the cheapest way to buy it.",
     },
     updated: "2026-09-28",
+  },
+  {
+    slug: "raised-bed-calculator",
+    name: "Raised Bed Calculator",
+    shortName: "Raised Bed",
+    description:
+      "How much topsoil, compost and manure fills your raised beds, in bags or bulk bags, plus the boards and posts to build them and what it all costs.",
+    category: "Everyday",
+    icon: Sprout,
+    keywords: ["raised bed", "raised garden bed", "veg bed", "vegetable bed", "planter", "soil mix", "raised bed soil", "topsoil", "compost", "manure", "farmyard manure", "no dig", "scaffold boards", "sleepers", "railway sleepers", "decking boards", "timber", "cut list", "bulk bag", "how much soil", "allotment", "garden", "grow your own"],
+    tint: "var(--sticker-yellow)",
+    seo: {
+      title: "Raised Bed Calculator: Soil Mix, Timber and Cost",
+      description:
+        "Work out how much topsoil, compost and manure fills your raised beds, how many bags or bulk bags to buy, the scaffold boards or sleepers to build them, and the cost.",
+    },
+    updated: "2026-09-29",
   },
   {
     slug: "tv-distance-calculator",

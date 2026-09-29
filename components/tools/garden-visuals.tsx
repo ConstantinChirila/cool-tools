@@ -9,8 +9,12 @@ import { clamp, cn } from "@/lib/utils";
 
 const INK = "var(--foreground)";
 
+/** Fill patterns: every garden material, plus manure for raised bed mixes. */
+const TEXTURES = [...MATERIALS, "manure"] as const;
+export type Texture = (typeof TEXTURES)[number];
+
 /** Id of a material's fill pattern; `TextureDefs` must be on the page. */
-const texture = (m: Material) => `url(#garden-tex-${m})`;
+export const texture = (m: Texture) => `url(#garden-tex-${m})`;
 
 /** Hand-placed marks in a 40-unit tile, kept clear of the edges so tiles meet without seams. */
 const SPECKS: [number, number, number][] = [
@@ -26,7 +30,7 @@ const PEBBLES: [number, number, number, number][] = [
 ];
 const PEBBLE_FILLS = ["oklch(0.93 0.01 80)", "oklch(0.74 0.02 70)", "oklch(0.64 0.025 250)", "oklch(0.83 0.03 60)"];
 
-function Tile({ material }: { material: Material }) {
+function Tile({ material }: { material: Texture }) {
   switch (material) {
     case "topsoil":
       return (
@@ -107,6 +111,16 @@ function Tile({ material }: { material: Material }) {
           ))}
         </>
       );
+    case "manure":
+      return (
+        <>
+          <rect width={40} height={40} fill="oklch(0.29 0.03 60)" />
+          {SPECKS.map(([x, y, r], i) => (
+            <ellipse key={i} cx={x} cy={y} rx={r * 1.5} ry={r} fill={i % 3 ? "oklch(0.38 0.045 70)" : "oklch(0.22 0.02 55)"} />
+          ))}
+          <path d="M4 12 q5 -3 9 0 M21 26 q4 3 9 1 M28 13 l6 -4 M10 34 l5 -1" stroke="oklch(0.72 0.1 90)" strokeWidth={1.1} strokeLinecap="round" fill="none" />
+        </>
+      );
   }
 }
 
@@ -115,7 +129,7 @@ export function TextureDefs() {
   return (
     <svg width={0} height={0} className="absolute" aria-hidden focusable="false">
       <defs>
-        {MATERIALS.map((m) => (
+        {TEXTURES.map((m) => (
           <pattern key={m} id={`garden-tex-${m}`} patternUnits="userSpaceOnUse" width={40} height={40}>
             <Tile material={m} />
           </pattern>
@@ -130,7 +144,7 @@ export function TextureDefs() {
 }
 
 /** A round sample of the material, for tabs. */
-export function Swatch({ material, className }: { material: Material; className?: string }) {
+export function Swatch({ material, className }: { material: Texture; className?: string }) {
   return (
     <svg viewBox="0 0 40 40" className={cn("shrink-0 rounded-full border-2 border-foreground", className)} aria-hidden>
       <rect width={40} height={40} fill={texture(material)} />
@@ -384,7 +398,7 @@ const BULK = "M6 18 L54 18 L56 62 L4 62 Z";
  * A bag or bulk bag, filled with the material up to `fill` (0 to 1), so the
  * last one can show how much of it you'll use.
  */
-export function BagIcon({ kind, material, fill = 1, className }: { kind: "bag" | "bulk"; material: Material; fill?: number; className?: string }) {
+export function BagIcon({ kind, material, fill = 1, className }: { kind: "bag" | "bulk"; material: Texture; fill?: number; className?: string }) {
   const id = React.useId();
   const d = kind === "bag" ? SACK : BULK;
   const top = kind === "bag" ? 10 : 18;
