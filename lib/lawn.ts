@@ -19,6 +19,7 @@ import {
   type BuyOptions,
   type Buying,
 } from "@/lib/garden-materials";
+import { WATER_PRICE } from "@/lib/water";
 
 export const PROJECTS = ["seed", "turf", "overseed"] as const;
 export type Project = (typeof PROJECTS)[number];
@@ -150,11 +151,8 @@ export interface Water {
   price: number;
 }
 
-/**
- * Thames Water charges £4.21/m³ and United Utilities £5.51/m³ for water
- * and sewerage together in 2026/27. Sewerage is charged on garden water too.
- */
-export const WATER_DEFAULTS: Water = { price: 4.5 };
+/** Water and sewerage together, as on a meter (see lib/water.ts). */
+export const WATER_DEFAULTS: Water = { price: WATER_PRICE };
 
 export interface WateringSpell {
   /** Weeks after sowing or laying, inclusive. */

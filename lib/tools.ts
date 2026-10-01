@@ -3,7 +3,9 @@ import {
   Binary,
   Briefcase,
   Car,
+  CloudRain,
   Dices,
+  Droplets,
   FileDiff,
   Gift,
   Hourglass,
@@ -351,6 +353,40 @@ export const tools: Tool[] = [
         "Work out how many paving slabs a patio needs with every cut drawn on a plan, plus MOT Type 1, sharp sand, cement, jointing compound, the fall and the cost.",
     },
     updated: "2026-09-30",
+  },
+  {
+    slug: "water-butt-calculator",
+    name: "Water Butt Calculator",
+    shortName: "Water Butt",
+    description:
+      "How much rain your roof can catch, what size water butt to buy, how often it would overflow or run dry, and what it saves on a water meter.",
+    category: "Everyday",
+    icon: CloudRain,
+    keywords: ["water butt", "rain barrel", "rainwater", "rainwater harvesting", "rain water", "roof", "gutter", "downpipe", "tank", "ibc", "rainfall", "how much rain", "what size water butt", "water saving", "water meter", "hosepipe ban", "drought", "garden", "watering"],
+    tint: "var(--sticker-sky)",
+    seo: {
+      title: "Water Butt Calculator: Size, Rain and Savings",
+      description:
+        "Work out how much rain your roof collects, the right water butt size for your garden, how often it overflows or runs dry, and what it saves on a water meter.",
+    },
+    updated: "2026-10-01",
+  },
+  {
+    slug: "drip-irrigation-calculator",
+    name: "Drip Irrigation Calculator",
+    shortName: "Drip Irrigation",
+    description:
+      "How many drippers your tap can run per zone, how long to water each zone, how much water it uses a day and a week, and how long to flush the pipes.",
+    category: "Everyday",
+    icon: Droplets,
+    keywords: ["irrigation", "drip irrigation", "micro irrigation", "drippers", "emitters", "watering system", "tap flow", "flow rate", "zones", "run time", "timer", "hozelock", "gardena", "greenhouse", "tomatoes", "pots", "hanging baskets", "supply pipe", "flush", "litres per hour", "garden", "watering"],
+    tint: "var(--sticker-lilac)",
+    seo: {
+      title: "Drip Irrigation Calculator: Drippers, Zones, Run Time",
+      description:
+        "Work out how many drippers your tap can feed per zone, how long each zone should run, daily and weekly water use and cost, and pipe flush time.",
+    },
+    updated: "2026-10-01",
   },
   {
     slug: "tv-distance-calculator",
