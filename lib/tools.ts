@@ -411,7 +411,7 @@ export const tools: Tool[] = [
     shortName: "Units",
     description:
       "Convert length, weight, volume, temperature, speed, fuel economy, data, pressure and more across 300 units, including mpg to L/100km and stone to kg.",
-    category: "Everyday",
+    category: "Maths",
     icon: ArrowLeftRight,
     keywords: ["unit", "units", "convert", "conversion", "converter", "metric", "imperial", "mpg", "l/100km", "fuel economy", "stone", "kg", "lbs", "pounds", "kilograms", "miles", "km", "feet", "inches", "cm", "celsius", "fahrenheit", "litres", "gallons", "pints", "cups", "ounces", "psi", "bar", "kwh", "gb", "gib", "knots", "pace", "min/km", "measurement"],
     tint: "var(--sticker-yellow)",
