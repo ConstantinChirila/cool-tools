@@ -70,6 +70,16 @@
       "when": "Water companies set new charges every 1 April (announced in February); Ofwat charging rules may change from April 2027",
       "lastChecked": "2026-10-01",
       "due": "2027-04-10"
+    },
+    {
+      "id": "energy-prices",
+      "what": "Ofgem price cap unit rate, Smart Export Guarantee rates, EV tariff off-peak rates and windows, typical solar and battery install costs, Ofgem typical consumption values, DESNZ grid carbon factor, VAT relief end date",
+      "tools": ["solar-payback-calculator"],
+      "files": ["lib/solar.ts (DEFAULT_IMPORT, DEFAULT_EXPORT, DEFAULT_OFF_PEAK, OFF_PEAK_DAY_RATE, solarCostFor, batteryCostFor, USE_PRESETS, GRID_CO2)", "content/solar-payback-calculator.ts", "components/tools/solar-payback-calculator.tsx (hints quote the cap and VAT date)"],
+      "sources": ["https://www.ofgem.gov.uk/information-consumers/energy-advice-households/energy-price-cap-unit-rates-and-standing-charges", "https://octopus.energy/outgoing/", "https://www.gov.uk/government/statistics/solar-pv-cost-data", "https://www.gov.uk/government/collections/government-conversion-factors-for-company-reporting"],
+      "when": "The cap changes every quarter (1 Jan, 1 Apr, 1 Jul, 1 Oct; the next is announced 25 Nov 2026); VAT relief on installs ends 31 Mar 2027",
+      "lastChecked": "2026-10-01",
+      "due": "2027-01-02"
     }
   ]
 }

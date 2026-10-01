@@ -3,7 +3,8 @@
 import * as React from "react";
 import { formatNumber } from "@/lib/currency";
 import { cn, clamp } from "@/lib/utils";
-import { DAYS, MONTH_START, type RoofInfo, type Simulation } from "@/lib/water-butt";
+import { type RoofInfo, type Simulation } from "@/lib/water-butt";
+import { DAYS, MONTH_START, MONTHS, dayLabel } from "@/lib/year";
 
 const INK = "var(--foreground)";
 /** Water in the drawings and charts: deep enough to read on white and on the sky card. */
@@ -12,14 +13,7 @@ const WATER_LIGHT = "oklch(0.8 0.08 235)";
 export const DRY = "oklch(0.6 0.19 25)";
 const GREEN = "oklch(0.66 0.15 140)";
 
-export const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-
-/** "12 Jun" for a day of a 365-day year. */
-export function dayLabel(day: number): string {
-  let m = 0;
-  while (m < 11 && (MONTH_START[m + 1] ?? DAYS) <= day) m++;
-  return `${day - (MONTH_START[m] ?? 0) + 1} ${MONTHS[m]}`;
-}
+export { MONTHS, dayLabel };
 
 /* --------------------------------------------------------------- Scene -- */
 

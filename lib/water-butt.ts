@@ -15,6 +15,8 @@
  */
 
 import { PLACES, type Place, type PlaceId } from "@/lib/rainfall-data";
+import { hashSeed, seededRandom } from "@/lib/seeded";
+import { DAYS, DAYS_IN_MONTH, MONTH_OF_DAY, MONTH_START } from "@/lib/year";
 
 export { PLACES, type Place, type PlaceId };
 
@@ -130,31 +132,7 @@ export const LIMITS = {
 /* ------------------------------------------------------------- Weather -- */
 
 export const YEARS = 30;
-const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] as const;
-export const DAYS = 365;
-
-/** Month (0–11) of each day of a 365-day year. */
-export const MONTH_OF_DAY: readonly number[] = DAYS_IN_MONTH.flatMap((n, m) => Array.from({ length: n }, () => m));
-/** Day of the year each month starts on. */
-export const MONTH_START: readonly number[] = DAYS_IN_MONTH.map((_, m) => DAYS_IN_MONTH.slice(0, m).reduce((a, b) => a + b, 0));
-
-/** A small, fast seeded generator (mulberry32), so the weather repeats exactly. */
-function random(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function hash(text: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
-  return h >>> 0;
-}
+export { DAYS, MONTH_OF_DAY, MONTH_START };
 
 /**
  * How much more likely rain is the day after rain than on any day. UK rain
@@ -181,7 +159,8 @@ const MONTH_SHAPE = 3;
  * month matches the place's average once scaled to `annual`.
  */
 export function simulateRain(place: Place, annual: number): Float64Array {
-  const next = random(hash(place.id));
+  // Seeded from the place, so the weather repeats exactly.
+  const next = seededRandom(hashSeed(place.id));
   const scale = place.annual > 0 ? annual / place.annual : 1;
   const rain = new Float64Array(YEARS * DAYS);
   let wet = false;

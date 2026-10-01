@@ -19,6 +19,7 @@ import {
   Sprout,
   ShoppingBasket,
   Stamp,
+  Sun,
   Target,
   TrainFront,
   TrendingUp,
@@ -368,6 +369,23 @@ export const tools: Tool[] = [
       title: "Water Butt Calculator: Size, Rain and Savings",
       description:
         "Work out how much rain your roof collects, the right water butt size for your garden, how often it overflows or runs dry, and what it saves on a water meter.",
+    },
+    updated: "2026-10-01",
+  },
+  {
+    slug: "solar-payback-calculator",
+    name: "Solar and Battery Payback Calculator",
+    shortName: "Solar Payback",
+    description:
+      "What solar panels and a home battery would generate, save and earn, hour by hour through a year, and how many years they take to pay for themselves.",
+    category: "Finance",
+    icon: Sun,
+    keywords: ["solar", "solar panels", "pv", "photovoltaic", "battery", "home battery", "battery storage", "powerwall", "payback", "roi", "return", "generation", "kwp", "kwh", "export", "seg", "smart export guarantee", "octopus", "feed in", "self consumption", "electricity bill", "energy", "green", "net zero", "octopus go", "off peak", "ev tariff"],
+    tint: "var(--sticker-yellow)",
+    seo: {
+      title: "Solar Panel and Battery Payback Calculator UK",
+      description:
+        "See what solar panels and a home battery would save and earn on a UK roof, hour by hour through the year, and how many years they take to pay back. PVGIS yields, 2026 prices and export rates.",
     },
     updated: "2026-10-01",
   },
