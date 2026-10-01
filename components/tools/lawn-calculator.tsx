@@ -13,11 +13,13 @@ import { SliderField } from "@/components/calc/slider-field";
 import { SwitchField } from "@/components/calc/switch-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { SplitBar } from "@/components/charts/split-bar";
+import { BagFields } from "@/components/tools/bag-fields";
 import { AreaList, withIds, type AreaRow } from "@/components/tools/garden-areas";
 import {
   CM_PER_INCH,
   UNITS,
   UNIT_OPTIONS,
+  bagDetail,
   cubic,
   depthText,
   formatArea,
@@ -33,7 +35,7 @@ import { ShopRow } from "@/components/tools/shop-row";
 import { useCurrency } from "@/hooks/use-currency";
 import { MONEY_RANGE, inputFields, useUrlState, urlField, type FieldUpdate, type NumberRange } from "@/hooks/use-url-state";
 import { formatNumber, plural } from "@/lib/currency";
-import { BARROW, MATERIAL_INFO, encodeAreas, parseAreas, type Area, type Buying, type Plan } from "@/lib/garden-materials";
+import { BARROW, MATERIAL_INFO, encodeAreas, parseAreas, planOrFallback, type Area, type Buying, type Plan } from "@/lib/garden-materials";
 import {
   BIRD_EXTRA,
   DRESSING_DEFAULTS,
@@ -49,7 +51,6 @@ import {
   TURF_DEFAULTS,
   WATER_DEFAULTS,
   calculate,
-  planOrFallback,
   type Dressing,
   type Feed,
   type LawnInput,
@@ -449,67 +450,6 @@ function Extra({
         <SwitchField id={id} label={label} hint={hint} checked={on} onCheckedChange={setOn} className="min-w-0 flex-1" />
       </div>
       {on && <div className="space-y-4 border-t border-foreground/15 px-3.5 pt-4 pb-4">{children}</div>}
-    </div>
-  );
-}
-
-function BagFields({
-  id,
-  unit,
-  sizes,
-  s,
-  update,
-  material,
-  currency,
-}: {
-  id: string;
-  unit: "L" | "kg";
-  sizes: { bag: readonly number[]; bulk: readonly number[] };
-  s: Buying;
-  update: (key: keyof Buying, v: number) => void;
-  material: "topsoil" | "sand";
-  currency: string;
-}) {
-  return (
-    <div className="grid gap-5 sm:grid-cols-2">
-      <div className="space-y-4">
-        <SizePicker
-          id={`${id}-bag`}
-          label="Bag size"
-          unit={unit}
-          sizes={sizes.bag}
-          value={s.bag}
-          onChange={(v) => update("bag", v)}
-          min={LIMITS.size.min}
-          max={LIMITS.size.max}
-          icon={<BagIcon kind="bag" material={material} className="h-7 w-6" />}
-        />
-        <NumberField id={`${id}-bag-price`} label="Price per bag" value={s.bagPrice} onChange={(v) => update("bagPrice", v)} max={MONEY_RANGE.max} prefix={currency} decimals={2} />
-      </div>
-      <div className="space-y-4">
-        <SizePicker
-          id={`${id}-bulk`}
-          label="Bulk bag size"
-          unit={unit}
-          sizes={sizes.bulk}
-          value={s.bulk}
-          onChange={(v) => update("bulk", v)}
-          min={LIMITS.size.min}
-          max={LIMITS.size.max}
-          icon={<BagIcon kind="bulk" material={material} className="h-7 w-6" />}
-        />
-        <NumberField id={`${id}-bulk-price`} label="Price per bulk bag" value={s.bulkPrice} onChange={(v) => update("bulkPrice", v)} max={MONEY_RANGE.max} prefix={currency} decimals={2} />
-      </div>
-      <NumberField
-        id={`${id}-delivery`}
-        label="Bulk bag delivery"
-        value={s.delivery}
-        onChange={(v) => update("delivery", v)}
-        max={MONEY_RANGE.max}
-        prefix={currency}
-        decimals={2}
-        hint="Once per order with a bulk bag. Blank if it's in the price."
-      />
     </div>
   );
 }
@@ -930,9 +870,6 @@ function ShoppingList({
   );
 }
 
-function bagDetail(plan: Plan, s: Buying, unit: "L" | "kg"): string {
-  return [plan.bulk ? `${plan.bulk} × ${formatNumber(s.bulk, 0)} ${unit}` : "", plan.bags ? `${plan.bags} × ${formatNumber(s.bag, 0)} ${unit}` : ""].filter(Boolean).join(" + ");
-}
 
 function WateringPlan({ result }: { result: LawnResult }) {
   const water = result.water;

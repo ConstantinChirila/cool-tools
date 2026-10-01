@@ -4,7 +4,7 @@
  */
 
 import { formatNumber, plural } from "@/lib/currency";
-import type { Plan } from "@/lib/garden-materials";
+import type { Buying, Plan } from "@/lib/garden-materials";
 
 export type Units = "metric" | "imperial";
 export const UNITS = ["metric", "imperial"] as const satisfies readonly Units[];
@@ -65,4 +65,9 @@ export function planText(plan: Plan): string {
   if (plan.bulk) parts.push(plural(plan.bulk, "bulk bag"));
   if (plan.bags) parts.push(plural(plan.bags, "bag"));
   return parts.join(" + ") || "Nothing";
+}
+
+/** "1 × 750 L + 3 × 25 L". */
+export function bagDetail(plan: Plan, s: Buying, unit: "L" | "kg"): string {
+  return [plan.bulk ? `${plan.bulk} × ${formatNumber(s.bulk, 0)} ${unit}` : "", plan.bags ? `${plan.bags} × ${formatNumber(s.bag, 0)} ${unit}` : ""].filter(Boolean).join(" + ");
 }

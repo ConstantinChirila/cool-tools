@@ -343,6 +343,11 @@ export function buyOptions(volume: number, s: Buying, unit: BagUnit): BuyOptions
   return { bagsOnly, bulkOnly, mix, best };
 }
 
+/** The plan to show when nothing is priced: the fewest packs or bags. */
+export function planOrFallback(options: BuyOptions): Plan {
+  return options.best ?? options.bulkOnly;
+}
+
 /** Cheaper on price, or as cheap with fewer things to carry. Unpriced plans never win. */
 function cheaper(p: Plan, than: Plan | null): boolean {
   if (p.cost === null) return false;

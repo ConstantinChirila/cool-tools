@@ -18,7 +18,6 @@ import {
   type AreaTotal,
   type BuyOptions,
   type Buying,
-  type Plan,
 } from "@/lib/garden-materials";
 
 export const PROJECTS = ["seed", "turf", "overseed"] as const;
@@ -356,9 +355,4 @@ export function calculate({ areas, project, seed, turf, topsoil, dressing, feed,
     water: waterResult,
     cost: { grass, soil: soilCost, feed: feedCost, water: waterCost, total: grass + soilCost + feedCost + waterCost, unpriced },
   };
-}
-
-/** The plan to show when nothing is priced: the fewest packs or bags. */
-export function planOrFallback(options: BuyOptions): Plan {
-  return options.best ?? options.bulkOnly;
 }
