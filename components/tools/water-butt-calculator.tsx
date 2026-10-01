@@ -34,6 +34,10 @@ import {
   USE_PRESETS,
   buttsFor,
   calculate,
+  litresPerMm,
+  placeOf,
+  simulateRain,
+  sizing,
   type ButtInput,
   type ButtResult,
   type PlaceId,
@@ -84,8 +88,13 @@ export function WaterButtCalculator() {
     currency: currencyField,
   });
 
-  const result = calculate(input);
-  const place = PLACES.find((p) => p.id === input.place) ?? DEFAULT_PLACE;
+  // Staged so the weather only rebuilds when the place or rainfall changes and
+  // the sizing curve only when the roof or garden does: the compiler keeps each.
+  const place = placeOf(input);
+  const rain = simulateRain(place, input.annual);
+  const perMm = litresPerMm(input);
+  const sized = sizing(rain, perMm, input.use);
+  const result = calculate(input, rain, sized);
   const setPlace = (id: PlaceId) => {
     const next = PLACES.find((p) => p.id === id);
     if (next) setInput((prev) => ({ ...prev, place: next.id, annual: next.annual }));

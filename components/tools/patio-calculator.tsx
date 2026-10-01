@@ -30,6 +30,7 @@ import {
   LIMITS,
   MAX_CUTOUTS,
   MAX_PATIOS,
+  MAX_PIECES,
   MAX_SIDE,
   MOT_WASTE,
   SLAB_INFO,
@@ -146,10 +147,12 @@ const COST_COLORS = {
   jointing: "var(--chart-1)",
 };
 
-type PatioRow = Patio & { id: number };
-const withIds = (patios: Patio[]): PatioRow[] => patios.map((p, id) => ({ ...p, id }));
-const stripIds = (rows: PatioRow[]): Patio[] => rows.map(({ length, width, cutOuts }) => ({ length, width, cutOuts }));
-const nextId = (rows: PatioRow[]) => rows.reduce((max, r) => Math.max(max, r.id), -1) + 1;
+// Rows carry ids so React keeps each editor (and its half-typed draft) with its own patio or cut-out when one is removed.
+type CutOutRow = CutOut & { id: number };
+type PatioRow = Omit<Patio, "cutOuts"> & { id: number; cutOuts: CutOutRow[] };
+const withIds = (patios: Patio[]): PatioRow[] => patios.map((p, id) => ({ ...p, id, cutOuts: p.cutOuts.map((c, cid) => ({ ...c, id: cid })) }));
+const stripIds = (rows: PatioRow[]): Patio[] => rows.map(({ length, width, cutOuts }) => ({ length, width, cutOuts: cutOuts.map(({ x, y, w, h }) => ({ x, y, w, h })) }));
+const nextId = (rows: readonly { id: number }[]) => rows.reduce((max, r) => Math.max(max, r.id), -1) + 1;
 
 export function PatioCalculator() {
   const { code, currency, setCurrency, money, currencyField } = useCurrency();
@@ -246,7 +249,7 @@ export function PatioCalculator() {
         </Card>
         <Results result={result} laying={laying} costs={costs} mot={mot} sand={sand} units={units} money={money} />
       </div>
-      <MobileResultBar label={`Slabs · ${price(result.cost.total, money)}`} value={plural(result.slabs.order, "slab")} />
+      <MobileResultBar label={`Slabs · ${price(result.cost.total, money)}`} value={result.tooMany ? "Too many" : plural(result.slabs.order, "slab")} />
     </>
   );
 }
@@ -343,7 +346,7 @@ function SlabPicker({ laying, update, onKind }: { laying: Laying; update: FieldU
 /* ------------------------------------------------------------- Patios -- */
 
 function PatioList({ rows, onChange, units }: { rows: PatioRow[]; onChange: (rows: PatioRow[]) => void; units: Units }) {
-  const set = (id: number, patio: Patio) => onChange(rows.map((r) => (r.id === id ? { ...patio, id } : r)));
+  const set = (patio: PatioRow) => onChange(rows.map((r) => (r.id === patio.id ? patio : r)));
   return (
     <section className="space-y-3" aria-labelledby="pt-area">
       <div>
@@ -362,7 +365,7 @@ function PatioList({ rows, onChange, units }: { rows: PatioRow[]; onChange: (row
             name={`Patio ${i + 1}`}
             patio={row}
             units={units}
-            onChange={(p) => set(row.id, p)}
+            onChange={set}
             onRemove={rows.length > 1 ? () => onChange(rows.filter((r) => r.id !== row.id)) : undefined}
           />
         ))}
@@ -387,9 +390,9 @@ function PatioItem({
 }: {
   id: string;
   name: string;
-  patio: Patio;
+  patio: PatioRow;
   units: Units;
-  onChange: (p: Patio) => void;
+  onChange: (p: PatioRow) => void;
   onRemove?: () => void;
 }) {
   const { factor, suffix } = lengthIn(units);
@@ -405,7 +408,7 @@ function PatioItem({
       hint={hint}
     />
   );
-  const setCut = (i: number, cut: CutOut) => onChange({ ...patio, cutOuts: patio.cutOuts.map((c, j) => (j === i ? cut : c)) });
+  const setCut = (cut: CutOutRow) => onChange({ ...patio, cutOuts: patio.cutOuts.map((c) => (c.id === cut.id ? cut : c)) });
 
   return (
     <li className="space-y-3 rounded-2xl border-[2.5px] border-foreground bg-card p-3">
@@ -430,12 +433,12 @@ function PatioItem({
         {len("width", "Width", patio.width, (width) => onChange({ ...patio, width }))}
       </div>
       {patio.cutOuts.map((cut, i) => (
-        <div key={i} className="space-y-3 rounded-xl border-2 border-dashed border-foreground bg-secondary p-3">
+        <div key={cut.id} className="space-y-3 rounded-xl border-2 border-dashed border-foreground bg-secondary p-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-bold">Cut-out {i + 1}</p>
             <button
               type="button"
-              onClick={() => onChange({ ...patio, cutOuts: patio.cutOuts.filter((_, j) => j !== i) })}
+              onClick={() => onChange({ ...patio, cutOuts: patio.cutOuts.filter((c) => c.id !== cut.id) })}
               aria-label={`Remove cut-out ${i + 1} from ${name.toLowerCase()}`}
               className="flex size-8 items-center justify-center rounded-full hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
@@ -443,15 +446,15 @@ function PatioItem({
             </button>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {len(`cut${i}-w`, "Length", cut.w, (w) => setCut(i, { ...cut, w }))}
-            {len(`cut${i}-h`, "Width", cut.h, (h) => setCut(i, { ...cut, h }))}
-            {len(`cut${i}-x`, "From the left", cut.x, (x) => setCut(i, { ...cut, x }))}
-            {len(`cut${i}-y`, "From the house", cut.y, (y) => setCut(i, { ...cut, y }))}
+            {len(`cut${cut.id}-w`, "Length", cut.w, (w) => setCut({ ...cut, w }))}
+            {len(`cut${cut.id}-h`, "Width", cut.h, (h) => setCut({ ...cut, h }))}
+            {len(`cut${cut.id}-x`, "From the left", cut.x, (x) => setCut({ ...cut, x }))}
+            {len(`cut${cut.id}-y`, "From the house", cut.y, (y) => setCut({ ...cut, y }))}
           </div>
         </div>
       ))}
       <PillButton
-        onClick={() => onChange({ ...patio, cutOuts: [...patio.cutOuts, { x: 0.6, y: 0.6, w: 0.6, h: 0.45 }] })}
+        onClick={() => onChange({ ...patio, cutOuts: [...patio.cutOuts, { x: 0.6, y: 0.6, w: 0.6, h: 0.45, id: nextId(patio.cutOuts) }] })}
         disabled={patio.cutOuts.length >= MAX_CUTOUTS}
       >
         <Plus className="size-4" /> Cut out a drain, tree or step
@@ -484,7 +487,7 @@ function Plans({ rows, result, kind, setRows }: { rows: PatioRow[]; result: Pati
               label={`Patio ${i + 1}`}
               width={widths[i] ?? "100%"}
               onMoveCutOut={(index, cut) =>
-                setRows(rows.map((r) => (r.id === row.id ? { ...r, cutOuts: r.cutOuts.map((c, j) => (j === index ? cut : c)) } : r)))
+                setRows(rows.map((r) => (r.id === row.id ? { ...r, cutOuts: r.cutOuts.map((c, j) => (j === index ? { ...c, ...cut } : c)) } : r)))
               }
             />
           ) : null;
@@ -649,7 +652,7 @@ function Results({
   units: Units;
   money: Money;
 }) {
-  const { slabs, area, cost, fall, dig } = result;
+  const { slabs, area, cost, fall, dig, tooMany } = result;
   const empty = area.net <= 0;
   const segments = [
     { name: "Slabs", value: cost.slabs, color: COST_COLORS.slabs },
@@ -667,13 +670,21 @@ function Results({
         <CardContent className="space-y-6 pt-6">
           <HeroStat
             label="Slabs to order"
-            value={plural(slabs.order, "slab")}
+            value={tooMany ? "Too many" : plural(slabs.order, "slab")}
             hint={
               empty
                 ? "Add your patio's size to see how many to order."
-                : `${slabs.full} whole, ${plural(slabs.cuts, "cut piece")} from ${plural(slabs.cutFrom, "slab")}, plus ${laying.slabExtra}% for breakages`
+                : tooMany
+                  ? `Over ${formatNumber(MAX_PIECES, 0)} pieces: too many to lay out, so slabs and jointing aren't counted below.`
+                  : `${slabs.full} whole, ${plural(slabs.cuts, "cut piece")} from ${plural(slabs.cutFrom, "slab")}, plus ${laying.slabExtra}% for breakages`
             }
           />
+          {tooMany && (
+            <Callout tone="warn">
+              A patio this big in slabs this small would take more than {formatNumber(MAX_PIECES, 0)} pieces. Use bigger slabs, or split it into
+              rectangles and total them.
+            </Callout>
+          )}
 
           <div className="space-y-3 rounded-2xl border-[2.5px] border-foreground bg-card px-4 py-4">
             <p className="text-[15px] font-bold">Estimated cost</p>
@@ -737,7 +748,7 @@ function Results({
 const THIN_CUT = 100;
 
 function ShoppingList({ result, laying, costs, mot, sand, money }: { result: PatioResult; laying: Laying; costs: Costs; mot: Buying; sand: Buying; money: Money }) {
-  const { slabs, subBase, compound, pointing, cement } = result;
+  const { slabs, subBase, compound, pointing, cement, tooMany } = result;
   const motPlan = planOrFallback(subBase.options);
   const sandPlan = planOrFallback(result.sand.options);
   const slabArea = (laying.length * laying.width) / 1e6;
@@ -745,15 +756,18 @@ function ShoppingList({ result, laying, costs, mot, sand, money }: { result: Pat
     <div className="space-y-2">
       <p className="text-[15px] font-bold">Shopping list</p>
       <ul className="space-y-2">
-        <ShopRow
-          icon={<SlabIcon kind={laying.kind} className="h-8 w-9" />}
-          title={`${SLAB_INFO[laying.kind].label} slabs`}
-          detail={`${laying.length} × ${laying.width} × ${laying.thickness} mm`}
-          buy={plural(slabs.order, "slab")}
-          buyDetail={`${formatNumber(slabs.order * slabArea, 1)} m²`}
-          cost={result.cost.slabs}
-          money={money}
-        />
+        {/* Slabs and jointing come off the laying plan, which a patio with too many pieces doesn't get. */}
+        {!tooMany && (
+          <ShopRow
+            icon={<SlabIcon kind={laying.kind} className="h-8 w-9" />}
+            title={`${SLAB_INFO[laying.kind].label} slabs`}
+            detail={`${laying.length} × ${laying.width} × ${laying.thickness} mm`}
+            buy={plural(slabs.order, "slab")}
+            buyDetail={`${formatNumber(slabs.order * slabArea, 1)} m²`}
+            cost={result.cost.slabs}
+            money={money}
+          />
+        )}
         <ShopRow
           icon={<BagIcon kind="bulk" material="gravel" className="h-9 w-8" />}
           title="MOT Type 1"
@@ -781,7 +795,7 @@ function ShoppingList({ result, laying, costs, mot, sand, money }: { result: Pat
           cost={result.cost.cement}
           money={money}
         />
-        {compound && (
+        {compound && !tooMany && (
           <ShopRow
             icon={<Tub className="h-9 w-8" />}
             title="Jointing compound"

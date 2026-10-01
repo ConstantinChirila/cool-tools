@@ -365,6 +365,8 @@ export interface SystemSpec {
   power: number;
   /** Hours from midnight the cheap rate runs, or 0 for a flat tariff. */
   offPeakHours: number;
+  /** Multiplier on the generation profile (fewer panels, older panels); 1 by default. */
+  scale?: number;
 }
 
 export interface YearSim {
@@ -384,6 +386,7 @@ export interface YearSim {
 export function simulateYear(gen: Float64Array, load: Float64Array, spec: SystemSpec, detail = false): YearSim {
   const cap = Math.max(spec.capacity, 0);
   const power = Math.max(spec.power, 0);
+  const scale = spec.scale ?? 1;
   const window = cap > 0 ? Math.min(Math.max(Math.round(spec.offPeakHours), 0), 24) : 0;
   const flatWindow = Math.min(Math.max(Math.round(spec.offPeakHours), 0), 24);
   const months = Array.from({ length: 12 }, emptyFlows);
@@ -403,7 +406,7 @@ export function simulateYear(gen: Float64Array, load: Float64Array, spec: System
     let imported = 0;
     for (let h = from; h < 24; h++) {
       const i = day * 24 + h;
-      const g = gen[i] ?? 0;
+      const g = (gen[i] ?? 0) * scale;
       const l = load[i] ?? 0;
       const direct = Math.min(g, l);
       let surplus = g - direct;
@@ -434,7 +437,7 @@ export function simulateYear(gen: Float64Array, load: Float64Array, spec: System
     }
     for (let h = 0; h < 24; h++) {
       const i = d * 24 + h;
-      const g = gen[i] ?? 0;
+      const g = (gen[i] ?? 0) * scale;
       const l = load[i] ?? 0;
       const inWindow = h < flatWindow;
       const direct = Math.min(g, l);
@@ -555,6 +558,11 @@ export interface Scenario {
   battery: number;
 }
 
+/** Where in year `age` the cumulative line crossed zero, with the year's kit bought at its start. */
+function crossing(age: number, before: number, saving: number, spent: number): number {
+  return age + (saving > 0 ? Math.min(Math.max((spent - before) / saving, 0), 1) : 1);
+}
+
 /** Runs one system through HORIZON years. */
 export function runScenario(input: SolarInput, scenario: Scenario, profiles: { gen: Float64Array; load: Float64Array }, detail = false): ScenarioResult {
   const kwp = Math.max(scenario.kwp, 0);
@@ -565,75 +573,87 @@ export function runScenario(input: SolarInput, scenario: Scenario, profiles: { g
   const batteryCost = battery > 0 ? (input.batteryCost > 0 ? input.batteryCost : batteryCostFor(battery)) : 0;
   const capex = solarCost + batteryCost;
   const baseline = bill(baselineFlows(profiles.load, offPeakHours), prices);
-
-  // Generation scaled to this scenario's panels; the profile was built for input.kwp.
+  // The profile was built for input.kwp; this scenario's panels scale it.
   const genScale = input.kwp > 0 ? kwp / input.kwp : 0;
-  const gen = genScale === 1 ? profiles.gen : profiles.gen.map((v) => v * genScale);
+  const power = batteryPower(battery);
 
-  const years: YearRow[] = [];
-  let cumulative = -capex;
-  let payback: number | null = null;
-  let lifetimeSaving = 0;
-  let first: FirstYear | null = null;
-  let months: Flows[] = [];
-  let hourly: Hourly | undefined;
+  // One year of the system's life: the kit replaced at its start, the panels and battery aged, prices risen.
   let batteryAge = 0;
-  for (let y = 1; y <= HORIZON; y++) {
+  const runYear = (y: number) => {
     const age = y - 1;
-    // Kit replaced at the start of the year.
     let spent = 0;
     if (kwp > 0 && input.inverterYear > 0 && y === input.inverterYear) spent += input.inverterCost;
     if (battery > 0 && input.batteryLife > 0 && y > 1 && age % input.batteryLife === 0) {
       spent += batteryCost;
       batteryAge = 0;
     }
-    const panelFactor = (1 - input.degradation / 100) ** age;
+    const scale = genScale * (1 - input.degradation / 100) ** age;
     const capacity = battery * Math.max(1 - BATTERY_FADE * batteryAge, BATTERY_FLOOR);
-    const yearGen = panelFactor === 1 ? gen : gen.map((v) => v * panelFactor);
-    const sim = simulateYear(yearGen, profiles.load, { capacity, power: batteryPower(battery), offPeakHours }, detail && y === 1);
-    const priceFactor = (1 + input.priceRise / 100) ** age;
-    const saving = (baseline - bill(sim.flows, prices)) * priceFactor;
+    const sim = simulateYear(profiles.gen, profiles.load, { capacity, power, offPeakHours, scale }, detail && y === 1);
+    const saving = (baseline - bill(sim.flows, prices)) * (1 + input.priceRise / 100) ** age;
+    batteryAge++;
+    return { sim, saving, spent };
+  };
+
+  const years: YearRow[] = [];
+  let cumulative = -capex;
+  let payback: number | null = null;
+  let lifetimeSaving = 0;
+  const book = (y: number, saving: number, spent: number) => {
     const before = cumulative;
     cumulative += saving - spent;
     lifetimeSaving += saving;
-    if (payback === null && cumulative >= 0) {
-      // Where in the year the line crossed zero, with the year's kit bought at its start.
-      const t = saving > 0 ? Math.min(Math.max((spent - before) / saving, 0), 1) : 1;
-      payback = age + t;
-    }
+    if (payback === null && cumulative >= 0) payback = crossing(y - 1, before, saving, spent);
     years.push({ year: y, saving, spent, cumulative });
-    if (y === 1) {
-      const f = sim.flows;
-      const exportIncome = (f.exported * prices.exportPrice) / 100;
-      const solarShare = f.solarToBattery + f.gridToBattery > 0 ? f.solarToBattery / (f.solarToBattery + f.gridToBattery) : 0;
-      first = {
-        flows: f,
-        saving,
-        billSaving: saving - exportIncome,
-        exportIncome,
-        baseline,
-        selfUse: f.generated > 0 ? (f.direct + f.solarToBattery) / f.generated : 0,
-        selfSufficiency: f.load > 0 ? (f.direct + f.fromBattery * solarShare) / f.load : 0,
-      };
-      months = sim.months;
-      hourly = sim.hourly;
-    }
-    batteryAge++;
+  };
+
+  const year1 = runYear(1);
+  book(1, year1.saving, year1.spent);
+  const f = year1.sim.flows;
+  const exportIncome = (f.exported * prices.exportPrice) / 100;
+  const solarShare = f.solarToBattery + f.gridToBattery > 0 ? f.solarToBattery / (f.solarToBattery + f.gridToBattery) : 0;
+  const first: FirstYear = {
+    flows: f,
+    saving: year1.saving,
+    billSaving: year1.saving - exportIncome,
+    exportIncome,
+    baseline,
+    selfUse: f.generated > 0 ? (f.direct + f.solarToBattery) / f.generated : 0,
+    selfSufficiency: f.load > 0 ? (f.direct + f.fromBattery * solarShare) / f.load : 0,
+  };
+  for (let y = 2; y <= HORIZON; y++) {
+    const { saving, spent } = runYear(y);
+    book(y, saving, spent);
   }
 
   return {
     kwp,
     battery,
     capex,
-    first: first!,
+    first,
     years,
     payback,
     net: cumulative,
     lifetimeSaving,
-    simpleReturn: capex > 0 && first ? first.saving / capex : 0,
-    months,
-    hourly,
+    simpleReturn: capex > 0 ? first.saving / capex : 0,
+    months: year1.sim.months,
+    hourly: year1.sim.hourly,
   };
+}
+
+/** Years for a battery to earn back its own cost from what it adds to the panels, its replacements included. */
+export function marginalPayback(both: ScenarioResult, panels: ScenarioResult): number | null {
+  let cumulative = -(both.capex - panels.capex);
+  for (let i = 0; i < both.years.length; i++) {
+    const b = both.years[i]!;
+    const p = panels.years[i]!;
+    const saving = b.saving - p.saving;
+    const spent = b.spent - p.spent;
+    const before = cumulative;
+    cumulative += saving - spent;
+    if (cumulative >= 0) return crossing(i, before, saving, spent);
+  }
+  return null;
 }
 
 /* -------------------------------------------------------------- Result -- */
@@ -682,13 +702,22 @@ export function approxPayback(input: SolarInput, saving1: number, capex: number,
     if (batteryCost > 0 && input.batteryLife > 0 && y > 1 && (y - 1) % input.batteryLife === 0) spent += batteryCost;
     const before = cumulative;
     cumulative += saving - spent;
-    if (cumulative >= 0) return age + (saving > 0 ? Math.min(Math.max((spent - before) / saving, 0), 1) : 1);
+    if (cumulative >= 0) return crossing(age, before, saving, spent);
   }
   return null;
 }
 
+/** The battery size on the curve with the quickest payback: 0 when no battery pays back sooner than the panels alone. */
+export function bestSweep(sweep: readonly SweepPoint[]): number {
+  let best = sweep[0];
+  if (!best) return 0;
+  for (const p of sweep) if (p.payback !== null && (best.payback === null || p.payback < best.payback - 1e-9)) best = p;
+  return best.kwh;
+}
+
 export function calculate(input: SolarInput): SolarResult {
-  const generation = input.generation > 0 ? input.generation : roofGeneration(input);
+  // No panels means no generation, whatever figure was typed for them.
+  const generation = input.kwp > 0 ? (input.generation > 0 ? input.generation : roofGeneration(input)) : 0;
   const profiles = {
     gen: generationProfile(generation, input.place),
     load: loadProfile(input.use, input.pattern),

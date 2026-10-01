@@ -6,7 +6,7 @@ import { KIND_INFO, clockText, type Kind, type Zone, type ZoneResult } from "@/l
 import { cn } from "@/lib/utils";
 
 const INK = "var(--foreground)";
-const WATER = "oklch(0.62 0.13 235)";
+const WATER = "var(--chart-4)";
 export const OVER = "var(--sticker-pink)";
 
 /** One colour per zone, deep enough to read on white and on the lilac card. */

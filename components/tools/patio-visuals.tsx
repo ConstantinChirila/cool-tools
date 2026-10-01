@@ -54,6 +54,15 @@ export function PatioPlan({
   const L = Math.max(patio.length * 1000, 1);
   const W = Math.max(patio.width * 1000, 1);
   const drag = React.useRef<{ index: number; dx: number; dy: number } | null>(null);
+  // Pointer events come faster than the layout can be relaid, so a drag hands over its latest position once a frame.
+  const pending = React.useRef<{ index: number; cut: CutOut } | null>(null);
+  const frame = React.useRef<number | null>(null);
+  React.useEffect(
+    () => () => {
+      if (frame.current !== null) cancelAnimationFrame(frame.current);
+    },
+    [],
+  );
 
   const move = (e: React.PointerEvent<SVGSVGElement>) => {
     const d = drag.current;
@@ -64,8 +73,20 @@ export function PatioPlan({
     // Snap to the centimetre so the typed position stays tidy.
     const x = clamp(Math.round((p.x - d.dx) / 10) / 100, 0, Math.max(patio.length - cut.w, 0));
     const y = clamp(Math.round((p.y - d.dy) / 10) / 100, 0, Math.max(patio.width - cut.h, 0));
-    if (x !== cut.x || y !== cut.y) onMoveCutOut(d.index, { ...cut, x, y });
+    if (x === cut.x && y === cut.y) return;
+    pending.current = { index: d.index, cut: { ...cut, x, y } };
+    if (frame.current !== null) return;
+    frame.current = requestAnimationFrame(() => {
+      frame.current = null;
+      const next = pending.current;
+      pending.current = null;
+      if (next) onMoveCutOut(next.index, next.cut);
+    });
   };
+
+  // One path per kind of piece, however many there are, so the plan stays light to draw.
+  const outlines = { full: "", cut: "", notched: "" };
+  for (const p of layout.pieces) outlines[p.kind] += `M${p.x.toFixed(1)} ${p.y.toFixed(1)}h${p.w.toFixed(1)}v${p.h.toFixed(1)}h${(-p.w).toFixed(1)}Z`;
 
   return (
     <figure className="space-y-1.5" style={{ width }}>
@@ -85,19 +106,9 @@ export function PatioPlan({
         onPointerCancel={() => (drag.current = null)}
       >
         <rect width={L} height={W} fill={JOINT_FILL} />
-        {layout.pieces.map((p, i) => (
-          <rect
-            key={i}
-            x={p.x}
-            y={p.y}
-            width={p.w}
-            height={p.h}
-            fill={p.kind === "full" ? SLAB_FILL[kind] : p.kind === "cut" ? CUT_FILL : NOTCH_FILL}
-            stroke="var(--foreground)"
-            strokeWidth={1.2}
-            vectorEffect="non-scaling-stroke"
-          />
-        ))}
+        {outlines.full && <path d={outlines.full} fill={SLAB_FILL[kind]} stroke="var(--foreground)" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />}
+        {outlines.cut && <path d={outlines.cut} fill={CUT_FILL} stroke="var(--foreground)" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />}
+        {outlines.notched && <path d={outlines.notched} fill={NOTCH_FILL} stroke="var(--foreground)" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />}
         {patio.cutOuts.map((c, i) => (
           <rect
             key={`cut${i}`}

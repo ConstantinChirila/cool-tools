@@ -209,7 +209,12 @@ export interface Layout {
   jointLength: number;
   /** Slab size as laid: along the house (x) and away from it (y), mm. */
   tile: { x: number; y: number };
+  /** True when the patio would take more than MAX_PIECES: nothing was laid, so the counts are not to be trusted. */
+  tooMany: boolean;
 }
+
+/** Most pieces a patio is laid out in; past this the plan is not drawn or counted. */
+export const MAX_PIECES = 20_000;
 
 /** Joints within this many mm of a size count as the same cut, so float dust doesn't split groups. */
 const MM = 0.5;
@@ -228,12 +233,12 @@ export function layout(patio: Patio, slab: Slab, joint: number, pattern: Pattern
   const holes = patio.cutOuts.map((c) => ({ x: c.x * 1000, y: c.y * 1000, w: c.w * 1000, h: c.h * 1000 }));
   const pieces: Piece[] = [];
   let jointLength = 0;
-  if (L < 1 || W < 1 || tile.x <= 0 || tile.y <= 0) return { pieces, jointLength, tile };
+  if (L < 1 || W < 1 || tile.x <= 0 || tile.y <= 0) return { pieces, jointLength, tile, tooMany: false };
 
   const pitchX = tile.x + joint;
   const pitchY = tile.y + joint;
-  // A guard against links asking for millions of slabs.
-  if ((L / pitchX + 2) * (W / pitchY + 1) > 20_000) return { pieces, jointLength, tile };
+  // A guard against links asking for millions of slabs: the caller is told.
+  if ((L / pitchX + 2) * (W / pitchY + 1) > MAX_PIECES) return { pieces, jointLength, tile, tooMany: true };
 
   for (let row = 0, y = 0; y < W - MM; row++, y += pitchY) {
     const h = Math.min(tile.y, W - y);
@@ -251,7 +256,7 @@ export function layout(patio: Patio, slab: Slab, joint: number, pattern: Pattern
       pieces.push({ ...piece, kind: piece.kind === "notched" ? "notched" : whole ? "full" : "cut" });
     }
   }
-  return { pieces, jointLength, tile };
+  return { pieces, jointLength, tile, tooMany: false };
 }
 
 /** What's left of a cell once the cut-outs are taken away: nothing, a smaller rectangle, or a notched slab. */
@@ -324,7 +329,7 @@ export function countSlabs(layouts: readonly Layout[], extraPct: number): SlabCo
     for (const { a, b, count } of groups.values()) cutFrom += Math.ceil(count / piecesPerSlab(a, b, tile));
   }
   const needed = full + cutFrom;
-  return { full, cuts, cutFrom, needed, order: Math.ceil(needed * (1 + extraPct / 100) - 1e-9), thinnest };
+  return { full, cuts, cutFrom, needed, order: Math.max(Math.ceil(needed * (1 + extraPct / 100) - 1e-9), 0), thinnest };
 }
 
 /* ---------------------------------------------------------- Materials -- */
@@ -419,6 +424,8 @@ export interface Prices {
 
 export interface PatioResult {
   layouts: Layout[];
+  /** True when a patio was too big for its slabs to be laid out: slab and joint figures are missing. */
+  tooMany: boolean;
   area: { gross: number; cut: number; net: number };
   slabs: SlabCount;
   subBase: { volume: number; kg: number; options: BuyOptions };
@@ -450,12 +457,12 @@ export function calculate(patios: readonly Patio[], b: Build, prices: Prices): P
   // Compound goes at least 25 mm deep, into the bed below a thin slab.
   const depth = Math.max(b.slab.thickness, COMPOUND.minDepth);
   const litres = ((jointLength * b.joint * depth) / 1000) * (1 + COMPOUND.extra / 100);
-  const compound = b.jointing === "compound" ? { litres, kg: litres * COMPOUND.kgPerLitre, depth, tubs: Math.ceil((litres * COMPOUND.kgPerLitre) / b.tub - TUB_SLACK) } : null;
+  const compound = b.jointing === "compound" ? { litres, kg: litres * COMPOUND.kgPerLitre, depth, tubs: Math.max(Math.ceil((litres * COMPOUND.kgPerLitre) / b.tub - TUB_SLACK), 0) } : null;
 
   const sandKg = bed.sandKg + (pointing?.sandKg ?? 0);
   const sand = { kg: sandKg, options: buyOptions(sandKg / 1000 / prices.sand.density, prices.sand, "kg") };
   const cementKg = bed.cementKg + (pointing?.cementKg ?? 0);
-  const cement = { kg: cementKg, bags: Math.ceil(cementKg / CEMENT_BAG - 1e-9) };
+  const cement = { kg: cementKg, bags: Math.max(Math.ceil(cementKg / CEMENT_BAG - 1e-9), 0) };
 
   const run = Math.max(0, ...patios.map((p) => (b.fallAlong === "width" ? p.width : p.length)));
   const digDepth = b.slab.thickness + b.bed + b.subBase;
@@ -469,6 +476,7 @@ export function calculate(patios: readonly Patio[], b: Build, prices: Prices): P
 
   return {
     layouts,
+    tooMany: layouts.some((l) => l.tooMany),
     area,
     slabs,
     subBase,

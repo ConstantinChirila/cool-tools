@@ -157,4 +157,36 @@ describe("calculate", () => {
     expect(r.compound?.litres).toBeCloseTo(litres);
     expect(r.compound?.tubs).toBe(Math.ceil((litres * COMPOUND.kgPerLitre) / 12.5 - 0.01));
   });
+
+  it("prices slabs per slab or per m² and totals the list", () => {
+    const perM2 = calculate([patio(3, 1.8)], build, prices);
+    const perSlab = calculate([patio(3, 1.8)], build, { ...prices, slab: 12, perSlab: true });
+    expect(perM2.cost.slabs).toBeCloseTo(perM2.slabs.order * 40 * 0.36);
+    expect(perSlab.cost.slabs).toBe(perSlab.slabs.order * 12);
+    expect(perM2.cost.total).toBeCloseTo(perM2.cost.slabs + (perM2.cost.subBase ?? 0) + (perM2.cost.sand ?? 0) + perM2.cost.cement + perM2.cost.jointing);
+  });
+
+  it("mortar jointing adds pointing sand and cement and drops the compound", () => {
+    const r = calculate([patio(3, 1.8)], { ...build, jointing: "mortar", joint: 10 }, prices);
+    expect(r.compound).toBeNull();
+    expect(r.cost.jointing).toBe(0);
+    expect(r.pointing).not.toBeNull();
+    expect(r.cement.kg).toBeCloseTo(r.bed.cementKg + (r.pointing?.cementKg ?? 0));
+    expect(r.sand.kg).toBeCloseTo(r.bed.sandKg + (r.pointing?.sandKg ?? 0));
+  });
+
+  it("leaves the total finite when sand is unpriced", () => {
+    const r = calculate([patio(3, 1.8)], build, { ...prices, sand: { ...DEFAULTS.sand, bagPrice: 0, bulkPrice: 0 } });
+    expect(r.cost.sand).toBeNull();
+    expect(Number.isFinite(r.cost.total)).toBe(true);
+    expect(r.cost.total).toBeCloseTo(r.cost.slabs + (r.cost.subBase ?? 0) + r.cost.cement + r.cost.jointing);
+  });
+
+  it("says so rather than counting nothing when a patio would take too many pieces", () => {
+    // 15 × 15 m of 100 mm setts: over 20,000 pieces.
+    const r = calculate([patio(15, 15)], { ...build, slab: { length: 100, width: 100, thickness: 50 }, joint: 3 }, prices);
+    expect(r.tooMany).toBe(true);
+    expect(r.layouts[0]?.pieces).toHaveLength(0);
+    expect(calculate([patio(5, 3)], build, prices).tooMany).toBe(false);
+  });
 });

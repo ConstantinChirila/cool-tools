@@ -8,7 +8,7 @@ import { DAYS, MONTH_START, MONTHS, dayLabel } from "@/lib/year";
 
 const INK = "var(--foreground)";
 /** Water in the drawings and charts: deep enough to read on white and on the sky card. */
-export const WATER = "oklch(0.62 0.13 235)";
+export const WATER = "var(--chart-4)";
 const WATER_LIGHT = "oklch(0.8 0.08 235)";
 export const DRY = "oklch(0.6 0.19 25)";
 const GREEN = "oklch(0.66 0.15 140)";

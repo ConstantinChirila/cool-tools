@@ -38,7 +38,9 @@ import {
   SOLAR_PLACES,
   USE_PRESETS,
   batteryCostFor,
+  bestSweep,
   calculate,
+  marginalPayback,
   roofGeneration,
   solarCostFor,
   typicalDay,
@@ -121,7 +123,10 @@ export function SolarPaybackCalculator() {
     "battery-life": field("batteryLife", { range: LIMITS.year }),
   });
 
-  const result = calculate(input);
+  // The year-by-year simulation is heavy enough to lag a slider drag, so it follows the inputs a beat behind.
+  const deferred = React.useDeferredValue(input);
+  const result = calculate(deferred);
+  const nothing = input.kwp <= 0 && input.battery <= 0;
 
   React.useEffect(() => {
     if (!playing) return;
@@ -158,7 +163,7 @@ export function SolarPaybackCalculator() {
 
       <BatteryCard input={input} result={result} onBattery={(v) => update("battery", v)} />
 
-      <MobileResultBar label="Pays back in" value={years(result.system.payback)} />
+      <MobileResultBar label="Pays back in" value={nothing ? "–" : years(result.system.payback)} />
     </>
   );
 }
@@ -516,21 +521,6 @@ function CompareRow({ label, r, strong }: { label: string; r: ScenarioResult; st
   );
 }
 
-/** Years for the battery to pay for its own cost from what it adds to the panels, replacements included. */
-function marginalPayback(both: ScenarioResult, panels: ScenarioResult): number | null {
-  let cumulative = -(both.capex - panels.capex);
-  for (let i = 0; i < both.years.length; i++) {
-    const b = both.years[i]!;
-    const p = panels.years[i]!;
-    const saving = b.saving - p.saving;
-    const spent = b.spent - p.spent;
-    const before = cumulative;
-    cumulative += saving - spent;
-    if (cumulative >= 0) return i + (saving > 0 ? Math.min(Math.max((spent - before) / saving, 0), 1) : 1);
-  }
-  return null;
-}
-
 /* --------------------------------------------------------- Battery card -- */
 
 function BatteryCard({ input, result, onBattery }: { input: SolarInput; result: SolarResult; onBattery: (kwh: number) => void }) {
@@ -573,13 +563,6 @@ function BatteryCard({ input, result, onBattery }: { input: SolarInput; result: 
       </CardContent>
     </Card>
   );
-}
-
-/** The battery size on the curve with the quickest payback (the panels alone when none helps). */
-function bestSweep(sweep: SolarResult["sweep"]): number {
-  let best = sweep[0]!;
-  for (const p of sweep) if (p.payback !== null && (best.payback === null || p.payback < best.payback - 1e-9)) best = p;
-  return best.kwh;
 }
 
 /** At most two notes, most useful first. */
@@ -683,36 +666,10 @@ function DayCard({
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm font-semibold">
             <FlowRow color={SOLAR} label="Panels" value={`${formatNumber(flows.generated, 2)} kW`} />
             <FlowRow color="var(--foreground)" label="Home" value={`${formatNumber(flows.load, 2)} kW`} />
-            {input.battery > 0 && (
-              <FlowRow
-                color={BATTERY}
-                label={flows.fromBattery > 0.005 ? "Battery giving" : flows.solarToBattery + flows.gridToBattery > 0.005 ? "Battery taking" : "Battery"}
-                value={
-                  flows.fromBattery > 0.005
-                    ? `${formatNumber(flows.fromBattery, 2)} kW`
-                    : flows.solarToBattery + flows.gridToBattery > 0.005
-                      ? `${formatNumber(flows.solarToBattery + flows.gridToBattery, 2)} kW`
-                      : `${formatPercent(input.battery > 0 ? soc / input.battery : 0, 0)} full`
-                }
-              />
-            )}
+            {input.battery > 0 && <FlowRow color={BATTERY} {...batteryRow(flows, soc, input.battery)} />}
             <FlowRow color={flows.exported > 0.005 ? EXPORT : GRID} label={flows.exported > 0.005 ? "Selling" : "Buying"} value={`${formatNumber(flows.exported > 0.005 ? flows.exported : flows.imported, 2)} kW`} />
           </dl>
-          <p className="text-sm font-semibold">
-            {flows.generated > 0.005
-              ? flows.exported > 0.005
-                ? `The panels make more than the home needs${input.battery > 0 && flows.solarToBattery > 0.005 ? ", the battery takes some" : input.battery > 0 ? ", the battery is full" : ""}, and the rest is sold.`
-                : flows.fromBattery > 0.005
-                  ? "Not enough sun for the home, so the battery tops it up."
-                  : gridForHome > 0.005
-                    ? "The sun covers some of it; the rest comes from the grid."
-                    : "The panels cover the home exactly."
-              : flows.fromBattery > 0.005
-                ? `No sun: the home runs on the battery${gridForHome > 0.005 ? " and the grid" : ""}.`
-                : flows.gridToBattery > 0.005
-                  ? "Cheap-rate hours: the home runs on the grid and the battery fills up for the day ahead."
-                  : "No sun: the home runs on the grid."}
-          </p>
+          <p className="text-sm font-semibold">{hourStory(flows, gridForHome, input.battery)}</p>
         </div>
         <div className="min-w-0 space-y-6">
           <div className="space-y-3">
@@ -765,6 +722,33 @@ function DayCard({
       </CardContent>
     </Card>
   );
+}
+
+/** Flows under this (kWh in the hour) count as nothing moving. */
+const FLOW_MIN = 0.005;
+
+/** The battery's line in the hour's figures: what it is giving or taking, or how full it sits. */
+function batteryRow(f: HourFlows, soc: number, battery: number): { label: string; value: string } {
+  const taking = f.solarToBattery + f.gridToBattery;
+  if (f.fromBattery > FLOW_MIN) return { label: "Battery giving", value: `${formatNumber(f.fromBattery, 2)} kW` };
+  if (taking > FLOW_MIN) return { label: "Battery taking", value: `${formatNumber(taking, 2)} kW` };
+  return { label: "Battery", value: `${formatPercent(soc / battery, 0)} full` };
+}
+
+/** One sentence on what the home is running on this hour. */
+function hourStory(f: HourFlows, gridForHome: number, battery: number): string {
+  if (f.generated > FLOW_MIN) {
+    if (f.exported > FLOW_MIN) {
+      const clause = battery > 0 ? (f.solarToBattery > FLOW_MIN ? ", the battery takes some" : ", the battery is full") : "";
+      return `The panels make more than the home needs${clause}, and the rest is sold.`;
+    }
+    if (f.fromBattery > FLOW_MIN) return "Not enough sun for the home, so the battery tops it up.";
+    if (gridForHome > FLOW_MIN) return "The sun covers some of it; the rest comes from the grid.";
+    return "The panels cover the home exactly.";
+  }
+  if (f.fromBattery > FLOW_MIN) return `No sun: the home runs on the battery${gridForHome > FLOW_MIN ? " and the grid" : ""}.`;
+  if (f.gridToBattery > FLOW_MIN) return "Cheap-rate hours: the home runs on the grid and the battery fills up for the day ahead.";
+  return "No sun: the home runs on the grid.";
 }
 
 function FlowRow({ color, label, value }: { color: string; label: string; value: string }) {

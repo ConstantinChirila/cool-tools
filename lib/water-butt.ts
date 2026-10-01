@@ -355,9 +355,17 @@ export interface ButtResult {
   covered: number;
 }
 
-export function calculate(input: ButtInput): ButtResult {
-  const place = PLACES.find((p) => p.id === input.place) ?? PLACES[0]!;
-  const rain = simulateRain(place, input.annual);
+/** The place whose weather the input uses. */
+export function placeOf(input: Pick<ButtInput, "place">): Place {
+  return PLACES.find((p) => p.id === input.place) ?? PLACES[0]!;
+}
+
+/**
+ * The weather and the sizing curve are the slow parts and depend on only a
+ * few inputs, so a caller that keeps them between renders can pass them in
+ * and rerun just the one butt.
+ */
+export function calculate(input: ButtInput, rain = simulateRain(placeOf(input), input.annual), sized = sizing(rain, litresPerMm(input), input.use)): ButtResult {
   const perMm = litresPerMm(input);
   const capacity = Math.max(input.size, 0) * Math.max(Math.round(input.butts), 1);
   const sim = simulate(rain, perMm, input.use, capacity);
@@ -367,7 +375,7 @@ export function calculate(input: ButtInput): ButtResult {
     yearly: input.annual * perMm,
     capacity,
     sim,
-    sizing: sizing(rain, perMm, input.use),
+    sizing: sized,
     saving: (sim.average.supplied / 1000) * Math.max(input.price, 0),
     covered: sim.average.need > 0 ? sim.average.supplied / sim.average.need : 0,
   };

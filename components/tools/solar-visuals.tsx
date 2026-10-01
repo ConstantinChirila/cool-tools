@@ -8,25 +8,16 @@ import { cn, clamp } from "@/lib/utils";
 import { MONTHS } from "@/lib/year";
 
 const INK = "var(--foreground)";
-/** Energy by where it came from: deep enough to read on white and on the yellow card. */
-export const SOLAR = "oklch(0.72 0.16 80)";
-export const BATTERY = "oklch(0.62 0.16 300)";
-export const GRID = "oklch(0.64 0.17 350)";
-export const EXPORT = "oklch(0.62 0.13 235)";
+/** Energy by where it came from: the chart tokens, deep enough to read on white and on the yellow card. */
+export const SOLAR = "var(--chart-3)";
+export const BATTERY = "var(--chart-1)";
+export const GRID = "var(--chart-5)";
+export const EXPORT = "var(--chart-4)";
 const PANEL = "oklch(0.36 0.07 250)";
 const PANEL_LINE = "oklch(0.6 0.08 250)";
 
 /** What the home, panels, battery and grid did in one hour, kWh. */
-export interface HourFlows {
-  generated: number;
-  load: number;
-  direct: number;
-  solarToBattery: number;
-  gridToBattery: number;
-  fromBattery: number;
-  exported: number;
-  imported: number;
-}
+export type HourFlows = Omit<Flows, "importedOffPeak">;
 
 /** CSS for the moving current in a live wire; still when the reader prefers less motion. */
 const FLOW_CSS = `@keyframes solar-flow{to{stroke-dashoffset:-14}}@media (prefers-reduced-motion:no-preference){.solar-flow{animation:solar-flow var(--flow-speed,1s) linear infinite}}`;

@@ -7,11 +7,13 @@ import {
   SOLAR_PLACES,
   approxPayback,
   batteryCostFor,
+  bestSweep,
   calculate,
   cloudFactors,
   generationProfile,
   isWeekend,
   loadProfile,
+  marginalPayback,
   roofGeneration,
   runScenario,
   simulateYear,
@@ -212,6 +214,40 @@ describe("finance", () => {
     const gains = r.sweep.map((p, i, a) => (i ? p.saving - a[i - 1]!.saving : 0));
     expect(gains[1]).toBeGreaterThan(gains[8]!);
     expect(approxPayback(base, r.sweep[0]!.saving, r.system.capex, 0)).toBeCloseTo(r.panelsOnly.payback!, 1);
+  });
+
+  it("the battery's own payback counts its extra cost, extra saving and its replacement", () => {
+    const forever = calculate({ ...base, battery: 5, offPeak: true, importPrice: 30, priceRise: 0, degradation: 0, inverterYear: 0, batteryLife: 0 });
+    const extra = forever.system.first.saving - forever.panelsOnly.first.saving;
+    expect(extra).toBeGreaterThan(0);
+    // The battery fades 3% a year, so its payback is a little past cost over the first year's extra.
+    const simple = batteryCostFor(5) / extra;
+    const own = marginalPayback(forever.system, forever.panelsOnly);
+    expect(own).not.toBeNull();
+    expect(own!).toBeGreaterThanOrEqual(simple);
+    expect(own!).toBeLessThan(simple * 1.25);
+    // A replacement in year 11 shows up only in the system with a battery, and pushes its own payback later.
+    const replaced = calculate({ ...base, battery: 5, offPeak: true, importPrice: 30, priceRise: 0, degradation: 0, inverterYear: 0, batteryLife: 10 });
+    expect(replaced.system.years[10]!.spent - replaced.panelsOnly.years[10]!.spent).toBe(batteryCostFor(5));
+    const later = marginalPayback(replaced.system, replaced.panelsOnly);
+    expect(later === null || later > own!).toBe(true);
+    // A battery that adds nothing never pays for itself.
+    const flat = calculate({ ...base, battery: 5, exportPrice: base.importPrice });
+    expect(marginalPayback(flat.system, flat.panelsOnly)).toBeNull();
+  });
+
+  it("picks no battery when none on the curve pays back sooner than the panels alone", () => {
+    expect(bestSweep([{ kwh: 0, saving: 500, payback: 10 }, { kwh: 5, saving: 600, payback: null }])).toBe(0);
+    expect(bestSweep([{ kwh: 0, saving: 500, payback: 10 }, { kwh: 5, saving: 700, payback: 9 }, { kwh: 10, saving: 720, payback: 11 }])).toBe(5);
+    expect(bestSweep([])).toBe(0);
+  });
+
+  it("makes nothing without panels, whatever generation was typed", () => {
+    const r = calculate({ ...base, kwp: 0, generation: 3400, battery: 5 });
+    expect(r.generation).toBe(0);
+    expect(r.co2).toBe(0);
+    expect(r.system.first.flows.generated).toBe(0);
+    expect(r.profiles.gen.every((v) => v === 0)).toBe(true);
   });
 
   it("scales a scenario's panels from the profile", () => {
