@@ -9,6 +9,7 @@ import {
   Hourglass,
   House,
   KeyRound,
+  Grid2x2,
   LandPlot,
   Percent,
   PiggyBank,
@@ -333,6 +334,23 @@ export const tools: Tool[] = [
         "Work out how much grass seed or how many turf rolls your lawn needs, minus paths and sheds, plus topsoil, starter feed, watering and the total cost.",
     },
     updated: "2026-09-29",
+  },
+  {
+    slug: "patio-calculator",
+    name: "Patio and Paving Calculator",
+    shortName: "Patio",
+    description:
+      "How many patio slabs to order with every cut counted on a plan, plus the MOT sub-base, sharp sand, cement, jointing, fall and total cost.",
+    category: "Everyday",
+    icon: Grid2x2,
+    keywords: ["patio", "paving", "slabs", "paving slabs", "flags", "porcelain", "sandstone", "indian sandstone", "concrete slabs", "how many slabs", "cuts", "waste", "mot type 1", "sub-base", "hardcore", "sharp sand", "cement", "mortar", "bedding", "jointing compound", "grout", "pointing", "fall", "gradient", "garden", "m2"],
+    tint: "var(--sticker-sky)",
+    seo: {
+      title: "Patio Calculator: Slabs, Sub-base, Sand and Cement",
+      description:
+        "Work out how many paving slabs a patio needs with every cut drawn on a plan, plus MOT Type 1, sharp sand, cement, jointing compound, the fall and the cost.",
+    },
+    updated: "2026-09-30",
   },
   {
     slug: "tv-distance-calculator",

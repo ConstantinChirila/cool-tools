@@ -53,9 +53,9 @@
     },
     {
       "id": "market-defaults",
-      "what": "Default prices and rates that follow the market, not the law: mortgage rates, car finance APRs and lease quote, garden material, raised bed timber and lawn seed, turf, feed and water prices, contractor umbrella fees and costs",
-      "tools": ["mortgage-calculator", "mortgage-overpayment-calculator", "car-finance-calculator", "garden-materials-calculator", "raised-bed-calculator", "lawn-calculator", "contractor-calculator"],
-      "files": ["components/tools/*.tsx defaults", "lib/garden-materials.ts", "lib/raised-bed.ts", "lib/lawn.ts (water tariff changes each April)", "content/lawn-calculator.ts", "lib/car-finance.ts"],
+      "what": "Default prices and rates that follow the market, not the law: mortgage rates, car finance APRs and lease quote, garden material, raised bed timber and lawn seed, turf, feed and water prices, patio slab, MOT, sand, cement and jointing compound prices, contractor umbrella fees and costs",
+      "tools": ["mortgage-calculator", "mortgage-overpayment-calculator", "car-finance-calculator", "garden-materials-calculator", "raised-bed-calculator", "lawn-calculator", "patio-calculator", "contractor-calculator"],
+      "files": ["components/tools/*.tsx defaults", "lib/garden-materials.ts", "lib/raised-bed.ts", "lib/lawn.ts (water tariff changes each April)", "content/lawn-calculator.ts", "lib/patio.ts (SLAB_INFO prices, DEFAULTS)", "lib/car-finance.ts"],
       "sources": ["https://www.bankofengland.co.uk/statistics/visual-summaries/quoted-household-interest-rates"],
       "when": "Once a year",
       "lastChecked": "2026-09-28",
