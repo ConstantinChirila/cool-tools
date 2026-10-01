@@ -28,7 +28,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type ToolCategory = "Finance" | "Maths" | "Sport" | "Everyday" | "Text";
+export type ToolCategory = "Finance" | "Maths" | "Sport" | "Everyday" | "Garden" | "Text";
 
 export interface Tool {
   slug: string;
@@ -292,7 +292,7 @@ export const tools: Tool[] = [
     shortName: "Garden Materials",
     description:
       "How much topsoil, compost, mulch, bark, gravel or sand you need: cubic metres, litres, weight, bags or bulk bags, and the cheapest way to buy it.",
-    category: "Everyday",
+    category: "Garden",
     icon: Shovel,
     keywords: ["garden", "topsoil", "top soil", "compost", "mulch", "bark", "bark chippings", "wood chip", "gravel", "shingle", "pea gravel", "sand", "sharp sand", "play sand", "bulk bag", "jumbo bag", "tonne bag", "cubic metres", "m3", "litres", "how much", "raised bed", "lawn", "border", "driveway", "path", "patio", "landscaping", "soil calculator", "aggregate"],
     tint: "var(--sticker-mint)",
@@ -309,7 +309,7 @@ export const tools: Tool[] = [
     shortName: "Raised Bed",
     description:
       "How much topsoil, compost and manure fills your raised beds, in bags or bulk bags, plus the boards and posts to build them and what it all costs.",
-    category: "Everyday",
+    category: "Garden",
     icon: Sprout,
     keywords: ["raised bed", "raised garden bed", "veg bed", "vegetable bed", "planter", "soil mix", "raised bed soil", "topsoil", "compost", "manure", "farmyard manure", "no dig", "scaffold boards", "sleepers", "railway sleepers", "decking boards", "timber", "cut list", "bulk bag", "how much soil", "allotment", "garden", "grow your own"],
     tint: "var(--sticker-yellow)",
@@ -326,7 +326,7 @@ export const tools: Tool[] = [
     shortName: "Lawn",
     description:
       "How much grass seed or turf your lawn needs, with paths, beds and sheds taken out, plus the topsoil, feed and water to get it going and what it all costs.",
-    category: "Everyday",
+    category: "Garden",
     icon: LandPlot,
     keywords: ["lawn", "grass", "grass seed", "lawn seed", "turf", "turf rolls", "how much turf", "how much grass seed", "overseed", "overseeding", "reseed", "patch", "topsoil", "top dressing", "lawn feed", "fertiliser", "fertilizer", "pre-seed", "pre-turf", "watering", "new lawn", "garden", "m2"],
     tint: "var(--sticker-mint)",
@@ -343,7 +343,7 @@ export const tools: Tool[] = [
     shortName: "Patio",
     description:
       "How many patio slabs to order with every cut counted on a plan, plus the MOT sub-base, sharp sand, cement, jointing, fall and total cost.",
-    category: "Everyday",
+    category: "Garden",
     icon: Grid2x2,
     keywords: ["patio", "paving", "slabs", "paving slabs", "flags", "porcelain", "sandstone", "indian sandstone", "concrete slabs", "how many slabs", "cuts", "waste", "mot type 1", "sub-base", "hardcore", "sharp sand", "cement", "mortar", "bedding", "jointing compound", "grout", "pointing", "fall", "gradient", "garden", "m2"],
     tint: "var(--sticker-sky)",
@@ -360,7 +360,7 @@ export const tools: Tool[] = [
     shortName: "Water Butt",
     description:
       "How much rain your roof can catch, what size water butt to buy, how often it would overflow or run dry, and what it saves on a water meter.",
-    category: "Everyday",
+    category: "Garden",
     icon: CloudRain,
     keywords: ["water butt", "rain barrel", "rainwater", "rainwater harvesting", "rain water", "roof", "gutter", "downpipe", "tank", "ibc", "rainfall", "how much rain", "what size water butt", "water saving", "water meter", "hosepipe ban", "drought", "garden", "watering"],
     tint: "var(--sticker-sky)",
@@ -377,7 +377,7 @@ export const tools: Tool[] = [
     shortName: "Drip Irrigation",
     description:
       "How many drippers your tap can run per zone, how long to water each zone, how much water it uses a day and a week, and how long to flush the pipes.",
-    category: "Everyday",
+    category: "Garden",
     icon: Droplets,
     keywords: ["irrigation", "drip irrigation", "micro irrigation", "drippers", "emitters", "watering system", "tap flow", "flow rate", "zones", "run time", "timer", "hozelock", "gardena", "greenhouse", "tomatoes", "pots", "hanging baskets", "supply pipe", "flush", "litres per hour", "garden", "watering"],
     tint: "var(--sticker-lilac)",
@@ -492,7 +492,7 @@ export const tools: Tool[] = [
   },
 ];
 
-export const categories: ToolCategory[] = ["Finance", "Maths", "Sport", "Everyday", "Text"];
+export const categories: ToolCategory[] = ["Finance", "Maths", "Sport", "Everyday", "Garden", "Text"];
 
 /** Site-relative path of a tool page. Tools live at the root: /<slug>. */
 export function toolPath(tool: Tool): string {
