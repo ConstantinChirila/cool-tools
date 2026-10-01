@@ -376,6 +376,31 @@ export interface YearSim {
 }
 
 /**
+ * One hour of dispatch: solar serves the home, the surplus charges the
+ * battery (a tenth lost on the way) and the rest is exported; a shortfall
+ * comes from the battery, when it may discharge, and what's left is the
+ * deficit the grid must cover. Returns the battery's new level.
+ */
+function stepHour(g: number, l: number, soc: number, cap: number, power: number, mayDischarge: boolean) {
+  const direct = Math.min(g, l);
+  let surplus = g - direct;
+  let deficit = l - direct;
+  let charged = 0;
+  let given = 0;
+  if (surplus > 0 && cap > 0) {
+    charged = Math.min(surplus, power, (cap - soc) / BATTERY_EFFICIENCY);
+    soc += charged * BATTERY_EFFICIENCY;
+    surplus -= charged;
+  }
+  if (deficit > 0 && mayDischarge) {
+    given = Math.min(deficit, power, soc);
+    soc -= given;
+    deficit -= given;
+  }
+  return { soc, direct, charged, given, surplus, deficit };
+}
+
+/**
  * Runs a year hour by hour. Solar serves the home first; the surplus charges
  * the battery (a tenth lost on the way) and the rest is exported. A
  * shortfall comes from the battery, then the grid. In a cheap overnight
@@ -406,22 +431,9 @@ export function simulateYear(gen: Float64Array, load: Float64Array, spec: System
     let imported = 0;
     for (let h = from; h < 24; h++) {
       const i = day * 24 + h;
-      const g = (gen[i] ?? 0) * scale;
-      const l = load[i] ?? 0;
-      const direct = Math.min(g, l);
-      let surplus = g - direct;
-      let deficit = l - direct;
-      if (surplus > 0) {
-        const charge = Math.min(surplus, power, (cap - soc) / BATTERY_EFFICIENCY);
-        soc += charge * BATTERY_EFFICIENCY;
-        surplus -= charge;
-      }
-      if (deficit > 0) {
-        const give = Math.min(deficit, power, soc);
-        soc -= give;
-        deficit -= give;
-        imported += deficit;
-      }
+      const step = stepHour((gen[i] ?? 0) * scale, load[i] ?? 0, soc, cap, power, true);
+      soc = step.soc;
+      imported += step.deficit;
     }
     return imported;
   };
@@ -439,44 +451,29 @@ export function simulateYear(gen: Float64Array, load: Float64Array, spec: System
       const i = d * 24 + h;
       const g = (gen[i] ?? 0) * scale;
       const l = load[i] ?? 0;
-      const inWindow = h < flatWindow;
-      const direct = Math.min(g, l);
-      let surplus = g - direct;
-      let deficit = l - direct;
-      let charged = 0;
+      // In the cheap window the home runs on the grid and the battery keeps its charge for the day.
+      const step = stepHour(g, l, soc, cap, power, h >= window);
+      soc = step.soc;
       month.generated += g;
       month.load += l;
-      month.direct += direct;
-      if (surplus > 0 && cap > 0) {
-        charged = Math.min(surplus, power, (cap - soc) / BATTERY_EFFICIENCY);
-        soc += charged * BATTERY_EFFICIENCY;
-        surplus -= charged;
-        month.solarToBattery += charged;
-        if (hourly) hourly.solarToBattery[i] = charged;
-      }
-      month.exported += surplus;
-      if (hourly) hourly.exported[i] = surplus;
-      let imported = 0;
-      if (deficit > 0) {
-        if (h >= window) {
-          const give = Math.min(deficit, power, soc);
-          soc -= give;
-          deficit -= give;
-          month.fromBattery += give;
-          if (hourly) hourly.fromBattery[i] = give;
-        }
-        imported = deficit;
-      }
+      month.direct += step.direct;
+      month.solarToBattery += step.charged;
+      month.exported += step.surplus;
+      month.fromBattery += step.given;
+      let imported = step.deficit;
       if (h < window && target > soc + 1e-9) {
-        const fromGrid = Math.min(Math.max(power - charged, 0), (target - soc) / BATTERY_EFFICIENCY);
+        const fromGrid = Math.min(Math.max(power - step.charged, 0), (target - soc) / BATTERY_EFFICIENCY);
         soc += fromGrid * BATTERY_EFFICIENCY;
         imported += fromGrid;
         month.gridToBattery += fromGrid;
         if (hourly) hourly.gridToBattery[i] = fromGrid;
       }
       month.imported += imported;
-      if (inWindow) month.importedOffPeak += imported;
+      if (h < flatWindow) month.importedOffPeak += imported;
       if (hourly) {
+        hourly.solarToBattery[i] = step.charged;
+        hourly.exported[i] = step.surplus;
+        hourly.fromBattery[i] = step.given;
         hourly.imported[i] = imported;
         hourly.soc[i] = soc;
       }
@@ -567,7 +564,7 @@ function crossing(age: number, before: number, saving: number, spent: number): n
 export function runScenario(input: SolarInput, scenario: Scenario, profiles: { gen: Float64Array; load: Float64Array }, detail = false): ScenarioResult {
   const kwp = Math.max(scenario.kwp, 0);
   const battery = Math.max(scenario.battery, 0);
-  const offPeakHours = input.offPeak ? input.offPeakHours : 0;
+  const offPeakHours = input.offPeak ? Math.round(input.offPeakHours) : 0;
   const prices = { importPrice: input.importPrice, exportPrice: input.exportPrice, offPeakPrice: input.offPeak ? input.offPeakPrice : input.importPrice };
   const solarCost = kwp > 0 ? (input.solarCost > 0 ? input.solarCost : solarCostFor(kwp)) : 0;
   const batteryCost = battery > 0 ? (input.batteryCost > 0 ? input.batteryCost : batteryCostFor(battery)) : 0;
@@ -728,7 +725,7 @@ export function calculate(input: SolarInput): SolarResult {
 
   const sweep: SweepPoint[] = [];
   if (input.kwp > 0) {
-    const offPeakHours = input.offPeak ? input.offPeakHours : 0;
+    const offPeakHours = input.offPeak ? Math.round(input.offPeakHours) : 0;
     const prices = { importPrice: input.importPrice, exportPrice: input.exportPrice, offPeakPrice: input.offPeak ? input.offPeakPrice : input.importPrice };
     const baseline = bill(baselineFlows(profiles.load, offPeakHours), prices);
     const solarCost = input.solarCost > 0 ? input.solarCost : solarCostFor(input.kwp);

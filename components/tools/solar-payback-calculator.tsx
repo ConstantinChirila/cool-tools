@@ -5,9 +5,9 @@ import { Pause, Play, SlidersHorizontal } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Callout } from "@/components/calc/callout";
 import { ChoiceGroup } from "@/components/calc/choice-group";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
+import { NoteList, type Note } from "@/components/calc/note-list";
 import { NumberField } from "@/components/calc/number-field";
 import { PillButton, togglePillClass } from "@/components/calc/pill-button";
 import { Section, useSectionState } from "@/components/calc/section";
@@ -16,6 +16,7 @@ import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { SwitchField } from "@/components/calc/switch-field";
 import { GrowthChart } from "@/components/charts/growth-chart";
+import { Key } from "@/components/charts/legend";
 import { BATTERY, DayChart, EXPORT, GRID, HomeScene, MonthBars, SOLAR, hourLabel, type HourFlows } from "@/components/tools/solar-visuals";
 import { inputFields, useUrlState, type FieldUpdate } from "@/hooks/use-url-state";
 import { formatGbp, formatGbpCompact, formatNumber, formatPercent, plural } from "@/lib/currency";
@@ -567,7 +568,7 @@ function BatteryCard({ input, result, onBattery }: { input: SolarInput; result: 
 
 /** At most two notes, most useful first. */
 function Notes({ input, result }: { input: SolarInput; result: SolarResult }) {
-  const notes: { tone: "info" | "warn"; text: string }[] = [];
+  const notes: Note[] = [];
   const { system, panelsOnly } = result;
   if (input.place === "belfast" && input.exportPrice > 0) {
     notes.push({ tone: "warn", text: "The Smart Export Guarantee covers Great Britain only. In Northern Ireland, export is paid (if at all) through your supplier's own scheme, often at a few pence: check before counting on it." });
@@ -587,16 +588,7 @@ function Notes({ input, result }: { input: SolarInput; result: SolarResult }) {
   if (input.kwp > 0 && input.battery <= 0 && input.exportPrice < 6) {
     notes.push({ tone: "info", text: "At a few pence a kWh, export earns little: suppliers pay 12–16p to their own customers, so switching may matter more than any kit." });
   }
-  if (notes.length === 0) return null;
-  return (
-    <div className="space-y-2">
-      {notes.slice(0, 2).map((n) => (
-        <Callout key={n.text} tone={n.tone}>
-          {n.text}
-        </Callout>
-      ))}
-    </div>
-  );
+  return <NoteList notes={notes} />;
 }
 
 /* ------------------------------------------------------------- Day card -- */
@@ -692,23 +684,23 @@ function DayCard({
             </p>
             <DayChart data={data} capacity={input.battery} day={day} hour={hour} onHour={onHour} offPeakHours={input.offPeak ? input.offPeakHours : 0} />
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2.5 w-3 rounded-[2px]" style={{ background: SOLAR }} /> Panels
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-0.5 w-3 rounded-full bg-foreground" /> Home
-              </span>
+              <Key color={SOLAR} shape="block">
+                Panels
+              </Key>
+              <Key color="var(--foreground)" shape="line">
+                Home
+              </Key>
               {input.battery > 0 && (
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-0.5 w-3 rounded-full" style={{ background: BATTERY }} /> Battery level
-                </span>
+                <Key color={BATTERY} shape="line">
+                  Battery level
+                </Key>
               )}
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-1 w-3 rounded-full" style={{ background: GRID }} /> Buying
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-1 w-3 rounded-full" style={{ background: EXPORT }} /> Selling
-              </span>
+              <Key color={GRID} shape="bar">
+                Buying
+              </Key>
+              <Key color={EXPORT} shape="bar">
+                Selling
+              </Key>
             </div>
             <p className="text-xs font-semibold text-muted-foreground">
               The day in the month whose sun is nearest its average, in a simulated year built from PVGIS monthly figures: real days swing from gloom to glare. Drag across the chart or press play.

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { FeedbackLink } from "@/components/feedback-link";
-import { LegalPage, legalMetadata } from "@/components/legal-page";
+import { LegalPage } from "@/components/legal-page";
+import { LEGAL_PAGES, legalMetadata } from "@/lib/seo";
 import { PrivacyIllustration } from "@/components/privacy-illustration";
 
 export const metadata = legalMetadata(
-  "/privacy",
+  "privacy",
   "Privacy Policy",
   "Bits & Bobs has no accounts, no cookies, no ads and no idea who you are. Here is what the site does and doesn't see, in plain English.",
 );
@@ -24,7 +25,7 @@ export default function PrivacyPage() {
       title="Privacy Policy"
       tint="mint"
       gist="The short version: I don't know who you are, and I would like to keep it that way."
-      updated="1 October 2026"
+      updated={LEGAL_PAGES.privacy.updated}
     >
       <PrivacyIllustration />
 

@@ -65,7 +65,7 @@
       "id": "water-tariffs",
       "what": "Metered water + sewerage price per m³ (default and the Thames / United Utilities range quoted in hints and guides)",
       "tools": ["lawn-calculator", "water-butt-calculator", "drip-irrigation-calculator"],
-      "files": ["lib/water.ts", "components/tools/lawn-calculator.tsx", "components/tools/water-butt-calculator.tsx", "components/tools/drip-irrigation-calculator.tsx", "content/water-butt-calculator.ts", "content/drip-irrigation-calculator.ts"],
+      "files": ["lib/water.ts (WATER_PRICE, WATER_PRICE_HINT)", "content/water-butt-calculator.ts", "content/drip-irrigation-calculator.ts"],
       "sources": ["https://www.thameswater.co.uk/help/account-and-billing/understand-your-bill/metered-customers", "https://cumbria.unitedutilities.com/my-account/your-bill/our-household-charges-20262027/", "https://www.stwater.co.uk/my-account/our-charges/metered-charges/"],
       "when": "Water companies set new charges every 1 April (announced in February); Ofwat charging rules may change from April 2027",
       "lastChecked": "2026-10-01",

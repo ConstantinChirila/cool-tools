@@ -243,9 +243,9 @@ export interface ZoneResult {
   /** Most drippers of this flow the tap can run at once. */
   maxDrippers: number;
   over: boolean;
-  /** Zones this one should become to fit the tap. */
+  /** Zones this one should become to fit the tap (1 when it fits). */
   split: number;
-  /** Minutes per watering. */
+  /** Minutes per watering for one run; a zone that must be split takes `split` runs. */
   minutes: number;
   /** Litres a day. */
   litres: number;
@@ -316,7 +316,8 @@ export function calculate({ tap, zones, schedule, pipes, price }: IrrigationInpu
     tap: flow,
     usable,
     zones: results,
-    minutes: results.reduce((s, z) => s + z.minutes, 0),
+    // A zone the tap can't run at once takes its runs one after another.
+    minutes: results.reduce((s, z) => s + z.minutes * z.split, 0),
     daily,
     weekly,
     weeklyCost: (weekly / 1000) * Math.max(price, 0),

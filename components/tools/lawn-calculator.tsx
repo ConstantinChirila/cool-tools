@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Callout } from "@/components/calc/callout";
 import { ChoiceGroup } from "@/components/calc/choice-group";
 import { CurrencySelect } from "@/components/calc/currency-select";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
+import { NoteList, type Note } from "@/components/calc/note-list";
 import { NumberField } from "@/components/calc/number-field";
 import { Segmented } from "@/components/calc/segmented";
 import { SizePicker } from "@/components/calc/size-picker";
@@ -62,6 +62,7 @@ import {
   type Water,
 } from "@/lib/lawn";
 import { cn } from "@/lib/utils";
+import { WATER_PRICE_HINT } from "@/lib/water";
 
 type Include = LawnInput["include"];
 
@@ -629,7 +630,7 @@ function WaterExtra({ on, setOn, water, update, currency }: { on: boolean; setOn
         max={MONEY_RANGE.max}
         prefix={currency}
         decimals={2}
-        hint="On a meter, water and sewerage together: about £4.20 (Thames) to £5.50 (United Utilities) in 2026/27."
+        hint={WATER_PRICE_HINT}
         className="sm:max-w-[50%]"
       />
     </Extra>
@@ -899,7 +900,7 @@ function WateringPlan({ result }: { result: LawnResult }) {
 
 /** At most two notes, most important first. */
 function Notes({ project, result }: { project: Project; result: LawnResult }) {
-  const notes: { tone: "info" | "warn"; text: string }[] = [];
+  const notes: Note[] = [];
   const { area, turf, soil } = result;
 
   if (area.cut > 0 && area.cut >= area.added) {
@@ -918,14 +919,5 @@ function Notes({ project, result }: { project: Project; result: LawnResult }) {
     notes.push({ tone: "info", text: `${weightText(soil.weight)} of soil is more than most cars can carry in one go: get it delivered.` });
   }
 
-  if (notes.length === 0) return null;
-  return (
-    <div className="space-y-2">
-      {notes.slice(0, 2).map((n) => (
-        <Callout key={n.text} tone={n.tone}>
-          {n.text}
-        </Callout>
-      ))}
-    </div>
-  );
+  return <NoteList notes={notes} />;
 }

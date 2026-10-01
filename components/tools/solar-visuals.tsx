@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Key } from "@/components/tools/water-butt-visuals";
+import { Key } from "@/components/charts/legend";
 import { formatNumber } from "@/lib/currency";
 import { type Flows, sunTimes } from "@/lib/solar";
 import { cn, clamp } from "@/lib/utils";
@@ -19,9 +19,6 @@ const PANEL_LINE = "oklch(0.6 0.08 250)";
 /** What the home, panels, battery and grid did in one hour, kWh. */
 export type HourFlows = Omit<Flows, "importedOffPeak">;
 
-/** CSS for the moving current in a live wire; still when the reader prefers less motion. */
-const FLOW_CSS = `@keyframes solar-flow{to{stroke-dashoffset:-14}}@media (prefers-reduced-motion:no-preference){.solar-flow{animation:solar-flow var(--flow-speed,1s) linear infinite}}`;
-
 /** How fast the dashes move for a flow of `kw`: a trickle crawls, a few kW races. */
 function flowSpeed(kw: number): string {
   return `${clamp(1.6 / Math.max(kw, 0.05), 0.35, 2.4).toFixed(2)}s`;
@@ -34,7 +31,7 @@ function Wire({ d, color, kw }: { d: string; color: string; kw: number }) {
     <>
       <path d={d} fill="none" stroke={INK} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" />
       <path d={d} fill="none" stroke={live ? color : "var(--card)"} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ transition: "stroke .3s" }} />
-      {live && <path d={d} fill="none" stroke="var(--card)" strokeWidth={2} strokeDasharray="3 11" strokeLinecap="round" className="solar-flow" style={{ "--flow-speed": flowSpeed(kw) } as React.CSSProperties} />}
+      {live && <path d={d} fill="none" stroke="var(--card)" strokeWidth={2} strokeDasharray="3 11" strokeLinecap="round" className="motion-safe:animate-flow" style={{ "--flow-speed": flowSpeed(kw) } as React.CSSProperties} />}
     </>
   );
 }
@@ -104,7 +101,6 @@ export function HomeScene({ hour, day, kwp, battery, soc, flows, className }: { 
 
   return (
     <svg viewBox="0 0 360 200" className={cn("block w-full", className)} role="img" aria-label={sceneLabel(hour, flows, battery, soc)}>
-      <style>{FLOW_CSS}</style>
       <rect x={0} y={0} width={360} height={GROUND} style={{ fill: sky, transition: "fill .4s" }} />
       {/* Stars come out as the sky darkens. */}
       <g fill="var(--card)" style={{ opacity: 1 - daylight, transition: "opacity .4s" }}>

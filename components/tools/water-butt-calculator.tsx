@@ -4,10 +4,10 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Callout } from "@/components/calc/callout";
 import { ChoiceGroup } from "@/components/calc/choice-group";
 import { CurrencySelect } from "@/components/calc/currency-select";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
+import { NoteList, type Note } from "@/components/calc/note-list";
 import { NumberField } from "@/components/calc/number-field";
 import { PillButton, togglePillClass } from "@/components/calc/pill-button";
 import { Segmented } from "@/components/calc/segmented";
@@ -15,13 +15,14 @@ import { SizePicker } from "@/components/calc/size-picker";
 import { SliderField } from "@/components/calc/slider-field";
 import { HeroStat, Stat } from "@/components/calc/stat";
 import { GrowthChart } from "@/components/charts/growth-chart";
+import { Key } from "@/components/charts/legend";
 import { price, type Money } from "@/components/tools/garden-format";
 import { DRY, MonthBars, RoofScene, WATER, YearChart, dayLabel } from "@/components/tools/water-butt-visuals";
 import { useCurrency } from "@/hooks/use-currency";
 import { MONEY_RANGE, inputFields, useUrlState, type FieldUpdate } from "@/hooks/use-url-state";
 import { formatNumber, formatPercent, plural } from "@/lib/currency";
 import { cn } from "@/lib/utils";
-import { WATER_PRICE } from "@/lib/water";
+import { WATER_PRICE, WATER_PRICE_HINT } from "@/lib/water";
 import {
   BUTT_SIZES,
   CURVE_MAX,
@@ -128,7 +129,7 @@ export function WaterButtCalculator() {
                 max={MONEY_RANGE.max}
                 prefix={currency.symbol}
                 decimals={2}
-                hint="On a meter, water and sewerage together: about £4.20 (Thames) to £5.50 (United Utilities) in 2026/27. Leave blank if you're not on a meter."
+                hint={`${WATER_PRICE_HINT} Leave blank if you're not on a meter.`}
                 className="sm:max-w-[60%]"
               />
             </section>
@@ -452,12 +453,12 @@ function YearCard({ input, result, day, onDay, placeName }: { input: ButtInput; 
             <p className="text-[15px] font-bold">Water in the butt, day by day</p>
             <YearChart year={year} capacity={result.capacity} day={day} onDay={onDay} />
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-1 w-3 rounded-full" style={{ background: WATER }} /> Overflowing
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-1 w-3 rounded-full" style={{ background: DRY }} /> Empty when needed
-              </span>
+              <Key color={WATER} shape="bar">
+                Overflowing
+              </Key>
+              <Key color={DRY} shape="bar">
+                Empty when needed
+              </Key>
               <span className="text-muted-foreground">Bars along the top: rain</span>
             </div>
             <p className="text-xs font-semibold text-muted-foreground">
@@ -477,7 +478,7 @@ function YearCard({ input, result, day, onDay, placeName }: { input: ButtInput; 
 
 /** At most two notes, most important first. */
 function Notes({ input, result }: { input: ButtInput; result: ButtResult }) {
-  const notes: { tone: "info" | "warn"; text: string }[] = [];
+  const notes: Note[] = [];
   const { sim, sizing } = result;
   if (result.area > 0 && input.use > 0 && sizing.roofLimited) {
     const best = sizing.curve[sizing.curve.length - 1]?.supplied ?? 0;
@@ -498,14 +499,5 @@ function Notes({ input, result }: { input: ButtInput; result: ButtResult }) {
   if (input.price <= 0) {
     notes.push({ tone: "info", text: "Without a meter the butt saves water, not money: still handy in a hosepipe ban, and plants prefer rainwater." });
   }
-  if (notes.length === 0) return null;
-  return (
-    <div className="space-y-2">
-      {notes.slice(0, 2).map((n) => (
-        <Callout key={n.text} tone={n.tone}>
-          {n.text}
-        </Callout>
-      ))}
-    </div>
-  );
+  return <NoteList notes={notes} />;
 }

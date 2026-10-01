@@ -1,11 +1,9 @@
 import type { MetadataRoute } from "next";
 import { codecPagePath, codecPages } from "@/lib/encoding-pages";
+import { LEGAL_PAGES } from "@/lib/seo";
 import { absoluteUrl } from "@/lib/site";
 import { getTool, toolPath, tools } from "@/lib/tools";
 import { pairPath, pairs } from "@/lib/units/pairs";
-
-/** Date on the terms and privacy pages; keep in step with their "Last updated" line. */
-const LEGAL_UPDATED = "2026-10-01";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const newest = tools.map((t) => t.updated).sort().at(-1);
@@ -34,9 +32,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.6,
     })),
-    ...["/terms", "/privacy"].map((path) => ({
-      url: absoluteUrl(path),
-      lastModified: new Date(LEGAL_UPDATED),
+    ...Object.values(LEGAL_PAGES).map((page) => ({
+      url: absoluteUrl(page.path),
+      lastModified: new Date(page.updated),
       changeFrequency: "yearly" as const,
       priority: 0.2,
     })),

@@ -3,10 +3,10 @@
 import { Ruler } from "lucide-react";
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Callout } from "@/components/calc/callout";
 import { ChoiceGroup } from "@/components/calc/choice-group";
 import { CurrencySelect } from "@/components/calc/currency-select";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
+import { NoteList, type Note } from "@/components/calc/note-list";
 import { NumberField } from "@/components/calc/number-field";
 import { togglePillClass } from "@/components/calc/pill-button";
 import { Section, useSectionState } from "@/components/calc/section";
@@ -820,7 +820,7 @@ function CutList({ result, timber }: { result: RaisedBedResult; timber: Timber }
 
 /** At most two notes, most important first. */
 function Notes({ bed, result, units }: { bed: Bed; result: RaisedBedResult; units: Units }) {
-  const notes: { tone: "info" | "warn"; text: string }[] = [];
+  const notes: Note[] = [];
   const t = result.timber;
 
   if (result.parts.length === 0) notes.push({ tone: "warn", text: "Your mix is empty: give at least one ingredient a share." });
@@ -844,14 +844,5 @@ function Notes({ bed, result, units }: { bed: Bed; result: RaisedBedResult; unit
     });
   }
 
-  if (notes.length === 0) return null;
-  return (
-    <div className="space-y-2">
-      {notes.slice(0, 2).map((n) => (
-        <Callout key={n.text} tone={n.tone}>
-          {n.text}
-        </Callout>
-      ))}
-    </div>
-  );
+  return <NoteList notes={notes} />;
 }

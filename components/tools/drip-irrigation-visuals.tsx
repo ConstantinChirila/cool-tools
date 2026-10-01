@@ -98,8 +98,6 @@ const LANE_H = 66;
 const PIPE_Y = 12;
 const STEP = 42;
 
-/** CSS for the moving water in the running zone's pipe; still when the reader prefers less motion. */
-const FLOW_CSS = `@keyframes drip-flow{to{stroke-dashoffset:-16}}@media (prefers-reduced-motion:no-preference){.drip-flow{animation:drip-flow .8s linear infinite}}`;
 
 function Lane({ zone, result, color, active, last }: { zone: Zone; result: ZoneResult; color: string; active: boolean; last: boolean }) {
   const shown = Math.min(Math.round(zone.plants), MAX_PLANTS);
@@ -114,7 +112,7 @@ function Lane({ zone, result, color, active, last }: { zone: Zone; result: ZoneR
       <path d={`M3.5 0 V${last ? PIPE_Y : LANE_H}`} stroke={INK} strokeWidth={7} />
       <path d={`M3.5 ${PIPE_Y} H${end}`} stroke={INK} strokeWidth={7} strokeLinecap="round" />
       <path d={`M7 ${PIPE_Y} H${end}`} stroke={active ? WATER : "var(--card)"} strokeWidth={3} strokeLinecap="round" />
-      {active && <path d={`M7 ${PIPE_Y} H${end}`} stroke="var(--card)" strokeWidth={3} strokeDasharray="4 12" className="drip-flow" />}
+      {active && <path d={`M7 ${PIPE_Y} H${end}`} stroke="var(--card)" strokeWidth={3} strokeDasharray="3 11" className="motion-safe:animate-flow" style={{ "--flow-speed": ".8s" } as React.CSSProperties} />}
       <circle cx={end + 2} cy={PIPE_Y} r={4.5} fill={color} stroke={INK} strokeWidth={2} />
       {Array.from({ length: shown }, (_, i) => {
         const x = first + i * STEP;
@@ -180,7 +178,6 @@ export function SystemSchematic({
 }) {
   return (
     <div className="min-w-0">
-      <style>{FLOW_CSS}</style>
       <div className="flex items-end gap-3">
         <Headworks />
         <p className="pb-1 text-xs font-bold text-muted-foreground">Tap · timer · filter · pressure reducer</p>

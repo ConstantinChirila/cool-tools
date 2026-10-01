@@ -8,3 +8,6 @@
  * charges £4.21/m³ and United Utilities £5.51/m³ for both in 2026/27.
  */
 export const WATER_PRICE = 4.5;
+
+/** The price field's hint, so every tool quotes the same figures. */
+export const WATER_PRICE_HINT = "On a meter, water and sewerage together: about £4.20 (Thames) to £5.50 (United Utilities) in 2026/27.";

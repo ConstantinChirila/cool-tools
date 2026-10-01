@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Key } from "@/components/charts/legend";
 import { formatNumber } from "@/lib/currency";
 import { cn, clamp } from "@/lib/utils";
 import { type RoofInfo, type Simulation } from "@/lib/water-butt";
@@ -317,14 +318,5 @@ export function MonthBars({ months, format }: { months: Simulation["months"]; fo
       </div>
       {clipped && <p className="text-xs font-semibold text-muted-foreground">The roof catches far more than the garden uses, so the rain bars are cut off at the top.</p>}
     </div>
-  );
-}
-
-export function Key({ color, children }: { color: string; children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="size-3 rounded-[3px] border-2 border-foreground" style={{ background: color }} />
-      {children}
-    </span>
   );
 }

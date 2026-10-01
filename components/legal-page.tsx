@@ -1,17 +1,8 @@
 import Link from "next/link";
-import type { Metadata } from "next";
-import { SITE_NAME, absoluteUrl } from "@/lib/site";
 
-/** Metadata for a plain prose page (terms, privacy): title, description, canonical. */
-export function legalMetadata(path: string, title: string, description: string): Metadata {
-  const url = absoluteUrl(path);
-  return {
-    title,
-    description,
-    alternates: { canonical: url },
-    openGraph: { type: "website", url, title: `${title} · ${SITE_NAME}`, description, siteName: SITE_NAME, locale: "en_GB" },
-    twitter: { card: "summary", title: `${title} · ${SITE_NAME}`, description },
-  };
+/** "1 October 2026" from an ISO date, in British English whatever the server's locale. */
+function longDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 }
 
 // Full class names so Tailwind can see them.
@@ -37,6 +28,7 @@ export function LegalPage({
   title: string;
   tint: keyof typeof TINT;
   gist: string;
+  /** ISO date the page last changed. */
   updated: string;
   children: React.ReactNode;
 }) {
@@ -50,7 +42,7 @@ export function LegalPage({
         </h1>
         <p className="max-w-xl text-balance text-lg font-semibold">{gist}</p>
         <p className="font-mono text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-          Last updated {updated}
+          Last updated {longDate(updated)}
         </p>
       </header>
       <div className="space-y-10 font-semibold leading-relaxed text-foreground/85 sm:text-lg [&_h2]:text-2xl [&_h2]:font-extrabold [&_h2]:tracking-tight [&_h2]:text-foreground [&_h2]:sm:text-3xl [&_section]:space-y-4 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6 [&_ul]:marker:text-foreground [&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:no-underline [&_strong]:text-foreground">

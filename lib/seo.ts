@@ -4,6 +4,24 @@ import type { ToolContent } from "@/lib/tool-content";
 import { SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/site";
 import { toolPath, type Tool } from "@/lib/tools";
 
+/** The legal pages and the ISO date each last changed: shown on the page and sent as the sitemap's lastmod. */
+export const LEGAL_PAGES = {
+  terms: { path: "/terms", updated: "2026-10-01" },
+  privacy: { path: "/privacy", updated: "2026-10-01" },
+} as const;
+
+/** Metadata for a plain prose page (terms, privacy): title, description, canonical. */
+export function legalMetadata(page: keyof typeof LEGAL_PAGES, title: string, description: string): Metadata {
+  const url = absoluteUrl(LEGAL_PAGES[page].path);
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { type: "website", url, title: `${title} · ${SITE_NAME}`, description, siteName: SITE_NAME, locale: "en_GB" },
+    twitter: { card: "summary", title: `${title} · ${SITE_NAME}`, description },
+  };
+}
+
 /** Page metadata for a tool route: title, description, canonical, Open Graph and Twitter. */
 export function toolMetadata(tool: Tool): Metadata {
   const url = absoluteUrl(toolPath(tool));

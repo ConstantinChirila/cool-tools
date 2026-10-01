@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { FeedbackLink } from "@/components/feedback-link";
-import { LegalPage, legalMetadata } from "@/components/legal-page";
+import { LegalPage } from "@/components/legal-page";
+import { LEGAL_PAGES, legalMetadata } from "@/lib/seo";
 
 export const metadata = legalMetadata(
-  "/terms",
+  "terms",
   "Terms of Use",
   "The rules for using Bits & Bobs: free calculators that try hard to be right, come with no guarantee, and are not financial advice.",
 );
@@ -14,7 +15,7 @@ export default function TermsPage() {
       title="Terms of Use"
       tint="yellow"
       gist="The tools are free and I try hard to make them right. You use them at your own risk. That is most of it."
-      updated="1 October 2026"
+      updated={LEGAL_PAGES.terms.updated}
     >
       <section>
         <h2>What this is</h2>

@@ -5,10 +5,10 @@ import { Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Callout } from "@/components/calc/callout";
 import { ChoiceGroup } from "@/components/calc/choice-group";
 import { CurrencySelect } from "@/components/calc/currency-select";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
+import { NoteList, type Note } from "@/components/calc/note-list";
 import { NumberField } from "@/components/calc/number-field";
 import { PillButton } from "@/components/calc/pill-button";
 import { Segmented } from "@/components/calc/segmented";
@@ -58,7 +58,7 @@ import {
   type Zone,
 } from "@/lib/irrigation";
 import { cn } from "@/lib/utils";
-import { WATER_PRICE } from "@/lib/water";
+import { WATER_PRICE, WATER_PRICE_HINT } from "@/lib/water";
 
 type ZoneRow = Zone & { id: number };
 
@@ -137,7 +137,7 @@ export function DripIrrigationCalculator() {
                 max={MONEY_RANGE.max}
                 prefix={currency.symbol}
                 decimals={2}
-                hint="On a meter, water and sewerage together: about £4.20 (Thames) to £5.50 (United Utilities) in 2026/27. Leave blank if you're not on a meter."
+                hint={`${WATER_PRICE_HINT} Leave blank if you're not on a meter.`}
                 className="sm:max-w-[60%]"
               />
             </section>
@@ -450,7 +450,7 @@ function Results({
   onActive: (i: number) => void;
 }) {
   const twice = schedule.waterings === 2;
-  const runs: Run[] = result.zones.map((z, zone) => ({ zone, minutes: z.minutes }));
+  const runs: Run[] = result.zones.map((z, zone) => ({ zone, minutes: z.minutes * z.split }));
   const counted = runs.filter((r) => r.minutes > 0).length;
   const flows = [...new Set(zones.map((z) => z.lph))].sort((a, b) => b - a);
   const mainFlow = flows[0] ?? 4;
@@ -566,7 +566,7 @@ function FlushBox({ pipes, result }: { pipes: Pipes; result: IrrigationResult })
 
 /** At most two notes, most important first. */
 function Notes({ zones, result }: { zones: readonly Zone[]; result: IrrigationResult }) {
-  const notes: { tone: "info" | "warn"; text: string }[] = [];
+  const notes: Note[] = [];
   const over = result.zones.map((z, i) => ({ z, i })).filter(({ z }) => z.over);
   if (over.length > 0) {
     notes.push({
@@ -592,14 +592,5 @@ function Notes({ zones, result }: { zones: readonly Zone[]; result: IrrigationRe
   if (result.minutes > 0 && notes.length === 0) {
     notes.push({ tone: "info", text: "These are summer amounts. Cut the run time in spring and autumn, and skip a day after heavy rain (pots under cover still need watering)." });
   }
-  if (notes.length === 0) return null;
-  return (
-    <div className="space-y-2">
-      {notes.slice(0, 2).map((n) => (
-        <Callout key={n.text} tone={n.tone}>
-          {n.text}
-        </Callout>
-      ))}
-    </div>
-  );
+  return <NoteList notes={notes} />;
 }

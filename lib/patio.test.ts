@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  COMPOUND,
   DEFAULTS,
+  MAX_CUTOUTS,
+  MAX_PATIOS,
+  MAX_SIDE,
   calculate,
   countSlabs,
   encodePatios,
@@ -112,6 +114,21 @@ describe("patios in the URL", () => {
     expect(parsePatios("5x").ok).toBe(false);
     expect(parsePatios("5x3@1,2").ok).toBe(false);
   });
+
+  it("caps the number of patios and cut-outs and clamps sides to 100 m", () => {
+    expect(parsePatios(Array.from({ length: MAX_PATIOS }, () => "2x2").join("_")).ok).toBe(true);
+    expect(parsePatios(Array.from({ length: MAX_PATIOS + 1 }, () => "2x2").join("_")).ok).toBe(false);
+    expect(parsePatios(`2x2${"@0,0,1x1".repeat(MAX_CUTOUTS)}`).ok).toBe(true);
+    expect(parsePatios(`2x2${"@0,0,1x1".repeat(MAX_CUTOUTS + 1)}`).ok).toBe(false);
+    const big = parsePatios("500x3@0,0,200x1");
+    expect(big.ok && big.value[0]).toMatchObject({ length: MAX_SIDE, width: 3, cutOuts: [{ x: 0, y: 0, w: MAX_SIDE, h: 1 }] });
+  });
+
+  it("lays nothing and says so rather than millions of slabs", () => {
+    const l = layout(patio(100, 100), { length: 100, width: 100, thickness: 20 }, 0, "grid", "along");
+    expect(l.pieces).toHaveLength(0);
+    expect(l.tooMany).toBe(true);
+  });
 });
 
 describe("patioArea", () => {
@@ -152,10 +169,16 @@ describe("calculate", () => {
   });
 
   it("fills compound joints at least 25 mm deep and rounds up to whole tubs", () => {
+    // 3 × 1.8 m in 600 mm slabs with 10 mm joints: 13.12 m of joint, 10 mm wide, filled 25 mm deep (not the slab's 20) plus 5%.
     const r = calculate([patio(3, 1.8)], { ...build, joint: 10 }, prices);
-    const litres = r.joints.length * 10 * 25 / 1000 * 1.05;
-    expect(r.compound?.litres).toBeCloseTo(litres);
-    expect(r.compound?.tubs).toBe(Math.ceil((litres * COMPOUND.kgPerLitre) / 12.5 - 0.01));
+    expect(r.joints.length).toBeCloseTo(13.12);
+    expect(r.compound?.depth).toBe(25);
+    expect(r.compound?.litres).toBeCloseTo(3.444, 2);
+    expect(r.compound?.tubs).toBe(1);
+    // 6 × 4 m needs 18.8 L, about 33.8 kg: three 12.5 kg tubs.
+    const big = calculate([patio(6, 4)], { ...build, joint: 10 }, prices);
+    expect(big.compound?.litres).toBeCloseTo(18.76, 1);
+    expect(big.compound?.tubs).toBe(3);
   });
 
   it("prices slabs per slab or per m² and totals the list", () => {

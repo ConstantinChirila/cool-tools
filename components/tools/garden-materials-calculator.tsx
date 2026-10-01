@@ -3,10 +3,10 @@
 import { SlidersHorizontal } from "lucide-react";
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Callout } from "@/components/calc/callout";
 import { ChoiceGroup } from "@/components/calc/choice-group";
 import { CurrencySelect } from "@/components/calc/currency-select";
 import { MobileResultBar } from "@/components/calc/mobile-result-bar";
+import { NoteList, type Note } from "@/components/calc/note-list";
 import { NumberField } from "@/components/calc/number-field";
 import { togglePillClass } from "@/components/calc/pill-button";
 import { Section, useSectionState } from "@/components/calc/section";
@@ -557,7 +557,7 @@ function PlanRow({
 function Notes({ material, settings, result, units }: { material: Material; settings: Settings; result: GardenResult; units: Units }) {
   const job = jobFor(material, settings.job);
   const { area, weight, options } = result;
-  const notes: { tone: "info" | "warn"; text: string }[] = [];
+  const notes: Note[] = [];
 
   if (area.cut > 0 && area.cut >= area.added) {
     notes.push({ tone: "warn", text: "Your cut-outs are as big as your areas, so there's nothing left to cover." });
@@ -581,14 +581,5 @@ function Notes({ material, settings, result, units }: { material: Material; sett
     });
   }
 
-  if (notes.length === 0) return null;
-  return (
-    <div className="space-y-2">
-      {notes.slice(0, 2).map((n) => (
-        <Callout key={n.text} tone={n.tone}>
-          {n.text}
-        </Callout>
-      ))}
-    </div>
-  );
+  return <NoteList notes={notes} />;
 }

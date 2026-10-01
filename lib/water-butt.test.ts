@@ -8,6 +8,7 @@ import {
   PLACES,
   ROOF_INFO,
   YEARS,
+  buttsFor,
   calculate,
   dailyNeed,
   litresPerMm,
@@ -133,6 +134,14 @@ describe("calculate", () => {
     expect(r.area).toBe(25);
     expect(r.yearly).toBeCloseTo(place.annual * 25 * ROOF_INFO.tiles.runoff * FILTER_EFFICIENCY);
     expect(r.capacity).toBe(210);
+  });
+
+  it("links common sizes together, four at most", () => {
+    expect(buttsFor(1500)).toEqual({ size: 500, butts: 3 });
+    expect(buttsFor(2000)).toEqual({ size: 1000, butts: 2 });
+    expect(buttsFor(210)).toEqual({ size: 210, butts: 1 });
+    // Nothing in the range divides it: one butt of that odd size.
+    expect(buttsFor(170)).toEqual({ size: 170, butts: 1 });
   });
 
   it("recommends a common size and saves money on a meter", () => {

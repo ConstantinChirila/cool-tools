@@ -90,6 +90,13 @@ describe("calculate", () => {
     expect(r.weeklyCost).toBeCloseTo(0.8064);
   });
 
+  it("counts every run of a zone the tap must split", () => {
+    const r = calculate(input({ zones: [zoneFromKind("bed", 100)] }));
+    const z = r.zones[0]!;
+    expect(z.split).toBe(2);
+    expect(r.minutes).toBeCloseTo(z.minutes * 2);
+  });
+
   it("waters fewer days a week", () => {
     const r = calculate(input({ schedule: { ...SCHEDULE_DEFAULTS, days: 3 } }));
     expect(r.weekly).toBeCloseTo(76.8);

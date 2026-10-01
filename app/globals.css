@@ -161,6 +161,18 @@
 @utility tilt-5 { transform: rotate(-1deg); }
 @utility tilt-6 { transform: rotate(0.7deg); }
 
+/* Current or water moving along a dashed SVG path: pair with a 14-unit dash
+   period (e.g. stroke-dasharray "3 11") and set --flow-speed for the pace.
+   Use as motion-safe:animate-flow so it stays still for reduced motion. */
+@keyframes flow {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+@utility animate-flow {
+  animation: flow var(--flow-speed, 1s) linear infinite;
+}
+
 /* Frosted bar for sticky elements. */
 @utility glass {
   background: oklch(0.985 0.01 90 / 85%);
