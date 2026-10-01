@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search } from "lucide-react";
+import { Coffee, Search } from "lucide-react";
 import { LogoMark, Wordmark } from "@/components/logo";
 import { openCommandPalette } from "@/components/command-palette-events";
 
@@ -43,6 +43,26 @@ export function SiteHeader() {
             <span className="hidden sm:inline">Search</span>
             <kbd className="hidden font-mono text-[11px] sm:inline">⌘K</kbd>
           </button>
+          {/* Round coffee sticker that widens on hover/focus to reveal its
+              label. The grid 0fr -> 1fr trick animates width without a fixed
+              size; on touch there is no hover, so a tap just follows the link. */}
+          <a
+            href="https://buymeacoffee.com/constantinchirila"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Fund my next tool (Buy Me a Coffee)"
+            className="sticker-sm group grid h-11 grid-cols-[auto_0fr] items-center rounded-full bg-pink px-3.5 transition-[grid-template-columns,transform] duration-300 ease-out hover:-translate-y-0.5 hover:grid-cols-[auto_1fr] focus-visible:grid-cols-[auto_1fr] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+          >
+            <Coffee
+              className="size-4 transition-transform duration-300 group-hover:-rotate-12"
+              strokeWidth={2.5}
+            />
+            <span className="overflow-hidden whitespace-nowrap">
+              <span className="block pl-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+                Fund my next tool
+              </span>
+            </span>
+          </a>
         </nav>
       </div>
     </header>
