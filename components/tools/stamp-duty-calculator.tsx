@@ -134,7 +134,7 @@ export function StampDutyCalculator() {
           </CardContent>
         </Card>
 
-        <Results result={result} costs={costs} onBuyerChange={setBuyer} />
+        <Results result={result} costs={costs} />
       </div>
       <BandTable result={result} />
       <PriceChart result={result} />
@@ -243,24 +243,18 @@ function CostsSection({
   );
 }
 
-function Results({
-  result,
-  costs,
-  onBuyerChange,
-}: {
-  result: StampDutyResult;
-  costs: UpfrontCosts;
-  onBuyerChange: (b: Buyer) => void;
-}) {
+function Results({ result, costs }: { result: StampDutyResult; costs: UpfrontCosts }) {
   const { input, tax } = result;
   const rules = RULES[input.nation];
   const byBuyer = compareBuyers(input);
   const nudge = nearestSaving(input);
   const visibleBuyers = BUYERS.filter((b) => b !== "firstTime" || rules.firstTime);
+  // Without first-time relief (Wales) a first-time buyer pays the same as a mover, so that tile is theirs.
+  const ownTile: Buyer = visibleBuyers.includes(input.buyer) ? input.buyer : "main";
   const { fees, cash, mortgage, ltv } = completion(result, costs);
 
   return (
-    <div className="order-first min-w-0 space-y-6 lg:order-none lg:sticky lg:top-20">
+    <div className="min-w-0 space-y-6 lg:sticky lg:top-20">
       <Card className="min-w-0 bg-sky">
         <CardContent className="space-y-6 pt-6">
           <HeroStat
@@ -273,16 +267,9 @@ function Results({
             }
           />
 
-          <div className={cn("grid gap-2.5", visibleBuyers.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
+          <div className={cn("grid gap-2 sm:gap-2.5", visibleBuyers.length === 3 ? "grid-cols-3" : "grid-cols-2")}>
             {visibleBuyers.map((b) => (
-              <BuyerTile
-                key={b}
-                buyer={b}
-                tax={byBuyer[b]}
-                current={tax}
-                selected={b === input.buyer}
-                onSelect={() => onBuyerChange(b)}
-              />
+              <BuyerTile key={b} buyer={b} tax={byBuyer[b]} current={tax} selected={b === ownTile} />
             ))}
           </div>
 
@@ -342,34 +329,32 @@ function BuyerTile({
   tax,
   current,
   selected,
-  onSelect,
 }: {
   buyer: Buyer;
   tax: number;
   current: number;
   selected: boolean;
-  onSelect: () => void;
 }) {
   const diff = tax - current;
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
+    <div
       className={cn(
-        "rounded-2xl border-[2.5px] border-foreground px-3.5 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
-        selected ? "bg-foreground text-background" : "bg-card hover:bg-secondary",
+        "min-w-0 rounded-2xl border-[2.5px] border-foreground px-2.5 py-2.5 sm:px-3.5 sm:py-3",
+        selected ? "bg-foreground text-background" : "bg-card",
       )}
     >
-      <span className="flex items-center gap-2 text-sm font-bold">
-        <span className="size-2.5 shrink-0 rounded-full" style={{ background: COLORS[buyer] }} aria-hidden />
-        {BUYER_INFO[buyer].label}
+      <span className="flex items-center gap-2 text-xs font-bold sm:text-sm">
+        <span className="hidden size-2.5 shrink-0 rounded-full sm:block" style={{ background: COLORS[buyer] }} aria-hidden />
+        <span className="sm:hidden">{BUYER_INFO[buyer].short}</span>
+        <span className="hidden sm:inline">{BUYER_INFO[buyer].label}</span>
       </span>
-      <span className="mt-1 block font-heading text-2xl font-extrabold tracking-tight text-numeric">{money(tax)}</span>
+      <span className="mt-1 block font-heading text-lg font-extrabold tracking-tight text-numeric sm:text-2xl">
+        {money(tax)}
+      </span>
       <span className={cn("block font-mono text-xs font-bold", selected ? "text-background/70" : "text-muted-foreground")}>
         {selected ? "You" : diff === 0 ? "Same" : diff > 0 ? `+${money(diff)}` : `−${money(-diff)}`}
       </span>
-    </button>
+    </div>
   );
 }
 
@@ -432,13 +417,13 @@ function BandTable({ result }: { result: StampDutyResult }) {
       </CardHeader>
       <CardContent className="min-w-0 space-y-4">
         <div className="overflow-x-auto rounded-2xl border-[2.5px] border-foreground">
-          <table className="w-full min-w-[480px] font-mono text-sm font-bold text-numeric">
+          <table className="w-full font-mono text-sm font-bold text-numeric">
             <thead>
               <tr className="border-b border-foreground/15 text-left font-sans text-xs text-muted-foreground">
-                <th className="px-4 py-2.5 font-bold">{title}</th>
-                <th className="px-4 py-2.5 text-right font-bold">Rate</th>
-                <th className="px-4 py-2.5 text-right font-bold">Price in band</th>
-                <th className="px-4 py-2.5 text-right font-bold">Tax</th>
+                <th className="px-3 py-2.5 font-bold sm:px-4">{title}</th>
+                <th className="px-3 py-2.5 sm:px-4 text-right font-bold">Rate</th>
+                <th className="hidden px-4 py-2.5 text-right font-bold sm:table-cell">Price in band</th>
+                <th className="px-3 py-2.5 sm:px-4 text-right font-bold">Tax</th>
               </tr>
             </thead>
             <tbody>
@@ -447,27 +432,34 @@ function BandTable({ result }: { result: StampDutyResult }) {
                   key={line.from}
                   className={cn("border-b border-foreground/10", line.taxable === 0 && "text-muted-foreground")}
                 >
-                  <td className="px-4 py-2.5 font-sans font-semibold">{bandLabel(line)}</td>
-                  <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                  <td className="px-3 py-2.5 font-sans font-semibold sm:px-4">
+                    {bandLabel(line)}
+                    <span className="block font-mono text-xs text-muted-foreground sm:hidden">{money(line.taxable)} in band</span>
+                  </td>
+                  <td className="px-3 py-2.5 sm:px-4 text-right whitespace-nowrap">
                     {hasSurcharge ? `${pct(line.rate)} + ${pct(line.surcharge)}` : pct(line.rate)}
                   </td>
-                  <td className="px-4 py-2.5 text-right">{money(line.taxable)}</td>
-                  <td className="px-4 py-2.5 text-right">{money(line.tax, line.tax % 1 ? 2 : 0)}</td>
+                  <td className="hidden px-4 py-2.5 text-right sm:table-cell">{money(line.taxable)}</td>
+                  <td className="px-3 py-2.5 sm:px-4 text-right">{money(line.tax, line.tax % 1 ? 2 : 0)}</td>
                 </tr>
               ))}
               {flatSupplement && (
                 <tr className="border-b border-foreground/10">
-                  <td className="px-4 py-2.5 font-sans font-semibold">Additional Dwelling Supplement</td>
-                  <td className="px-4 py-2.5 text-right">{pct(flatSupplement.rate)}</td>
-                  <td className="px-4 py-2.5 text-right">{money(input.price)}</td>
-                  <td className="px-4 py-2.5 text-right">{money(flatSupplement.tax)}</td>
+                  <td className="px-3 py-2.5 font-sans font-semibold sm:px-4">
+                    Additional Dwelling Supplement
+                    <span className="block font-mono text-xs text-muted-foreground sm:hidden">on {money(input.price)}</span>
+                  </td>
+                  <td className="px-3 py-2.5 text-right sm:px-4">{pct(flatSupplement.rate)}</td>
+                  <td className="hidden px-4 py-2.5 text-right sm:table-cell">{money(input.price)}</td>
+                  <td className="px-3 py-2.5 sm:px-4 text-right">{money(flatSupplement.tax)}</td>
                 </tr>
               )}
               <tr className="bg-sky">
-                <td colSpan={3} className="px-4 py-2.5 font-sans">
+                <td colSpan={2} className="px-3 py-2.5 font-sans sm:px-4">
                   Total {rules.short}
                 </td>
-                <td className="px-4 py-2.5 text-right">{money(result.tax)}</td>
+                <td className="hidden sm:table-cell" />
+                <td className="px-3 py-2.5 sm:px-4 text-right">{money(result.tax)}</td>
               </tr>
             </tbody>
           </table>
