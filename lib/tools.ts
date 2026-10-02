@@ -30,7 +30,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type ToolCategory = "Finance" | "Maths" | "Sport" | "Everyday" | "Garden" | "Text";
+export type ToolCategory = "Finance" | "Maths" | "Sport" | "Everyday" | "Garden" | "Developer" | "Text";
 
 export interface Tool {
   slug: string;
@@ -481,7 +481,7 @@ export const tools: Tool[] = [
     shortName: "Encode / Decode",
     description:
       "Encode and decode Base64, URLs, HTML entities, hex and Unicode escapes, with proper UTF-8 handling and clear errors when something will not decode.",
-    category: "Text",
+    category: "Developer",
     icon: Binary,
     keywords: ["encode", "decode", "encoder", "decoder", "base64", "base64url", "url encode", "url decode", "urlencode", "percent encoding", "%20", "html entities", "escape", "unescape", "html escape", "&amp;", "hex", "hexadecimal", "text to hex", "hex to text", "unicode", "\\u", "utf-8", "utf8", "ascii", "bytes", "convert"],
     tint: "var(--sticker-lilac)",
@@ -498,7 +498,7 @@ export const tools: Tool[] = [
     shortName: "JWT",
     description:
       "Decode a JSON Web Token to read its header, claims and expiry in plain English, and check an HMAC signature, without the token leaving your browser.",
-    category: "Text",
+    category: "Developer",
     icon: KeyRound,
     keywords: ["jwt", "json web token", "token", "decode", "decoder", "bearer", "access token", "id token", "oauth", "oidc", "openid", "claims", "exp", "iat", "expiry", "expired", "hs256", "rs256", "signature", "verify", "auth", "authorization", "jws", "debugger"],
     tint: "var(--sticker-pink)",
@@ -515,7 +515,7 @@ export const tools: Tool[] = [
     shortName: "Cron",
     description:
       "Build or decode a crontab schedule field by field, read it in plain English and see the next five runs in any time zone.",
-    category: "Text",
+    category: "Developer",
     icon: CalendarClock,
     keywords: ["cron", "crontab", "cron job", "schedule", "scheduler", "expression", "generator", "parser", "every 5 minutes", "linux", "unix", "github actions", "kubernetes", "cronjob", "next run", "timer"],
     tint: "var(--sticker-sky)",
@@ -528,7 +528,7 @@ export const tools: Tool[] = [
   },
 ];
 
-export const categories: ToolCategory[] = ["Finance", "Maths", "Sport", "Everyday", "Garden", "Text"];
+export const categories: ToolCategory[] = ["Finance", "Maths", "Sport", "Everyday", "Garden", "Developer", "Text"];
 
 /** Site-relative path of a tool page. Tools live at the root: /<slug>. */
 export function toolPath(tool: Tool): string {

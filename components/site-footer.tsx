@@ -4,7 +4,7 @@ import { toolPath, tools, type ToolCategory } from "@/lib/tools";
 
 // Footer columns: the long lists get a column each, the short categories
 // pair up. A category missing from this list lands in the last column.
-const PLACED: ToolCategory[][] = [["Finance"], ["Garden"], ["Everyday", "Maths"], ["Text", "Sport"]];
+const PLACED: ToolCategory[][] = [["Finance"], ["Garden"], ["Everyday", "Maths"], ["Developer", "Text", "Sport"]];
 const COLUMNS: ToolCategory[][] = (() => {
   const missing = [...new Set(tools.map((t) => t.category))].filter((c) => !PLACED.flat().includes(c));
   const last = PLACED.at(-1) ?? [];

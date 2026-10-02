@@ -52,6 +52,7 @@ const SCHEMA_CATEGORY: Record<Tool["category"], string> = {
   Sport: "SportsApplication",
   Everyday: "LifestyleApplication",
   Garden: "LifestyleApplication",
+  Developer: "DeveloperApplication",
   Text: "UtilitiesApplication",
 };
 
