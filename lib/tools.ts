@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   Binary,
   Briefcase,
+  CalendarClock,
   Car,
   CloudRain,
   Dices,
@@ -507,6 +508,23 @@ export const tools: Tool[] = [
         "Paste a JSON Web Token to see its header, payload and claims, with exp and iat as real dates and whether it has expired. HS256 signature check. Nothing is uploaded.",
     },
     updated: "2026-09-20",
+  },
+  {
+    slug: "cron-builder",
+    name: "Cron Expression Builder",
+    shortName: "Cron",
+    description:
+      "Build or decode a crontab schedule field by field, read it in plain English and see the next five runs in any time zone.",
+    category: "Text",
+    icon: CalendarClock,
+    keywords: ["cron", "crontab", "cron job", "schedule", "scheduler", "expression", "generator", "parser", "every 5 minutes", "linux", "unix", "github actions", "kubernetes", "cronjob", "next run", "timer"],
+    tint: "var(--sticker-sky)",
+    seo: {
+      title: "Cron Expression Builder and Explainer",
+      description:
+        "Build a crontab expression field by field or paste one to read it in plain English, with the next five run times in your time zone. Standard five-field cron, no sign-up.",
+    },
+    updated: "2026-10-02",
   },
 ];
 

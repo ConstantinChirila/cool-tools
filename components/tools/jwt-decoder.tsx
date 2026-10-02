@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useCopy } from "@/hooks/use-copy";
 import { useNow } from "@/hooks/use-now";
+import { relativeTo } from "@/lib/duration";
 import {
   CLAIM_NAMES,
   HEADER_NAMES,
@@ -16,7 +17,6 @@ import {
   decodeJwt,
   isHmac,
   jwtStatus,
-  roughDuration,
   verifyHmac,
   type DecodedJwt,
   type JsonObject,
@@ -40,10 +40,6 @@ const TIME_FORMAT = { dateStyle: "medium", timeStyle: "long" } as const;
 const LOCAL_TIME = new Intl.DateTimeFormat("en-GB", TIME_FORMAT);
 const UTC_TIME = new Intl.DateTimeFormat("en-GB", { ...TIME_FORMAT, timeZone: "UTC" });
 
-function relative(ms: number, now: number): string {
-  return ms <= now ? `${roughDuration(now - ms)} ago` : `in ${roughDuration(ms - now)}`;
-}
-
 function showValue(value: unknown): string {
   return typeof value === "string" ? value : JSON.stringify(value);
 }
@@ -59,7 +55,7 @@ function ClaimTime({ ms }: { ms: number }) {
   return (
     <>
       {(now === null ? UTC_TIME : LOCAL_TIME).format(new Date(ms))}
-      {now !== null && <span className="ml-2 font-semibold text-muted-foreground">({relative(ms, now)})</span>}
+      {now !== null && <span className="ml-2 font-semibold text-muted-foreground">({relativeTo(ms, now)})</span>}
     </>
   );
 }
@@ -129,9 +125,9 @@ function StatusSticker({ jwt }: { jwt: DecodedJwt }) {
   if (now === null) return <div className="h-[74px]" aria-hidden="true" />;
   const status = jwtStatus(jwt.payload, now);
   const view = {
-    valid: { bg: "bg-mint", title: "Not expired", detail: status.kind === "valid" ? `Expires ${relative(status.expiresAt, now)}` : "" },
-    expired: { bg: "bg-pink", title: "Expired", detail: status.kind === "expired" ? `Expired ${relative(status.expiredAt, now)}` : "" },
-    "not-yet": { bg: "bg-yellow", title: "Not valid yet", detail: status.kind === "not-yet" ? `Becomes valid ${relative(status.validFrom, now)}` : "" },
+    valid: { bg: "bg-mint", title: "Not expired", detail: status.kind === "valid" ? `Expires ${relativeTo(status.expiresAt, now)}` : "" },
+    expired: { bg: "bg-pink", title: "Expired", detail: status.kind === "expired" ? `Expired ${relativeTo(status.expiredAt, now)}` : "" },
+    "not-yet": { bg: "bg-yellow", title: "Not valid yet", detail: status.kind === "not-yet" ? `Becomes valid ${relativeTo(status.validFrom, now)}` : "" },
     "no-expiry": { bg: "bg-yellow", title: "Never expires", detail: "There is no usable exp claim, so this token is valid until its key is changed" },
   }[status.kind];
   return (

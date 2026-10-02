@@ -1,6 +1,7 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { claimTime, decodeJwt, isHmac, jwtStatus, roughDuration, verifyHmac } from "@/lib/jwt";
+import { roughDuration } from "@/lib/duration";
+import { claimTime, decodeJwt, isHmac, jwtStatus, verifyHmac } from "@/lib/jwt";
 
 /** HS256, secret "bits-and-bobs-demo-secret", iat 2026-01-01, exp 2030-01-01. Made with node:crypto. */
 const TOKEN =

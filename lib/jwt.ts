@@ -1,5 +1,4 @@
 import { base64ToBytes } from "@/lib/base64";
-import { plural } from "@/lib/currency";
 import { fail, ok, type Result } from "@/lib/result";
 
 export type JsonObject = Record<string, unknown>;
@@ -128,27 +127,6 @@ export function jwtStatus(payload: JsonObject, nowMs: number): JwtStatus {
   if (exp !== null && nowMs >= exp) return { kind: "expired", expiredAt: exp };
   if (nbf !== null && nowMs < nbf) return { kind: "not-yet", validFrom: nbf };
   return exp === null ? { kind: "no-expiry" } : { kind: "valid", expiresAt: exp };
-}
-
-const UNITS: [number, string][] = [
-  [365 * 86_400_000, "year"],
-  [30 * 86_400_000, "month"],
-  [86_400_000, "day"],
-  [3_600_000, "hour"],
-  [60_000, "minute"],
-  [1000, "second"],
-];
-
-/** "3 hours", "2 days": the largest whole unit, for relative times. */
-export function roughDuration(ms: number): string {
-  const size = Math.abs(ms);
-  for (const [unit, name] of UNITS) {
-    if (size >= unit) {
-      const n = Math.floor(size / unit);
-      return plural(n, name);
-    }
-  }
-  return "less than a second";
 }
 
 /* ---------- Signature ---------- */
