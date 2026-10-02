@@ -143,23 +143,45 @@ export function calculateMortgage(
 
 interface CompoundYear {
   year: number;
+  /** Monthly contribution paid during this year (grows with `contributionIncreasePct`). */
+  monthlyContribution: number;
   contributed: number;
-  /** Cumulative interest earned by the end of this year. */
+  /** Cumulative growth (net of fees) by the end of this year. */
   interestEarned: number;
-  /** Interest earned during this year alone. */
+  /** Growth (net of fees) during this year alone. */
   interestThisYear: number;
+  /** Fees charged during this year alone. */
+  feesThisYear: number;
   balance: number;
+  /** Balance deflated to today's money using `inflationPct`. Equals `balance` when inflation is 0. */
+  realBalance: number;
 }
 
 export interface CompoundResult {
   finalBalance: number;
+  /** `finalBalance` in today's money. */
+  realFinalBalance: number;
   totalContributed: number;
+  /** Net growth: balance minus money paid in, after fees. */
   totalInterest: number;
+  /** Fees charged over the whole term. */
+  totalFees: number;
   years: CompoundYear[];
   /** Balance at the end of each year, starting with year 0 (initial deposit). */
   balanceSeries: number[];
   /** Total contributed at the end of each year, starting with year 0. */
   contributedSeries: number[];
+  /** Balance in today's money at the end of each year, starting with year 0. */
+  realBalanceSeries: number[];
+}
+
+export interface CompoundOptions {
+  /** Raise the monthly contribution by this % at the start of every year after the first. Default 0. */
+  contributionIncreasePct?: number;
+  /** Annual charge (platform fee + fund OCF) as a % of the balance, taken monthly. Default 0. */
+  annualFeePct?: number;
+  /** Assumed inflation, used only to restate balances in today's money. Default 0. */
+  inflationPct?: number;
 }
 
 export function calculateCompound(
@@ -168,48 +190,67 @@ export function calculateCompound(
   annualRatePct: number,
   compoundsPerYear: number,
   termYears: number,
+  options: CompoundOptions = {},
 ): CompoundResult {
+  const { contributionIncreasePct = 0, annualFeePct = 0, inflationPct = 0 } = options;
   const rate = annualRatePct / 100;
+  const monthlyFee = annualFeePct / 100 / 12;
   const termCapped = clamp(Math.round(termYears), 0, MAX_TERM_YEARS);
   const years: CompoundYear[] = [];
   const balanceSeries: number[] = [initial];
   const contributedSeries: number[] = [initial];
+  const realBalanceSeries: number[] = [initial];
 
   let balance = initial;
   let contributed = initial;
+  let fees = 0;
+  let contribution = monthlyContribution;
 
-  // Iterate monthly; apply compounding at the configured frequency.
+  // Iterate monthly; apply compounding at the configured frequency and the fee every month.
   const monthsPerCompound = 12 / compoundsPerYear;
   const periodRate = rate / compoundsPerYear;
 
   for (let year = 1; year <= termCapped; year++) {
+    if (year > 1) contribution *= 1 + contributionIncreasePct / 100;
     const balanceStartOfYear = balance;
     const contributedStartOfYear = contributed;
+    const feesStartOfYear = fees;
     for (let m = 1; m <= 12; m++) {
-      balance += monthlyContribution;
-      contributed += monthlyContribution;
+      balance += contribution;
+      contributed += contribution;
       if (m % monthsPerCompound === 0) {
         balance *= 1 + periodRate;
       }
+      const fee = balance * monthlyFee;
+      balance -= fee;
+      fees += fee;
     }
+    const realBalance = balance / (1 + inflationPct / 100) ** year;
     years.push({
       year,
+      monthlyContribution: contribution,
       contributed,
       interestEarned: balance - contributed,
       interestThisYear:
         balance - balanceStartOfYear - (contributed - contributedStartOfYear),
+      feesThisYear: fees - feesStartOfYear,
       balance,
+      realBalance,
     });
     balanceSeries.push(balance);
     contributedSeries.push(contributed);
+    realBalanceSeries.push(realBalance);
   }
 
   return {
     finalBalance: balance,
+    realFinalBalance: realBalanceSeries[realBalanceSeries.length - 1] ?? initial,
     totalContributed: contributed,
     totalInterest: balance - contributed,
+    totalFees: fees,
     years,
     balanceSeries,
     contributedSeries,
+    realBalanceSeries,
   };
 }

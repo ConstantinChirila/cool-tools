@@ -176,14 +176,14 @@ export const tools: Tool[] = [
       "Watch savings and investments grow with compounding, regular contributions, and a year-by-year chart.",
     category: "Finance",
     icon: TrendingUp,
-    keywords: ["savings", "investment", "growth", "interest", "wealth", "returns", "isa"],
+    keywords: ["savings", "investment", "growth", "interest", "wealth", "returns", "isa", "fees", "inflation", "pension"],
     tint: "var(--sticker-lilac)",
     seo: {
       title: "Compound Interest Calculator with Monthly Deposits",
       description:
-        "Project savings and investment growth with compound interest, regular monthly contributions and monthly, quarterly or yearly compounding. Chart and yearly table.",
+        "Project savings and investment growth with compound interest, monthly contributions that rise each year, platform and fund fees, and the result in today's money. Chart and yearly table.",
     },
-    updated: "2026-09-16",
+    updated: "2026-10-02",
   },
   {
     slug: "inflation-calculator",

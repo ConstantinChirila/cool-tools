@@ -3,6 +3,7 @@ import type { ToolContent } from "@/lib/tool-content";
 export const content: ToolContent = {
   intro: [
     "This compound interest calculator shows how a lump sum, plus a regular monthly contribution, grows once interest starts earning interest on itself. Set an initial deposit, a monthly amount, a rate and a term, and it plots the balance year by year so you can see how much is your own money versus growth.",
+    "For investments, open the extras to raise your contribution each year, take off platform and fund fees, and see the result in today's money after inflation.",
     "Use it to sanity-check a savings goal or compare what happens at different rates and contribution levels over time.",
   ],
   sections: [
@@ -31,7 +32,29 @@ export const content: ToolContent = {
       heading: "Using this for ISAs, savings accounts and investments",
       paragraphs: [
         "For savings accounts, look at the **AER (Annual Equivalent Rate)** rather than the headline rate: it restates the compounding frequency as if it compounded once a year, so you can compare accounts fairly. Plug the AER into this calculator's rate field for a like-for-like estimate.",
-        "A cash ISA works the same way as a savings account, just without the tax question. For a stocks and shares ISA or any investment account, remember the rate is a fixed assumption: real returns are not guaranteed and can fall as well as rise. Inflation also erodes what a balance can buy by the time you reach it, so treat the output as a projection, not a promise.",
+        "A cash ISA works the same way as a savings account, just without the tax question. For a stocks and shares ISA or any investment account, remember the rate is a fixed assumption: real returns are not guaranteed and can fall as well as rise. Treat the output as a projection, not a promise.",
+      ],
+    },
+    {
+      heading: "Fees: small percentages, big money",
+      paragraphs: [
+        "Investment fees come in two layers: the platform (the broker or ISA provider) charges for holding your account, and each fund charges an ongoing charge figure (OCF) for running it. Both are quoted as a percentage of your balance per year, and both come out of the pot whether or not it grew. Enter the two added together in the Fees extra; the calculator takes a twelfth of it off the balance every month.",
+        "The damage is bigger than the headline number because the money taken in fees would have kept compounding. On the default plan (£10,000 plus £250 a month at 7% for 20 years) a 0.75% charge takes £10,183.46 in fees but leaves the pot £17,067.80 smaller, at £154,310.94 instead of £171,378.74. At 1.5% the fees are £19,015.10 and the pot is £32,171.34 smaller. The calculator shows both figures so you can see the full cost.",
+        "Rough UK reference points: a global index tracker costs around 0.1% to 0.2%, flat-fee platforms work out well under 0.1% on larger pots while percentage-fee platforms charge 0.15% to 0.45%, and actively managed funds are often 0.75% to 1%+. Check your own provider's documents rather than relying on these.",
+      ],
+    },
+    {
+      heading: "Raising contributions each year",
+      paragraphs: [
+        "Most people don't invest the same amount for 20 years; contributions tend to rise with pay. The 'Raise contributions each year' extra increases the monthly amount by a fixed percentage at the start of each new year. Raising the default £250 a month by 3% a year means paying £438.38 a month by year 20, £90,611.12 in total instead of £70,000, and the pot grows to £204,902.47 instead of £171,378.74.",
+        "A 3% rise is roughly in line with long-run wage growth, so it also happens to keep your contribution steady in real terms if inflation runs near its target.",
+      ],
+    },
+    {
+      heading: "Inflation and today's money",
+      paragraphs: [
+        "A balance 20 years away won't buy what the same figure buys now. The Inflation extra deflates each year's balance by your assumed rate, so you can see what the pot would be worth in today's money. At 2.5% inflation the default plan's £171,378.74 is worth about £104,587.46 in today's terms. Nothing about the nominal result changes; it's the same pot, measured in a steadier unit.",
+        "The Bank of England targets 2% CPI inflation. If you'd rather use what inflation has actually been over a period, this site's Inflation Calculator shows the UK record back to 1800.",
       ],
     },
     {
@@ -41,9 +64,9 @@ export const content: ToolContent = {
       ],
       bullets: [
         "Tax on interest or investment growth outside an ISA or your allowances",
-        "Account fees, platform charges or investment management costs",
-        "Interest rates changing over the term: it assumes one fixed rate throughout",
-        "Inflation, so results are shown in today's money, not adjusted for future purchasing power",
+        "Interest rates or returns changing over the term: it assumes one fixed rate throughout, with none of the ups and downs real investments have",
+        "Dealing charges, bid-offer spreads or fund entry fees: only ongoing percentage charges are modelled",
+        "Pausing or withdrawing: contributions run every month for the whole term",
       ],
     },
     {
@@ -74,6 +97,21 @@ export const content: ToolContent = {
       question: "Is compound interest taxed in the UK?",
       answer:
         "Interest earned outside an ISA counts towards your Personal Savings Allowance, which for 2025/26 is £1,000 for basic rate taxpayers, £500 for higher rate taxpayers, and £0 for additional rate taxpayers; interest above that is taxable. Interest earned inside a cash ISA is tax free. These figures are current for the 2025/26 tax year and can change.",
+    },
+    {
+      question: "What fee should I enter for an investment?",
+      answer:
+        "Add your platform's annual account charge to the ongoing charge figure (OCF) of the fund or funds you hold, both as a percentage of the balance. If your platform charges a flat monthly fee instead, divide the yearly total by your expected average balance to turn it into a rough percentage. The number is in your provider's key information document or fee schedule.",
+    },
+    {
+      question: "Why does the fee cost more than the fees paid?",
+      answer:
+        "Every pound taken in fees would otherwise have stayed invested and kept compounding. 'Fees paid' is the cash actually charged; the 'cost you' figure compares your final balance with the same plan at 0% fees, so it includes the growth that money would have earned.",
+    },
+    {
+      question: "Should I look at the nominal balance or today's money?",
+      answer:
+        "Both are true, they answer different questions. The nominal balance is what the statement will say; today's money is what that balance would buy at current prices. For a goal set in today's terms, such as a house deposit or a yearly retirement income, compare against the today's-money figure.",
     },
     {
       question: "What is the rule of 72?",
