@@ -16,6 +16,7 @@ import {
   LandPlot,
   Percent,
   PiggyBank,
+  Regex,
   Shovel,
   Sprout,
   ShoppingBasket,
@@ -523,6 +524,23 @@ export const tools: Tool[] = [
       title: "Cron Expression Builder and Explainer",
       description:
         "Build a crontab expression field by field or paste one to read it in plain English, with the next five run times in your time zone. Standard five-field cron, no sign-up.",
+    },
+    updated: "2026-10-02",
+  },
+  {
+    slug: "regex-tester",
+    name: "Regex Tester",
+    shortName: "Regex",
+    description:
+      "Test a JavaScript regular expression on your own text with live highlighting, groups, replace, a plain-English explanation and code for six languages.",
+    category: "Developer",
+    icon: Regex,
+    keywords: ["regex", "regexp", "regular expression", "pattern", "match", "matcher", "test", "tester", "debugger", "replace", "find and replace", "capture group", "named group", "lookahead", "lookbehind", "javascript", "python", "php", "java", "c#", "go", "explain", "cheat sheet", "regex101"],
+    tint: "var(--sticker-yellow)",
+    seo: {
+      title: "Regex Tester: Test and Explain Regular Expressions",
+      description:
+        "Test JavaScript regex live: matches and groups highlighted, find and replace, each part explained in plain English and code for Python, PHP, Java, C# and Go.",
     },
     updated: "2026-10-02",
   },
